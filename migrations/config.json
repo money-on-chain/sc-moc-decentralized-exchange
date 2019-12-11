@@ -1,0 +1,73 @@
+{
+  "rskTestnet": {
+    "deployGovernance": false,
+    "haveToAddTokenPairs": true,
+    "governor": "0xD63C0441b9A6c019917e9773992F7B5428542cbb",
+    "stopper": "0x7936cA4f95a662ABe0b1d9B41Ce89eE0Bc704824",
+    "proxyAdmin": "0x93176E10a2962061D92617a06abE3F5850E18CD6",
+    "upgradeDelegator": "0xc3aaFB85466Fb3D70b4dd801f694add6260997e3",
+    "addressesToHaveBalance": [
+      "0xC2C22CeE68625D65105fE98a92B283b79845F609",
+      "0x6E65A43762901Fe390f4e7fC1af550eD24535265",
+      "0x123ABDECe0585566291929E8da1EA3E2e29D51E5",
+      "0x26aF367E79acDBd91277682526e07D6A9725042D",
+      "0xb1aF5b992251096AA6b12326CEb368Bcd333DDCe"
+    ],
+    "beneficiaryAddress": "0xC2C22CeE68625D65105fE98a92B283b79845F609",
+    "existingTokens": {
+      "BproToken": {
+        "address": "0xb6A9F8C6eEc48A7FBbCb5DE3b73C257EB554179e"
+      },
+      "WRBTC": {
+        "address": "0xA274d994F698Dd09256674960d86aBa22C086669"
+      },
+      "DocToken": {
+        "address": "0xBca13b5E5A1637aCE451F2B7EF5E6d24E27D3bA3"
+      },
+      "TestToken": {
+        "address": "0x840871cbb73dC94dcb11b2CEA963553Db71a95b7"
+      },
+      "RifToken": {
+        "address": "0x19F64674D8A5B4E652319F5e239eFd3bc969A1fE"
+      }
+    }
+  },
+  "development": {
+    "deployGovernance": true,
+    "addressesToHaveBalance": [
+      "0xd51128F302755666c42e3920d72FF2FE632856a9",
+      "0xC2C22CeE68625D65105fE98a92B283b79845F609",
+      "0x6E65A43762901Fe390f4e7fC1af550eD24535265",
+      "0x123ABDECe0585566291929E8da1EA3E2e29D51E5",
+      "0x26aF367E79acDBd91277682526e07D6A9725042D",
+      "0x8c61e1063E0b6f6C5123428935F34AfA2b5C2e95",
+      "0xb1aF5b992251096AA6b12326CEb368Bcd333DDCe"
+    ],
+    "beneficiaryAddress": "0xC2C22CeE68625D65105fE98a92B283b79845F609"
+  },
+  "coverage": {
+    "deployGovernance": true,
+    "addressesToHaveBalance": [
+      "0xC2C22CeE68625D65105fE98a92B283b79845F609",
+      "0x6E65A43762901Fe390f4e7fC1af550eD24535265",
+      "0x123ABDECe0585566291929E8da1EA3E2e29D51E5",
+      "0x26aF367E79acDBd91277682526e07D6A9725042D",
+      "0xb1aF5b992251096AA6b12326CEb368Bcd333DDCe"
+    ],
+    "beneficiaryAddress": "0xC2C22CeE68625D65105fE98a92B283b79845F609"
+  },
+  "default": {
+    "MAX_PENDING_TXS": 4,
+    "ORDERS_FOR_TICK": 8,
+    "MAX_BLOCKS_FOR_TICK": 20,
+    "MIN_BLOCKS_FOR_TICK": 10,
+    "MIN_ORDER_AMOUNT": 1e16,
+    "MAX_ORDER_LIFESPAN": 10,
+    "DEFAULT_PRICE_PRECISION": 1e18,
+    "TOKEN_DECIMALS": 1e18,
+    "COMMISSION_RATE": 0.005,
+    "CANCELATION_PENALTY_RATE": 0.25,
+    "EXPIRATION_PENALTY_RATE": 0.5,
+    "TOKENS_TO_MINT": 1e10
+  }
+}
