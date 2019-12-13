@@ -22,6 +22,7 @@
     "truffle-compile": "truffle compile --all",
     "truffle-migrate-testnet": "cp zos.backup.json zos.json && truffle migrate --network rskTestnet --reset",
     "truffle-migrate-dev": "rm zos.dev-*.json; rm -r build/contracts; truffle migrate --network development --reset",
+    "truffle-migrate-mainnet": "cp zos.backup.json zos.json && truffle migrate --network mocMainnet --reset",
     "full-test": "npm run eslint && npm run solium && npm run test"
   },
   "repository": {
