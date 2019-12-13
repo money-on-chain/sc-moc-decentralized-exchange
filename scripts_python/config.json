@@ -39,14 +39,21 @@
       "network_id": 31,
       "accounts": [
         {
-          "address": "0xAb242e50E95C2f539242763A4eD5Db1aEE5ce461",
+          "address": "0xA8342cC05241E0D940E1c74043FAcD931562F19a",
           "private_key": ""
         }
       ],
       "addresses": {
-        "governor": "0x9258531274B945eB628656F4b30e8216938A619C",
-        "oracle": "0x78c892Dc5b7139d0Ec1eF513C9E28eDfAA44f2d4",
-        "upgradeDelegator": ""
+        "dex": "0x4aED476F44FbbCaf7247e85E365dDd4f21c175D2",
+        "doc": "0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0",
+        "wrbtc": "0xA274d994F698Dd09256674960d86aBa22C086669",
+        "rif": "0x19F64674D8A5B4E652319F5e239eFd3bc969A1fE",
+        "bpro": "0x4dA7997A819bb46B6758B9102234c289dD2Ad3bf",
+        "proxyAdmin": "0xffb65F6E24806B7e1A988EeD1Ad07BB2654fF695",
+        "upgradeDelegator": "0xCDAbFbF334A5F6BCe900D2f73470D1e6722365d8",
+        "governor": "0x4eAC4518e81B3A5198aADAb998D2610B46aAA609",
+        "stopper": "0x5bCdf8A2E61BD238AEe43b99962Ee8BfBda1Beca",
+        "commissionManager": "0xC2dd366416a7a4A34a8c06E6f59ee853f3717DEf"
       }
 
     },
