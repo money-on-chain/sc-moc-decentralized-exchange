@@ -42,6 +42,12 @@ module.exports = {
       provider: new HDWalletProvider(mnemonic, 'http://50.116.28.95:4444/'),
       network_id: '*',
       gasPrice: 60000000
+    },
+    mocTestnetAlpha: {
+      host: 'http://13.52.161.255:4444',
+      provider: new HDWalletProvider('PKPKPK', 'http://13.52.161.255:4444'),
+      network_id: '*',
+      gasPrice: 0x00
     }
   },
   mocha: {

@@ -32,6 +32,33 @@
       }
     }
   },
+  "mocTestnetAlpha": {
+    "deployGovernance": false,
+    "haveToAddTokenPairs": false,
+    "governor": "0x4eAC4518e81B3A5198aADAb998D2610B46aAA609",
+    "stopper": "0x5bCdf8A2E61BD238AEe43b99962Ee8BfBda1Beca",
+    "proxyAdmin": "0xffb65F6E24806B7e1A988EeD1Ad07BB2654fF695",
+    "upgradeDelegator": "0xCDAbFbF334A5F6BCe900D2f73470D1e6722365d8",
+    "addressesToHaveBalance": [],
+    "beneficiaryAddress": "0xf69287F5Ca3cC3C6d3981f2412109110cB8af076",
+    "existingTokens": {
+      "BproToken": {
+        "address": "0x4dA7997A819bb46B6758B9102234c289dD2Ad3bf"
+      },
+      "WRBTC": {
+        "address": "0xA274d994F698Dd09256674960d86aBa22C086669"
+      },
+      "DocToken": {
+        "address": "0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0"
+      },
+      "TestToken": {
+        "address": "0x840871cbb73dC94dcb11b2CEA963553Db71a95b7"
+      },
+      "RifToken": {
+        "address": "0x19F64674D8A5B4E652319F5e239eFd3bc969A1fE"
+      }
+    }
+  },
   "development": {
     "deployGovernance": true,
     "addressesToHaveBalance": [
