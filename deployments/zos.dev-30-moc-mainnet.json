@@ -1,0 +1,54 @@
+{
+  "contracts": {
+    "CommissionManager": {
+      "address": "0x7607d3B4366d493E3618bD807aeFe602CDc4fB3E",
+      "constructorCode": "608060405234801561001057600080fd5b50610fe8806100206000396000f3fe",
+      "bodyBytecodeHash": "992e93b99deac4baadc43187ccf40b66a90490fb6b1d43dbbfbc2f654d0741c3",
+      "localBytecodeHash": "c2b4ea0cf29d323dc29085865ade917a5939fa12c070680409adf9b891f7c6ff",
+      "deployedBytecodeHash": "c2b4ea0cf29d323dc29085865ade917a5939fa12c070680409adf9b891f7c6ff",
+      "types": null,
+      "storage": null
+    },
+    "MoCDecentralizedExchange": {
+      "address": "0xc8C81c9f427D311EaCE34d17Ea007102F6c901A9",
+      "constructorCode": "608060405234801561001057600080fd5b5061587c80620000216000396000f3fe",
+      "bodyBytecodeHash": "ce6dd6758d98e17327b4a8ec862f1ed4b1e16b88168bd983a5a797cb2477766b",
+      "localBytecodeHash": "bc2d9372e42d782347753fde4a246bd3e8a6e01852bc2d13218e3e0089177825",
+      "deployedBytecodeHash": "c396816944dba03e9a3aa7c13e5ee89c7cb897b5ee1540f9a8dfa52ab478afa8",
+      "types": null,
+      "storage": null
+    }
+  },
+  "solidityLibs": {
+    "MoCExchangeLib": {
+      "address": "0xF8C31E94F7c636D4aAAB0204eE81a0ade2649100",
+      "constructorCode": "61274d610026600b82828239805160001a60731461001957fe5b30600052607381538281f3fe",
+      "bodyBytecodeHash": "727a04d0ced2ea40011f371bfa9db75876daed4a52bda014ecdaaf9e13c983bf",
+      "localBytecodeHash": "61b76091a1dfc9170fedcf8287b91bf90db9d1e758daf573e1fe2bbc5125b8ca",
+      "deployedBytecodeHash": "61b76091a1dfc9170fedcf8287b91bf90db9d1e758daf573e1fe2bbc5125b8ca"
+    }
+  },
+  "proxies": {
+    "decentralized-exchange/CommissionManager": [
+      {
+        "address": "0x4ac95aF42Be3Cea9cc7e3cD7C7fEBf010f058761",
+        "version": "1.0.0",
+        "implementation": "0xC29ebbE3c5D469A2b17Cf5174e84F35Ac9D7D66B",
+        "admin": "0x009C51E1f6feDcDB8014Ea9AE1E39B6dbF2AC0EC"
+      }
+    ],
+    "decentralized-exchange/MoCDecentralizedExchange": [
+      {
+        "address": "0xAb849F900921D885eAF891B0831c72e58148F0c0",
+        "version": "1.0.0",
+        "implementation": "0xc8C81c9f427D311EaCE34d17Ea007102F6c901A9",
+        "admin": "0x009C51E1f6feDcDB8014Ea9AE1E39B6dbF2AC0EC"
+      }
+    ]
+  },
+  "zosversion": "2.2",
+  "version": "1.0.0",
+  "proxyAdmin": {
+    "address": "0x57F3c077a089885A95135CDaA2276E248818b707"
+  }
+}

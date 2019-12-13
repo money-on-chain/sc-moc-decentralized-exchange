@@ -46,7 +46,7 @@ module.exports = {
     mocMainnet: {
       // 0xb1ef062c364750deecdcacbf7190ed591b7a0bfe
       host: 'https://public-node.rsk.co/',
-      provider: new HDWalletProvider('', 'https://public-node.rsk.co/'),
+      provider: new HDWalletProvider('PKPKPK', 'https://public-node.rsk.co/'),
       network_id: '*',
       gasPrice: 60000000
     }
