@@ -1,0 +1,110 @@
+{
+  "timeout": 60,
+  "timeout_web3": 300,
+  "networks": {
+    "mocGanacheDesktop": {
+      "uri": "http://192.168.56.2:8545",
+      "network_id": 123456,
+      "accounts": [
+        {
+          "address": "0x0e424e9a8598a55918e12de47172f3180c4b4e13",
+          "private_key":  "0x9e790b185e5b7f11f2924c7b809936866c38ed3ab3f33e0fbd3cfe791c2cdbd6"
+        }
+      ],
+      "addresses": {
+        "governor": "0xb8b1B46e6f0246D8714fb1fB79F7Fc0f305ac2eE",
+        "oracle": "0x111301D0B6Ea6d588ba50b0eB8be7c02B6271AEA",
+        "upgradeDelegator": ""
+      }
+
+    },
+    "mocRegTestDesktop": {
+      "uri": "http://192.168.56.2:4444",
+      "network_id": 33,
+      "accounts": [
+        {
+          "address": "0xcd2a3d9f938e13cd947ec05abc7fe734df8dd826",
+          "private_key":  "0xc85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4"
+        }
+      ],
+      "addresses": {
+        "governor": "0x275eD9A7A6424c930cB730043e75ea9e58A02459",
+        "oracle": "0x0239eCA75c86DF869e72089568aca18845CCfe52",
+        "upgradeDelegator": ""
+      }
+
+    },
+    "mocTestnetAlpha": {
+      "uri": "http://13.52.161.255:4444",
+      "network_id": 31,
+      "accounts": [
+        {
+          "address": "0xAb242e50E95C2f539242763A4eD5Db1aEE5ce461",
+          "private_key": ""
+        }
+      ],
+      "addresses": {
+        "governor": "0x9258531274B945eB628656F4b30e8216938A619C",
+        "oracle": "0x78c892Dc5b7139d0Ec1eF513C9E28eDfAA44f2d4",
+        "upgradeDelegator": ""
+      }
+
+    },
+    "mocTestnet": {
+      "uri": "http://13.52.161.255:4444",
+      "network_id": 31,
+      "accounts": [
+        {
+          "address": "0xE2929d888015EB568AFfa06aaB946923a7236Ad9",
+          "private_key": ""
+        }
+      ],
+      "addresses": {
+        "dex": "0x7bA66cB9b83b605D1ADbE60feA29B633aB3b29fd",
+        "doc": "0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0",
+        "wrbtc": "0xA274d994F698Dd09256674960d86aBa22C086669",
+        "rif": "0x19F64674D8A5B4E652319F5e239eFd3bc969A1fE",
+        "bpro": "0x4dA7997A819bb46B6758B9102234c289dD2Ad3bf",
+        "proxyAdmin": "0x93176E10a2962061D92617a06abE3F5850E18CD6",
+        "upgradeDelegator": "0xc3aaFB85466Fb3D70b4dd801f694add6260997e3",
+        "governor": "0x4eAC4518e81B3A5198aADAb998D2610B46aAA609",
+        "stopper": "0x7936cA4f95a662ABe0b1d9B41Ce89eE0Bc704824",
+        "commissionManager": "0xf48fCfFb410668C5E8d9D620eED0EB5F2a7f40a1"
+      }
+
+    },
+    "mocMainnet1": {
+      "uri": "https://public-node.rsk.co",
+      "network_id": 30,
+      "accounts": [
+        {
+          "address": "0xEA14c08764c9e5F212c916E11a5c47Eaf92571e4",
+          "private_key": ""
+        }
+      ],
+      "addresses": {
+        "governor": "0x8375040b93d24FC89388295D12916289DeeAC8FC",
+        "oracle": "0x03Cb0116c6b90BfE54fdC0CB37b6980bbe855D67",
+        "upgradeDelegator": ""
+      }
+    },
+    "mocMainnet2": {
+      "uri": "http://13.52.186.248:4444",
+      "network_id": 30,
+      "accounts": [
+        {
+          "address": "0xEA14c08764c9e5F212c916E11a5c47Eaf92571e4",
+          "private_key": ""
+        }
+      ],
+      "addresses": {
+        "governor": "0xC61F0392d5170214b5D93C0BC4c4354163aBC1f7",
+        "oracle": "0x7B19bb8e6c5188eC483b784d6fB5d807a77b21bF",
+        "upgradeDelegator": ""
+      }
+    }
+
+
+  }
+
+}
