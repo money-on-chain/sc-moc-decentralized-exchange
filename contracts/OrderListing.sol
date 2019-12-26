@@ -1,7 +1,7 @@
 pragma solidity 0.5.8;
 
 import "openzeppelin-eth/contracts/utils/ReentrancyGuard.sol";
-import "moc---gobernanza/contracts/Stopper/Stoppable.sol";
+import "moc-governance/contracts/Stopper/Stoppable.sol";
 import "./OrderIdGenerator.sol";
 import "./CommissionManager.sol";
 import "./TokenPairConverter.sol";

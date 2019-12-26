@@ -32,7 +32,7 @@
   "author": "Atix",
   "license": "ISC",
   "dependencies": {
-    "moc---gobernanza": "git+ssh://git@gitlab.com/atixlabs/moc---gobernanza.git#v0.3.3",
+    "moc-governance": "git+ssh://git@github.com:money-on-chain/Areopagus-Governance.git#v0.3.3",
     "partial-execution": "git+ssh://git@gitlab.com/atixlabs/moc/partial-execution.git#v0.1.0",
     "openzeppelin-eth": "2.2.0",
     "openzeppelin-solidity": "2.3.0",

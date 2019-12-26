@@ -191,7 +191,7 @@ DEX and CommisionManger contracts subscribes to a governance implementation that
 
 - Pause/Un-pause the whole system (intended as temporal halts for future upgrades)
 
-For further detail on Governance mechanism refer to [Moc Governance project](https://gitlab.com/atixlabs/moc---gobernanza)
+For further detail on Governance mechanism refer to [Moc Governance project](https://gitlab.com/atixlabs/moc-governance)
 
 ## Block gas limit prevention
 
