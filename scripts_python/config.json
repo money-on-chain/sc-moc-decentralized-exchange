@@ -58,11 +58,11 @@
 
     },
     "mocTestnet": {
-      "uri": "http://13.52.161.255:4444",
+      "uri": "https://public-node.testnet.rsk.co",
       "network_id": 31,
       "accounts": [
         {
-          "address": "0xE2929d888015EB568AFfa06aaB946923a7236Ad9",
+          "address": "0xA8342cC05241E0D940E1c74043FAcD931562F19a",
           "private_key": ""
         }
       ],
