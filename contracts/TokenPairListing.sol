@@ -28,6 +28,9 @@ contract TokenPairListing is ConfigurableTick, EventfulTokenPairListing {
   mapping (bytes32 => MoCExchangeLib.Pair) tokenPairs;
   address[2][] public tokenPairAddresses;
 
+  uint256 constant public PRECISION_SMOOTHING_FACTOR = 10**18;
+  uint256 constant public SMOOTHING_FACTOR = 0.01653 * PRECISION_SMOOTHING_FACTOR;
+
   /**
     @notice Check if the new pair is valid; i.e. it or its inverse is not listed already, and
     that the tokens are different; fails otherwise
@@ -105,7 +108,9 @@ contract TokenPairListing is ConfigurableTick, EventfulTokenPairListing {
       MoCExchangeLib.TickStage.RECEIVING_ORDERS,
       _priceComparisonPrecision,
       _initialPrice,
-      false
+      false,
+      _initialPrice,
+      SMOOTHING_FACTOR
     );
   }
 
@@ -181,7 +186,8 @@ contract TokenPairListing is ConfigurableTick, EventfulTokenPairListing {
       uint256 nextTickBlock,
       uint256 lastTickBlock,
       uint256 lastClosingPrice,
-      bool disabled
+      bool disabled,
+      uint256 EMAPrice
     ) {
     return tokenPair(_baseToken, _secondaryToken).getStatus();
   }
