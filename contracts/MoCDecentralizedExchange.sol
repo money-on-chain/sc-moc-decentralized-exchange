@@ -248,16 +248,17 @@ contract MoCDecentralizedExchange is
         external
         view
         returns (
-            uint64 tickNumber,
-            uint256 nextTickBlock,
-            uint256 lastTickBlock,
-            uint256 lastClosingPrice,
             uint256 emergentPrice,
             uint256 lastBuyMatchId,
             uint256 lastBuyMatchAmount,
             uint256 lastSellMatchId,
+            uint64 tickNumber,
+            uint256 nextTickBlock,
+            uint256 lastTickBlock,
+            uint256 lastClosingPrice,
             bool disabled,
-            uint256 EMAPrice
+            uint256 EMAPrice,
+            uint256 smoothingFactor
         )
     {
         (
@@ -266,7 +267,8 @@ contract MoCDecentralizedExchange is
             lastTickBlock,
             lastClosingPrice,
             disabled,
-            EMAPrice
+            EMAPrice,
+            smoothingFactor
         ) = getStatus(_baseToken, _secondaryToken);
         (
             emergentPrice,
@@ -525,7 +527,7 @@ contract MoCDecentralizedExchange is
                 pair.pageMemory.lastSellMatch.price
             );
             pair.lastClosingPrice = pair.pageMemory.emergentPrice;
-            pair.EMAPrice = calculateNewEMA(
+            pair.EMAPrice = MoCExchangeLib.calculateNewEMA(
                 pair.EMAPrice,
                 pair.lastClosingPrice,
                 pair.smoothingFactor,
@@ -534,31 +536,6 @@ contract MoCDecentralizedExchange is
         }
     }
 
-    /**
-    @notice Calculates the new EMA using the exponential smoothing formula:
-              newEMA = (smoothingFactor * newValue) + ((1 - smoothingFactor) * oldEma)
-            where newValue is the lastClosingPrice of current tick, and 0 < smoothingFactor < 1.
-            All values are weighted with the appropiate precision.
-    @param _oldEMA the previous calculated EMA
-    @param _newValue the newValue to smooth, it represents the new lastClosingPrice
-    @param _smoothingFactor the smoothing factor of the exponential smoothing
-    @param _factorPrecision the smoothing factor's precision
-    */
-    function calculateNewEMA(
-        uint256 _oldEMA,
-        uint256 _newValue,
-        uint256 _smoothingFactor,
-        uint256 _factorPrecision
-    ) private pure returns (uint256) {
-        uint256 weightedNewValue = _newValue.mul(_smoothingFactor).div(
-            _factorPrecision
-        );
-        uint256 oldEMAWeighted = _oldEMA
-            .mul(_factorPrecision.sub(_smoothingFactor))
-            .div(_factorPrecision);
-        uint256 newEMA = oldEMAWeighted.add(weightedNewValue);
-        return newEMA;
-    }
     /**
     @notice Hook called when the actual matching of orders starts; marks as so the tick stage
     Has one discarded param; kept to have a fixed signature

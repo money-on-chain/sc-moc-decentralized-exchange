@@ -692,6 +692,7 @@ library MoCExchangeLib {
     @return lastClosingPrice Emergent price of the last tick
     @return disabled True if the pair is disabled(it can not be inserted any orders); false otherwise
     @return EMAPrice The last calculated EMAPrice of the last tick
+    @return smoothingFactor The current smoothing factor
    */
     function getStatus(Pair storage _self)
         internal
@@ -702,7 +703,8 @@ library MoCExchangeLib {
             uint256 lastTickBlock,
             uint256 lastClosingPrice,
             bool disabled,
-            uint256 EMAPrice
+            uint256 EMAPrice,
+            uint256 smoothingFactor
         )
     {
         tickNumber = _self.tickState.number;
@@ -711,6 +713,7 @@ library MoCExchangeLib {
         lastClosingPrice = _self.lastClosingPrice;
         disabled = _self.disabled;
         EMAPrice = _self.EMAPrice;
+        smoothingFactor = _self.smoothingFactor;
     }
 
     /**
@@ -825,6 +828,32 @@ library MoCExchangeLib {
             address(_self.baseToken.token) != address(0) &&
             address(_self.secondaryToken.token) != address(0) &&
             _self.priceComparisonPrecision != 0;
+    }
+
+    /**
+    @notice Calculates the new EMA using the exponential smoothing formula:
+              newEMA = (smoothingFactor * newValue) + ((1 - smoothingFactor) * oldEma)
+            where newValue is the lastClosingPrice of current tick, and 0 < smoothingFactor < 1.
+            All values are weighted with the appropiate precision.
+    @param _oldEMA the previous calculated EMA
+    @param _newValue the newValue to smooth, it represents the new lastClosingPrice
+    @param _smoothingFactor the smoothing factor of the exponential smoothing
+    @param _factorPrecision the smoothing factor's precision
+    */
+    function calculateNewEMA(
+        uint256 _oldEMA,
+        uint256 _newValue,
+        uint256 _smoothingFactor,
+        uint256 _factorPrecision
+    ) public pure returns (uint256) {
+        uint256 weightedNewValue = _newValue.mul(_smoothingFactor).div(
+            _factorPrecision
+        );
+        uint256 oldEMAWeighted = _oldEMA
+            .mul(_factorPrecision.sub(_smoothingFactor))
+            .div(_factorPrecision);
+        uint256 newEMA = oldEMAWeighted.add(weightedNewValue);
+        return newEMA;
     }
 
     /**
