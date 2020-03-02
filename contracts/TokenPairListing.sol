@@ -87,7 +87,12 @@ contract TokenPairListing is ConfigurableTick, EventfulTokenPairListing {
         emit TokenPairEnabled(_baseToken, _secondaryToken);
     }
 
-    // TODO add doc
+    /**
+    @dev Sets the smoothing factor for a specific token pair
+    @param _baseToken Address of the base token of the pair
+    @param _secondaryToken Address of the secondary token of the pair
+    @param _smoothingFactor wad from 0 to 1 that represents the smoothing factor for EMA calculation
+     */
     function setTokenPairSmoothingFactor(
         address _baseToken,
         address _secondaryToken,
@@ -104,7 +109,12 @@ contract TokenPairListing is ConfigurableTick, EventfulTokenPairListing {
         pair.smoothingFactor = _smoothingFactor;
     }
 
-    // TODO add doc
+    /**
+    @dev Sets the EMA Price for a specific token pair
+    @param _baseToken Address of the base token of the pair
+    @param _secondaryToken Address of the secondary token of the pair
+    @param _EMAPrice The new EMA price for the token pair
+     */
     function setTokenPairEMAPrice(
         address _baseToken,
         address _secondaryToken,
