@@ -1,6 +1,6 @@
 const testHelperBuilder = require("./testHelpers/testHelper");
 
-describe.only("Token pair EMA Price tests", function() {
+describe("Token pair EMA Price tests", function() {
   let dex;
   let base;
   let secondary;
