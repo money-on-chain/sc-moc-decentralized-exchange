@@ -83,7 +83,7 @@ describe("Token pair EMA Price tests", function() {
 
   describe("RULE: When the pair has runned one tick and some orders matched", () => {
     contract(
-      "GIVEN that there are three buy orders and two sell orders where there's matching price is 1",
+      "GIVEN that there are three buy orders and three sell orders where there's matching price is 1",
       function(accounts) {
         before(async () => {
           await initContractsAndOrders(accounts, getCommonInsertionParams())();
@@ -100,14 +100,14 @@ describe("Token pair EMA Price tests", function() {
       }
     );
     contract(
-      "GIVEN that there are three buy orders and two sell orders where there's matching price is 1",
+      "GIVEN that there are three buy orders and three sell orders where there's matching price is not 1",
       function(accounts) {
         before(async () => {
           await initContractsAndOrders(accounts, getNotCommonInsertionParams())();
           await dex.matchOrders(base.address, secondary.address, 10000);
         });
 
-        it("THEN the emaPrice should stay the same", async () => {
+        it("THEN the emaPrice should change and be different than the previous one (it was 1)", async () => {
           const tokenPairStatus = await dex.getTokenPairStatus(
             base.address,
             secondary.address
