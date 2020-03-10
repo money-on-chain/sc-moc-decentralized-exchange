@@ -34,6 +34,7 @@
   },
   "development": {
     "deployGovernance": true,
+    "haveToAddTokenPairs": true,
     "addressesToHaveBalance": [
       "0xd51128F302755666c42e3920d72FF2FE632856a9",
       "0xC2C22CeE68625D65105fE98a92B283b79845F609",
