@@ -112,6 +112,7 @@ describe('Running tick functions tests', function() {
                   );
                   return expectRevert(dex[functionName](...getParams()), 'Tick is running');
                 });
+
                 if (shouldCheckMovingPendingOrders) {
                   describe('WHEN the tick advances to inserting pending orders in that pair', function() {
                     before(async function() {

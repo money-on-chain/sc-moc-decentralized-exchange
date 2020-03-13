@@ -45,16 +45,16 @@ contract TokenPairConverter is TokenPairListing {
     }
     MoCExchangeLib.Pair storage pair = tokenPair(commonBaseTokenAddress, _tokenAddress);
     if (pair.isValid()) {
-      return MoCExchangeLib.convertToBase(_amount, pair.lastClosingPrice, pair.priceComparisonPrecision);
+      return MoCExchangeLib.convertToBase(_amount, pair.EMAPrice, pair.priceComparisonPrecision);
     }
 
     pair = tokenPair(commonBaseTokenAddress, _baseAddress);
     if (pair.isValid()) {
 
-      uint256 intermediaryAmount = MoCExchangeLib.convertToBase(_amount, pair.lastClosingPrice, pair.priceComparisonPrecision);
+      uint256 intermediaryAmount = MoCExchangeLib.convertToBase(_amount, pair.EMAPrice, pair.priceComparisonPrecision);
       pair = tokenPair(_baseAddress, _tokenAddress);
       if (pair.isValid()) {
-        return MoCExchangeLib.convertToBase(intermediaryAmount, pair.lastClosingPrice, pair.priceComparisonPrecision);
+        return MoCExchangeLib.convertToBase(intermediaryAmount, pair.EMAPrice, pair.priceComparisonPrecision);
       }
     }
 
