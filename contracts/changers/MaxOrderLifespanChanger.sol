@@ -1,6 +1,6 @@
 pragma solidity 0.5.8;
 
-import "moc---gobernanza/contracts/Governance/ChangeContract.sol";
+import "areopagus/contracts/Governance/ChangeContract.sol";
 
 import "../RestrictiveOrderListing.sol";
 

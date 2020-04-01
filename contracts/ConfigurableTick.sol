@@ -1,6 +1,6 @@
 pragma solidity 0.5.8;
 
-import "moc---gobernanza/contracts/Governance/Governed.sol";
+import "areopagus/contracts/Governance/Governed.sol";
 import { TickState } from "./libs/TickState.sol";
 
 contract ConfigurableTick is Governed {
