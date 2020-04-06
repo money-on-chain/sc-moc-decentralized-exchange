@@ -1,6 +1,6 @@
-const testHelperBuilder = require("./testHelpers/testHelper");
+const testHelperBuilder = require('./testHelpers/testHelper');
 
-describe("Token pair EMA Price tests", function() {
+describe('Token pair EMA Price tests', function() {
   let dex;
   let base;
   let secondary;
@@ -25,12 +25,7 @@ describe("Token pair EMA Price tests", function() {
   ];
   before(async function() {
     testHelper = testHelperBuilder();
-    ({
-      wadify,
-      pricefy,
-      DEFAULT_BALANCE,
-      decorateGovernedSetters
-    } = testHelper);
+    ({ wadify, pricefy, DEFAULT_BALANCE, decorateGovernedSetters } = testHelper);
     [dex, base, secondary, governor] = await Promise.all([
       testHelper.getDex(),
       testHelper.getBase(),
@@ -67,52 +62,39 @@ describe("Token pair EMA Price tests", function() {
     };
   };
 
-  describe("RULE: When the pair has not runned any tick", () => {
-    it("THEN the EmaPrice should be the same as the initial price", async () => {
-      const tokenPairStatus = await dex.getTokenPairStatus(
-        base.address,
-        secondary.address
-      );
-      testHelper.assertBig(
-        tokenPairStatus.EMAPrice,
-        tokenPairStatus.lastClosingPrice,
-        "EMAPrice"
-      );
+  describe('RULE: When the pair has not runned any tick', function() {
+    it('THEN the EmaPrice should be the same as the initial price', async function() {
+      const tokenPairStatus = await dex.getTokenPairStatus(base.address, secondary.address);
+      testHelper.assertBig(tokenPairStatus.EMAPrice, tokenPairStatus.lastClosingPrice, 'EMAPrice');
     });
   });
 
-  describe("RULE: When the pair has runned one tick and some orders matched", () => {
+  describe('RULE: When the pair has runned one tick and some orders matched', function() {
     contract(
-      "GIVEN that there are three buy orders and three sell orders where there's matching price is 1",
+      'GIVEN that there are three buy orders and three sell orders where there is matching price is 1',
       function(accounts) {
-        before(async () => {
+        before(async function() {
           await initContractsAndOrders(accounts, getCommonInsertionParams())();
           await dex.matchOrders(base.address, secondary.address, 10000);
         });
 
-        it("THEN the emaPrice should stay the same", async () => {
-          const tokenPairStatus = await dex.getTokenPairStatus(
-            base.address,
-            secondary.address
-          );
-          testHelper.assertBigWad(tokenPairStatus.EMAPrice, 1, "EMAPrice");
+        it('THEN the emaPrice should stay the same', async function() {
+          const tokenPairStatus = await dex.getTokenPairStatus(base.address, secondary.address);
+          testHelper.assertBigWad(tokenPairStatus.EMAPrice, 1, 'EMAPrice');
         });
       }
     );
     contract(
-      "GIVEN that there are three buy orders and three sell orders where there's matching price is not 1",
+      'GIVEN that there are three buy orders and three sell orders where there is matching price is not 1',
       function(accounts) {
-        before(async () => {
+        before(async function() {
           await initContractsAndOrders(accounts, getNotCommonInsertionParams())();
           await dex.matchOrders(base.address, secondary.address, 10000);
         });
 
-        it("THEN the emaPrice should change and be different than the previous one (it was 1)", async () => {
-          const tokenPairStatus = await dex.getTokenPairStatus(
-            base.address,
-            secondary.address
-          );
-          testHelper.assertBigWad(tokenPairStatus.EMAPrice, 1.01653, "EMAPrice");
+        it('THEN the emaPrice should change and be different than the previous one (it was 1)', async function() {
+          const tokenPairStatus = await dex.getTokenPairStatus(base.address, secondary.address);
+          testHelper.assertBigWad(tokenPairStatus.EMAPrice, 1.01653, 'EMAPrice');
         });
       }
     );
