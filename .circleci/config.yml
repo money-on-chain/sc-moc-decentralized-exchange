@@ -1,6 +1,6 @@
 version: 2.1
 jobs:
-  install-node-example:
+  build-solium-test-eslint:
       docker:
         - image: 'cimg/base:stable'
       steps:
@@ -22,4 +22,4 @@ orbs:
 workflows:
     build-and-test:
       jobs:
-        - install-node-example
+        - build-solium-test-eslint
