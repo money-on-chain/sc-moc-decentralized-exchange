@@ -22,7 +22,8 @@
     "truffle-compile": "truffle compile --all",
     "truffle-migrate-testnet": "cp zos.backup.json zos.json && truffle migrate --network rskTestnet --reset",
     "truffle-migrate-dev": "rm zos.dev-*.json; rm -r build/contracts; truffle migrate --network development --reset",
-    "full-test": "npm run eslint && npm run solium && npm run test"
+    "full-test": "npm run eslint && npm run solium && npm run test",
+    "pretty-sc": "prettier --write **/*.sol"
   },
   "repository": {
     "type": "git",
@@ -45,9 +46,9 @@
     "babel-eslint": "10.0.2",
     "bignumber.js": "9.0.0",
     "bn": "1.0.3",
+    "bn-chai": "1.0.1",
     "chai": "4.2.0",
     "chai-as-promised": "7.1.1",
-    "bn-chai": "1.0.1",
     "eslint": "6.1.0",
     "eslint-config-airbnb-base": "13.2.0",
     "eslint-config-prettier": "6.0.0",
@@ -63,6 +64,7 @@
     "mochawesome": "4.0.1",
     "openzeppelin-test-helpers": "0.4.0",
     "prettier": "1.18.2",
+    "prettier-plugin-solidity": "1.0.0-alpha.47",
     "solidity-coverage": "0.6.4",
     "truffle": "5.0.28",
     "truffle-hdwallet-provider": "1.0.14"
