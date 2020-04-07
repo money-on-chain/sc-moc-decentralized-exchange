@@ -3,6 +3,7 @@ pragma solidity 0.5.8;
 import "openzeppelin-eth/contracts/math/SafeMath.sol";
 import "openzeppelin-eth/contracts/math/Math.sol";
 
+
 /**
   @notice This library manages the inter-tick state(not intra-tick)
  */
@@ -15,11 +16,7 @@ library TickState {
     @param secondaryTokenAddress the secondary token of the pair
     @param number the tick number that just started
  */
-  event TickStart(
-    address indexed baseTokenAddress,
-    address indexed secondaryTokenAddress,
-    uint64 number
-  );
+  event TickStart(address indexed baseTokenAddress, address indexed secondaryTokenAddress, uint64 number);
 
   /**
     @notice notifies the end of the tick and its result
@@ -68,11 +65,7 @@ library TickState {
   function startTick(Data storage _self, address _baseTokenAddress, address _secondaryTokenAddress) internal {
     require(block.number >= _self.nextTickBlock, "Next tick not reached");
     _self.blockNumberWhenTickStarted = block.number;
-    emit TickStart(
-      _baseTokenAddress,
-      _secondaryTokenAddress,
-      _self.number
-    );
+    emit TickStart(_baseTokenAddress, _secondaryTokenAddress, _self.number);
   }
 
   /**
@@ -110,13 +103,7 @@ library TickState {
     _self.number = _self.number + 1;
     _self.blockNumberWhenTickStarted = 0;
 
-    emit TickEnd(
-      _baseTokenAddress,
-      _secondaryTokenAddress,
-      previousTickNumber,
-      _self.nextTickBlock,
-      _closingPrice
-    );
+    emit TickEnd(_baseTokenAddress, _secondaryTokenAddress, previousTickNumber, _self.nextTickBlock, _closingPrice);
   }
 
   /**
@@ -135,8 +122,8 @@ library TickState {
     uint256 _maxBlocksForTick,
     uint256 _minBlocksForTick,
     uint256 _actualOrders,
-    uint256 _currentBlockNumber) private pure returns(uint256) {
-
+    uint256 _currentBlockNumber
+  ) private pure returns (uint256) {
     // The amount of blocks since the previous tick until the current one
     uint256 blocksForLastTick = _currentBlockNumber - _lastTickBlock;
 

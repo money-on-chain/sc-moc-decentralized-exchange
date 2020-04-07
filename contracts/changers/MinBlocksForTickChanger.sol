@@ -4,10 +4,11 @@ import "areopagus/contracts/Governance/ChangeContract.sol";
 
 import "../TokenPairListing.sol";
 
+
 /**
   @notice Changer to change the min blocks for tick in the MoC Decentralized Exchange
  */
-contract MinBlocksForTickChanger is ChangeContract{
+contract MinBlocksForTickChanger is ChangeContract {
   TokenPairListing public tokenPairListing;
   uint64 public newMinBlocksForTick;
 
@@ -17,11 +18,7 @@ contract MinBlocksForTickChanger is ChangeContract{
     @param _newMinBlocksForTick New min blocks for tick
     Should be lower or equal than the current maximum, otherwise it will fail in dex
    */
-  constructor  (
-    TokenPairListing _tokenPairListing,
-    uint64 _newMinBlocksForTick
-  )
-  public {
+  constructor(TokenPairListing _tokenPairListing, uint64 _newMinBlocksForTick) public {
     tokenPairListing = _tokenPairListing;
     newMinBlocksForTick = _newMinBlocksForTick;
   }
