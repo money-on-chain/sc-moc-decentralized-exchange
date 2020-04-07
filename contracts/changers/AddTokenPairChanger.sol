@@ -4,10 +4,11 @@ import "areopagus/contracts/Governance/ChangeContract.sol";
 
 import "../MoCDecentralizedExchange.sol";
 
+
 /**
   @notice Changer that adds one or more pair of tokens to be listed in the MoC Decentralized Exchange
 */
-contract AddTokenPairChanger is ChangeContract{
+contract AddTokenPairChanger is ChangeContract {
   MoCDecentralizedExchange public dex;
   address[] public baseTokens;
   address[] public secondaryTokens;
@@ -23,17 +24,17 @@ contract AddTokenPairChanger is ChangeContract{
     @param _precisions Array of the precisision to be used in the price of each pair
     @param _prices Array of the initial price to be used in each pair
    */
-  constructor  (
+  constructor(
     MoCDecentralizedExchange _dex,
     address[] memory _baseTokens,
     address[] memory _secondaryTokens,
     uint256[] memory _precisions,
-    uint256[] memory _prices)
-  public {
+    uint256[] memory _prices
+  ) public {
     require(
-      _baseTokens.length == _secondaryTokens.length &&
-      _baseTokens.length == _precisions.length,
-      "All three arrays must have the same length");
+      _baseTokens.length == _secondaryTokens.length && _baseTokens.length == _precisions.length,
+      "All three arrays must have the same length"
+    );
     dex = _dex;
     baseTokens = _baseTokens;
     secondaryTokens = _secondaryTokens;
@@ -46,7 +47,7 @@ contract AddTokenPairChanger is ChangeContract{
   */
   function execute() external {
     uint256 i;
-    for ( i = 0; i < baseTokens.length; i++ ) {
+    for (i = 0; i < baseTokens.length; i++) {
       dex.addTokenPair(baseTokens[i], secondaryTokens[i], precisions[i], prices[i]);
     }
   }

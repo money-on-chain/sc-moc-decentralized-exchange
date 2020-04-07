@@ -6,8 +6,8 @@ import "./OrderIdGenerator.sol";
 import "./CommissionManager.sol";
 import "./TokenPairConverter.sol";
 
-contract EventfulOrderListing {
 
+contract EventfulOrderListing {
   /**
     @dev Cloned from MoCExchangeLib.sol or the event it is not recognized and emitted from that lib
   */
@@ -55,8 +55,8 @@ contract EventfulOrderListing {
   event TransferFailed(address indexed _tokenAddress, address indexed _to, uint256 _amount, bool _isRevert);
 }
 
-contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenerator, Stoppable, ReentrancyGuard {
 
+contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenerator, Stoppable, ReentrancyGuard {
   // intentionally using the biggest possible uint256
   // so it doesn't conflict with valid ids
   uint256 constant INSERT_FIRST = ~uint256(0);
@@ -68,9 +68,8 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     @param _baseToken the base token of the pair
     @param _secondaryToken the secondary token of the pair
    */
-  function sellOrdersLength(address _baseToken, address _secondaryToken) external view returns(uint256) {
-    return tokenPair(_baseToken, _secondaryToken)
-      .secondaryToken.orderbook.length;
+  function sellOrdersLength(address _baseToken, address _secondaryToken) external view returns (uint256) {
+    return tokenPair(_baseToken, _secondaryToken).secondaryToken.orderbook.length;
   }
 
   /**
@@ -78,9 +77,8 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     @param _baseToken the base token of the pair
     @param _secondaryToken the secondary token of the pair
    */
-  function buyOrdersLength(address _baseToken, address _secondaryToken) external view returns(uint256) {
-    return tokenPair(_baseToken, _secondaryToken)
-      .baseToken.orderbook.length;
+  function buyOrdersLength(address _baseToken, address _secondaryToken) external view returns (uint256) {
+    return tokenPair(_baseToken, _secondaryToken).baseToken.orderbook.length;
   }
 
   /**
@@ -88,7 +86,7 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     @param _baseToken the base token of the pair
     @param _secondaryToken the secondary token of the pair
    */
-  function pendingSellOrdersLength(address _baseToken, address _secondaryToken) external view returns(uint256) {
+  function pendingSellOrdersLength(address _baseToken, address _secondaryToken) external view returns (uint256) {
     return pendingSellOrdersLength(tokenPair(_baseToken, _secondaryToken));
   }
 
@@ -97,7 +95,7 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     @param _baseToken the base token of the pair
     @param _secondaryToken the secondary token of the pair
    */
-  function pendingBuyOrdersLength(address _baseToken, address _secondaryToken) external view returns(uint256) {
+  function pendingBuyOrdersLength(address _baseToken, address _secondaryToken) external view returns (uint256) {
     return pendingBuyOrdersLength(tokenPair(_baseToken, _secondaryToken));
   }
 
@@ -114,7 +112,6 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
   function insertBuyOrder(address _baseToken, address _secondaryToken, uint256 _amount, uint256 _price, uint64 _lifespan) public {
     insertBuyOrderAfter(_baseToken, _secondaryToken, _amount, _price, _lifespan, INSERT_FIRST);
   }
-
 
   /**
     @notice Inserts an order in the sell orderbook of a given pair without a hint
@@ -188,8 +185,7 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     @param _orderId Order id to cancel
     @param _previousOrderIdHint previous order in the orderbook, used as on optimization to search for.
   */
-  function cancelBuyOrder(address _baseToken, address _secondaryToken, uint256 _orderId, uint256 _previousOrderIdHint)
-  public whenNotPaused {
+  function cancelBuyOrder(address _baseToken, address _secondaryToken, uint256 _orderId, uint256 _previousOrderIdHint) public whenNotPaused {
     doCancelOrder(getTokenPair(_baseToken, _secondaryToken), _orderId, _previousOrderIdHint, msg.sender, true);
   }
 
@@ -201,8 +197,7 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     @param _orderId Order id to cancel
     @param _previousOrderIdHint previous order in the orderbook, used as on optimization to search for.
   */
-  function cancelSellOrder(address _baseToken, address _secondaryToken, uint256 _orderId, uint256 _previousOrderIdHint)
-  public whenNotPaused {
+  function cancelSellOrder(address _baseToken, address _secondaryToken, uint256 _orderId, uint256 _previousOrderIdHint) public whenNotPaused {
     doCancelOrder(getTokenPair(_baseToken, _secondaryToken), _orderId, _previousOrderIdHint, msg.sender, false);
   }
 
@@ -228,20 +223,18 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     @param _sender address of the account executing the cancel, revert if not order's owner
     @param _isBuy true if it's a buy order, meaning the funds should be from base Token
   */
-  function doCancelOrder(
-    MoCExchangeLib.Pair storage _pair,
-    uint256 _orderId,
-    uint256 _previousOrderIdHint,
-    address _sender,
-    bool _isBuy
-  ) internal {
+  function doCancelOrder(MoCExchangeLib.Pair storage _pair, uint256 _orderId, uint256 _previousOrderIdHint, address _sender, bool _isBuy)
+    internal
+  {
     MoCExchangeLib.Token storage token = _isBuy ? _pair.baseToken : _pair.secondaryToken;
     MoCExchangeLib.Order storage toRemove = token.orderbook.get(_orderId);
     require(toRemove.id != 0, "Order not found");
 
     // Copy order needed values before deleting it
     (uint256 exchangeableAmount, uint256 reservedCommission, address owner) = (
-      toRemove.exchangeableAmount, toRemove.reservedCommission, toRemove.owner
+      toRemove.exchangeableAmount,
+      toRemove.reservedCommission,
+      toRemove.owner
     );
     token.orderbook.removeOrder(toRemove, _previousOrderIdHint);
     require(owner == _sender, "Not order owner");
@@ -280,13 +273,7 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     address _governor,
     address _stopper
   ) internal initializer {
-    TokenPairConverter.initialize(
-      _commonBaseTokenAddress,
-      _expectedOrdersForTick,
-      _maxBlocksForTick,
-      _minBlocksForTick,
-      _governor
-    );
+    TokenPairConverter.initialize(_commonBaseTokenAddress, _expectedOrdersForTick, _maxBlocksForTick, _minBlocksForTick, _governor);
     OrderIdGenerator.initialize(0);
     commissionManager = _commissionManager;
     Stoppable.initialize(_stopper, _governor);
@@ -296,7 +283,7 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     @notice Returns the amount of pending sell orders that are in the orderbook of this pair
     @param _pair Storage structure that represents the pair
    */
-  function pendingSellOrdersLength(MoCExchangeLib.Pair storage _pair) internal view returns(uint256) {
+  function pendingSellOrdersLength(MoCExchangeLib.Pair storage _pair) internal view returns (uint256) {
     return _pair.secondaryToken.orderbook.amountOfPendingOrders;
   }
 
@@ -304,7 +291,7 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     @notice Returns the amount of pending buy orders that are in the orderbook of this pair
     @param _pair Storage structure that represents the pair
    */
-  function pendingBuyOrdersLength(MoCExchangeLib.Pair storage _pair) internal view returns(uint256) {
+  function pendingBuyOrdersLength(MoCExchangeLib.Pair storage _pair) internal view returns (uint256) {
     return _pair.baseToken.orderbook.amountOfPendingOrders;
   }
 
@@ -329,17 +316,7 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     uint256 _previousOrderIdHint
   ) private {
     uint256 initialFee = commissionManager.calculateInitialFee(_amount);
-    _pair.doInsertOrder(
-      nextId(),
-      _amount.sub(initialFee),
-      initialFee,
-      _price,
-      _lifespan,
-      _previousOrderIdHint,
-      msg.sender,
-      address(this),
-      true
-      );
+    _pair.doInsertOrder(nextId(), _amount.sub(initialFee), initialFee, _price, _lifespan, _previousOrderIdHint, msg.sender, address(this), true);
   }
 
   /**
@@ -372,8 +349,7 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
       msg.sender,
       address(this),
       false
-      );
-
+    );
   }
 
   // Leave a gap betweeen inherited contracts variables in order to be

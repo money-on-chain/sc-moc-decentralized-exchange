@@ -4,10 +4,11 @@ import "areopagus/contracts/Governance/ChangeContract.sol";
 
 import "../TokenPairListing.sol";
 
+
 /**
   @notice Changer to disable a token pair in the MoC Decentralized Exchange
  */
-contract TokenPairDisabler is ChangeContract{
+contract TokenPairDisabler is ChangeContract {
   TokenPairListing public tokenPairListing;
   address public baseToken;
   address public secondaryToken;
@@ -18,12 +19,7 @@ contract TokenPairDisabler is ChangeContract{
     @param _baseToken Address of the base token of the pair
     @param _secondaryToken Address of the secondary token of the pair
   */
-  constructor (
-    TokenPairListing _tokenPairListing,
-    address _baseToken,
-    address _secondaryToken
-  )
-  public {
+  constructor(TokenPairListing _tokenPairListing, address _baseToken, address _secondaryToken) public {
     tokenPairListing = _tokenPairListing;
     baseToken = _baseToken;
     secondaryToken = _secondaryToken;

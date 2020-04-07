@@ -10,16 +10,13 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
  * opeartcion as receipient
  */
 contract ERC20WithBlacklist is ERC20Mintable, ERC20Detailed, Ownable {
-
   string _name = "Test Blacklist";
   string _symbol = "BKL";
   uint8 _decimals = 18;
 
-  mapping (address => bool) private blacklistedUsers;
+  mapping(address => bool) private blacklistedUsers;
 
-  constructor() ERC20Detailed(_name, _symbol, _decimals) public {
-
-  }
+  constructor() public ERC20Detailed(_name, _symbol, _decimals) {}
 
   modifier notBlacklistedListed(address userAddress) {
     require(!blacklistedUsers[userAddress]);

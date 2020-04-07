@@ -1,5 +1,6 @@
 pragma solidity 0.5.8;
 
+
 contract OrderIdGenerator {
   uint256 private lastOrderId;
 
@@ -16,7 +17,7 @@ contract OrderIdGenerator {
     @notice Returns the id that a new order should use, and assumes it
     is created afterwards; this ids are unique for each order
   */
-  function nextId() internal returns(uint256) {
+  function nextId() internal returns (uint256) {
     ++lastOrderId;
     return lastOrderId;
   }

@@ -7,6 +7,7 @@ import "areopagus/contracts/Governance/Governed.sol";
 import "openzeppelin-eth/contracts/math/SafeMath.sol";
 import "openzeppelin-eth/contracts/ownership/Ownable.sol";
 
+
 /**
   @notice This contract is in charge of keeping track of the charged commissions
   and calculating the commissions to reserve/charge depending on the operation and
@@ -18,13 +19,13 @@ contract CommissionManager is Governed, Ownable {
   using SafeMath for uint256;
 
   /** mapping for the commission collected by MOCDEX */
-  mapping (address => uint256) public exchangeCommissions;
+  mapping(address => uint256) public exchangeCommissions;
 
   address public beneficiaryAddress;
   uint256 public commissionRate;
   uint256 public cancelationPenaltyRate;
   uint256 public expirationPenaltyRate;
-  uint256 constant public RATE_PRECISION = uint256(10 ** 18);
+  uint256 public constant RATE_PRECISION = uint256(10**18);
 
   /**
     @notice Checks that _rate is a valid rate, i.e. it is between 1(RATE_PRECISION)
@@ -56,7 +57,10 @@ contract CommissionManager is Governed, Ownable {
     @return the commission amount that its being charged in this iteration
   */
   function chargeCommissionForMatch(uint256 _orderAmount, uint256 _matchedAmount, uint256 _commission, address _tokenAddress)
-    external onlyOwner returns(uint256) {
+    external
+    onlyOwner
+    returns (uint256)
+  {
     assert(_orderAmount >= _matchedAmount);
     uint256 finalCommission = _matchedAmount.mul(_commission).div(_orderAmount);
     exchangeCommissions[_tokenAddress] = exchangeCommissions[_tokenAddress].add(finalCommission);
@@ -72,8 +76,7 @@ contract CommissionManager is Governed, Ownable {
     @param _isExpiration If true order is taken as expired; else is taken as cancelled
     @return the commission amount that its being charged in this iteration
   */
-  function chargeExceptionalCommission(uint256 _commission, address _tokenAddress, bool _isExpiration)
-    external onlyOwner returns(uint256) {
+  function chargeExceptionalCommission(uint256 _commission, address _tokenAddress, bool _isExpiration) external onlyOwner returns (uint256) {
     return chargeCommission(_commission, _isExpiration ? expirationPenaltyRate : cancelationPenaltyRate, _tokenAddress);
   }
 
@@ -82,7 +85,7 @@ contract CommissionManager is Governed, Ownable {
     IT DOESN'T KEEP THE FUNDS NOR MOVES ANY NOR TRACKS THE RETURNED AS CHARGED COMMISSION(IT IS JUST RESERVED)
     @param _amount Order locked amount
    */
-  function calculateInitialFee(uint256 _amount) external view returns(uint256) {
+  function calculateInitialFee(uint256 _amount) external view returns (uint256) {
     return _amount.mul(commissionRate).div(RATE_PRECISION);
   }
 
@@ -145,11 +148,16 @@ contract CommissionManager is Governed, Ownable {
     uint256 _expirationPenaltyRate,
     address _governor,
     address _owner
-  ) external initializer isValidRate(_commissionRate)
-    isValidRate(_cancelationPenaltyRate) isValidRate(_expirationPenaltyRate)
+  )
+    external
+    initializer
+    isValidRate(_commissionRate)
+    isValidRate(_cancelationPenaltyRate)
+    isValidRate(_expirationPenaltyRate)
     isValidAddress(_beneficiaryAddress, "beneficiaryAddress cannot be null")
     isValidAddress(_governor, "governor cannot be null")
-    isValidAddress(_owner, "owner cannot be null") {
+    isValidAddress(_owner, "owner cannot be null")
+  {
     beneficiaryAddress = _beneficiaryAddress;
     commissionRate = _commissionRate;
     cancelationPenaltyRate = _cancelationPenaltyRate;
@@ -167,8 +175,7 @@ contract CommissionManager is Governed, Ownable {
     @param _rate Rate of the commission to be charged
     @return the commission amount that its being charged in this iteration
   */
-  function chargeCommission(uint256 _fullCommission, uint256 _rate, address _tokenAddress)
-    private returns(uint256) {
+  function chargeCommission(uint256 _fullCommission, uint256 _rate, address _tokenAddress) private returns (uint256) {
     uint256 finalCommission = _fullCommission.mul(_rate).div(RATE_PRECISION);
     exchangeCommissions[_tokenAddress] = exchangeCommissions[_tokenAddress].add(finalCommission);
     return finalCommission;
