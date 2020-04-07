@@ -12,7 +12,7 @@
     "test": "rm -rf build && npm run truffle-compile && scripts/test.sh",
     "fast-test": "truffle test",
     "debugtx": "./scripts/debugtx $1",
-    "eslint": "eslint test/ --ext .js",
+    "eslint": "eslint ./ --ext .js",
     "truffle-test": "./node_modules/truffle/build/cli.bundled.js test",
     "truffle-contract-size": "./node_modules/truffle/build/cli.bundled.js run contract-size",
     "coverage": "SOLIDITY_COVERAGE=true npm run test",
