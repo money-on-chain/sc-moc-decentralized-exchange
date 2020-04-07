@@ -9,6 +9,7 @@ describe('Token pair EMA Price tests', function() {
   let pricefy;
   let DEFAULT_BALANCE;
   let decorateGovernedSetters;
+
   const getCommonInsertionParams = () => [
     base.address,
     secondary.address,
@@ -26,7 +27,7 @@ describe('Token pair EMA Price tests', function() {
   before(async function() {
     testHelper = testHelperBuilder();
     ({ wadify, pricefy, DEFAULT_BALANCE, decorateGovernedSetters } = testHelper);
-    [dex, base, secondary, governor] = await Promise.all([
+    [dex, base, secondary] = await Promise.all([
       testHelper.getDex(),
       testHelper.getBase(),
       testHelper.getSecondary(),
@@ -58,7 +59,6 @@ describe('Token pair EMA Price tests', function() {
         dex.insertBuyOrder(...insertionParams),
         dex.insertBuyOrder(...insertionParams)
       ]);
-      pair = [base.address, secondary.address];
     };
   };
 

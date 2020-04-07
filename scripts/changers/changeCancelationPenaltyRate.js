@@ -1,5 +1,6 @@
 const { deployCancelationPenaltyRateChanger } = require('./deployContracts');
 const { executeChange } = require('./networkHelper');
+
 const input = {
   network: process.argv[3] || 'rskTestnet',
   cancelationPenaltyRate: process.argv[2]

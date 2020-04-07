@@ -8,9 +8,7 @@ const input = {
 if (!input.tokenAddress)
   throw new Error('Usage: node getCommissions.js <tokenAddress> [<network>]');
 
-const execute = async () => {
-  return withdrawCommissions(input.network, input.tokenAddress);
-};
+const execute = async () => withdrawCommissions(input.network, input.tokenAddress);
 
 execute()
   .then(() => console.log('Completed'))

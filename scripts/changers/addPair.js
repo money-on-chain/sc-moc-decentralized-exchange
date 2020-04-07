@@ -1,5 +1,6 @@
 const { deployAddTokenPairChanger } = require('./deployContracts');
 const { executeChange } = require('./networkHelper');
+
 const input = {
   network: process.argv[6] || 'rskTestnet',
   baseAddress: process.argv[2],

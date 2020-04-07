@@ -56,10 +56,10 @@ const deployContract = async (newContract, network, constructorArguments) => {
 };
 
 const executeChange = async (network, changerAddress) => {
-  const config = getConfig(network);
+  const configToUse = getConfig(network);
   const web3 = getWeb3(network);
   const [owner] = await web3.eth.getAccounts();
-  const governor = await new web3.eth.Contract(Governor.abi, config.governor);
+  const governor = await new web3.eth.Contract(Governor.abi, configToUse.governor);
 
   return governor.methods.executeChange(changerAddress).send({ from: owner, gas: 1e6 });
 };
