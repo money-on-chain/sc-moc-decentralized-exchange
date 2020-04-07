@@ -1,7 +1,7 @@
+/* eslint-disable no-console */
 const unzip = require('lodash/unzip');
 const {
-  scripts: { add, push, create, setAdmin },
-  ConfigVariablesInitializer
+  scripts: { add, push, create, setAdmin }
 } = require('zos');
 
 const utilsBuilder = artifacts => {
@@ -62,8 +62,8 @@ const utilsBuilder = artifacts => {
 
     await upgradeDelegator.initialize(governor.address, admin.address);
 
-    // Transfers the ownership of the admin to the upgradeDelegator, so the upgradeDelegator is enabled to
-    // forward the upgrade calls
+    // Transfers the ownership of the admin to the upgradeDelegator, so the upgradeDelegator
+    // is enabled to forward the upgrade calls
     await admin.transferOwnership(upgradeDelegator.address);
 
     // Gives  the admin and, in consequence, the upgradeDelegator the right to upgrade the governor
@@ -81,7 +81,8 @@ const utilsBuilder = artifacts => {
     ]);
   };
 
-  // Returns the set of necesary contracts, it uses the deployed ones or deploys a new set if none are deployed in the network already
+  // Returns the set of necesary contracts, it uses the deployed ones or deploys a new set if
+  // none are deployed in the network already
   const getGovernanceContracts = async (config, owner, options, deployer) =>
     config.deployGovernance
       ? deployGovernanceContracts(owner, options, deployer)
