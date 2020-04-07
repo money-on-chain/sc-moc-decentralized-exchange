@@ -12,7 +12,7 @@
     "test": "rm -rf build && npm run truffle-compile && scripts/test.sh",
     "fast-test": "truffle test",
     "debugtx": "./scripts/debugtx $1",
-    "eslint": "eslint test/ --ext .js",
+    "eslint": "eslint ./ --ext .js",
     "truffle-test": "./node_modules/truffle/build/cli.bundled.js test",
     "truffle-contract-size": "./node_modules/truffle/build/cli.bundled.js run contract-size",
     "coverage": "SOLIDITY_COVERAGE=true npm run test",
@@ -22,7 +22,8 @@
     "truffle-compile": "truffle compile --all",
     "truffle-migrate-testnet": "cp zos.backup.json zos.json && truffle migrate --network rskTestnet --reset",
     "truffle-migrate-dev": "rm zos.dev-*.json; rm -r build/contracts; truffle migrate --network development --reset",
-    "full-test": "npm run eslint && npm run solium && npm run test"
+    "full-test": "npm run eslint && npm run solium && npm run test",
+    "pretty-sc": "prettier --write **/*.sol"
   },
   "repository": {
     "type": "git",
@@ -32,10 +33,10 @@
   "author": "Atix",
   "license": "ISC",
   "dependencies": {
-    "moc---gobernanza": "git+ssh://git@gitlab.com/atixlabs/moc---gobernanza.git#v0.3.3",
-    "partial-execution": "git+ssh://git@gitlab.com/atixlabs/moc/partial-execution.git#v0.1.0",
+    "areopagus": "git+https://git@github.com/money-on-chain/Areopagus-Governance.git#v0.3.3",
     "openzeppelin-eth": "2.2.0",
     "openzeppelin-solidity": "2.3.0",
+    "partial-execution": "git+ssh://git@github.com:money-on-chain/Partial-Execution-Dex.git",
     "truffle-contract-size": "1.0.0",
     "zos": "2.3.1",
     "zos-lib": "2.3.1"
@@ -45,9 +46,9 @@
     "babel-eslint": "10.0.2",
     "bignumber.js": "9.0.0",
     "bn": "1.0.3",
+    "bn-chai": "1.0.1",
     "chai": "4.2.0",
     "chai-as-promised": "7.1.1",
-    "bn-chai": "1.0.1",
     "eslint": "6.1.0",
     "eslint-config-airbnb-base": "13.2.0",
     "eslint-config-prettier": "6.0.0",
@@ -63,6 +64,7 @@
     "mochawesome": "4.0.1",
     "openzeppelin-test-helpers": "0.4.0",
     "prettier": "1.18.2",
+    "prettier-plugin-solidity": "1.0.0-alpha.47",
     "solidity-coverage": "0.6.4",
     "truffle": "5.0.28",
     "truffle-hdwallet-provider": "1.0.14"

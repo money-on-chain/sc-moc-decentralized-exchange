@@ -1,12 +1,13 @@
 pragma solidity 0.5.8;
 
-import { TickState } from "../libs/TickState.sol";
+import {TickState} from "../libs/TickState.sol";
+
 
 // This contract is a proxy for testing the TickState library, it is not mend to be deployed for use.
 contract TickStateFake {
   using TickState for TickState.Data;
 
-/*  Cloned from TickState.sol or the event it is not recogniced and emited from that lib
+  /*  Cloned from TickState.sol or the event it is not recogniced and emited from that lib
    @notice notifies the end of a matching process and its result
    @param baseTokenAddress the base token of the pair
    @param secondaryTokenAddress the secondary token of the pair
@@ -34,8 +35,9 @@ contract TickStateFake {
       baseTokenAddress,
       secondaryTokenAddress,
       tickConfig,
-      0,  //this is 0 becose it is unimportant for the excecution
-      _actualOrders);
+      0, //this is 0 becose it is unimportant for the excecution
+      _actualOrders
+    );
   }
 
   function initialize(
@@ -50,5 +52,4 @@ contract TickStateFake {
     tickConfig = TickState.Config(_expectedOrdersForTick, _maxBlocksForTick, _minBlocksForTick);
     tickState = TickState.Data(block.number, block.number, 0, 1);
   }
-
 }

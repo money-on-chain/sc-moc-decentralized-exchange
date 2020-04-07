@@ -1,5 +1,6 @@
 const { deployLastClosingPriceChanger } = require('./deployContracts');
 const { executeChange } = require('./networkHelper');
+
 const input = {
   network: process.argv[5] || 'rskTestnet',
   baseToken: process.argv[2],
