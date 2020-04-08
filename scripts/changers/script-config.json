@@ -12,6 +12,15 @@
     "commissionManager": "0x4783fDbc274186CA8595315751cfE6114874A3C0"
   },
   "rskTestnet": {
-    "dex": ""
+    "dex": "0x9f9069CDb5edb1ce3BB25F6025b0346922647237",
+    "doc": "0xbca13b5e5a1637ace451f2b7ef5e6d24e27d3ba3",
+    "wrbtc": "0xA274d994F698Dd09256674960d86aBa22C086669",
+    "rif": "0x19F64674D8A5B4E652319F5e239eFd3bc969A1fE",
+    "bpro": "0xb6A9F8C6eEc48A7FBbCb5DE3b73C257EB554179e",
+    "proxyAdmin": "0x93176E10a2962061D92617a06abE3F5850E18CD6",
+    "upgradeDelegator": "0xc3aaFB85466Fb3D70b4dd801f694add6260997e3",
+    "governor": "0xD63C0441b9A6c019917e9773992F7B5428542cbb",
+    "stopper": "0x7936cA4f95a662ABe0b1d9B41Ce89eE0Bc704824",
+    "commissionManager": "0xac8F72D5FbcfDf8b48Ac093BCD73e33C76695184"
   }
 }

@@ -11,6 +11,7 @@ const MaxOrderLifespanChanger = require('../../build/contracts/MaxOrderLifespanC
 const MinBlocksForTickChanger = require('../../build/contracts/MinBlocksForTickChanger.json');
 const MinOrderAmountChanger = require('../../build/contracts/MinOrderAmountChanger.json');
 const AddTokenPairChanger = require('../../build/contracts/AddTokenPairChanger.json');
+const ChangerGovernanceSet = require('../../build/contracts/ChangerGovernanceSet.json');
 
 const { deployContract, getConfig } = require('./networkHelper');
 
@@ -113,6 +114,14 @@ const deployAddTokenPairChanger = async (
   ]);
 };
 
+const deployGovernanceSetChanger = async (network, newGovernor, newStopper, newProxyAdmin) => {
+  const config = getConfig(network);
+
+  const params = [config.dex, newGovernor, newStopper, config.upgradeDelegator, newProxyAdmin];
+  console.log(`About to deploy changeGovernanceSet with params: ${params}`);
+  return deployContract(ChangerGovernanceSet, network, params);
+};
+
 module.exports = {
   deployTokenDisabler,
   deployTokenEnabler,
@@ -126,5 +135,6 @@ module.exports = {
   deployMaxOrderLifespanChanger,
   deployMinBlocksForTickChanger,
   deployMinOrderAmountChanger,
-  deployAddTokenPairChanger
+  deployAddTokenPairChanger,
+  deployGovernanceSetChanger
 };

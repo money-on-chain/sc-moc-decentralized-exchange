@@ -43,6 +43,8 @@ const Governor = artifacts.require('Governor');
 const Stopper = artifacts.require('Stopper');
 const OwnerBurnableToken = artifacts.require('OwnerBurnableToken');
 const CommissionManager = artifacts.require('CommissionManager');
+const UpgradeDelegator = artifacts.require('UpgradeDelegator');
+const ProxyAdmin = artifacts.require('ProxyAdmin');
 
 const getBaseToken = () => DocToken;
 const getSecondaryToken = () => this.using.secondaryToken || BProToken;
@@ -60,6 +62,8 @@ const getCommissionManager = () =>
 const getTickState = () => this.using.tickState || TickStateFake.deployed();
 const getGovernor = () => Governor.at(getProxyAddress('Governor'));
 const getStopper = () => Stopper.at(getProxyAddress('Stopper'));
+const getUpgradeDelegator = () => UpgradeDelegator.deployed();
+const getProxyAdmin = () => ProxyAdmin.deployed();
 
 const createTickStateFake = async ({ ordersForTick, maxBlocksForTick, minBlocksForTick }) => {
   this.using.tickState = await TickStateFake.new();
@@ -168,6 +172,8 @@ module.exports = () => {
     getTickState,
     getGovernor,
     getStopper,
-    getOwnerBurnableToken
+    getOwnerBurnableToken,
+    getUpgradeDelegator,
+    getProxyAdmin
   };
 };

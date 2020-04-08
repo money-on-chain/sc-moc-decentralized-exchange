@@ -38,15 +38,15 @@ module.exports = {
       gas: 0xfffffffffff
     },
     rskTestnet: {
-      host: 'http://50.116.28.95:4444/',
-      provider: new HDWalletProvider(mnemonic, 'http://50.116.28.95:4444/'),
+      host: 'http://45.79.72.117:4445/',
+      provider: new HDWalletProvider(mnemonic, 'http://45.79.72.117:4445/'),
       network_id: '*',
-      gasPrice: 60000000
+      gasPrice: 600000000
     }
   },
   mocha: {
     useColors: true,
-    bail: true
+    bail: false
   },
   plugins: ['truffle-contract-size']
 };
