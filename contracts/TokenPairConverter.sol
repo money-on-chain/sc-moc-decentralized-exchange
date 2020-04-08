@@ -4,11 +4,11 @@ import "openzeppelin-eth/contracts/math/SafeMath.sol";
 
 import "./TokenPairListing.sol";
 
+
 contract TokenPairConverter is TokenPairListing {
   using SafeMath for uint256;
 
   address private commonBaseTokenAddress;
-
 
   /**
     @notice Adds a token pair to be listed; the base token must be the commonBaseToken or be listed against it; the pair
@@ -19,12 +19,7 @@ contract TokenPairConverter is TokenPairListing {
     @param _priceComparisonPrecision Precision to be used in the pair price
     @param _initialPrice Price used initially until a new tick with matching orders is run
   */
-  function addTokenPair(
-    address _baseToken,
-    address _secondaryToken,
-    uint256 _priceComparisonPrecision,
-    uint256 _initialPrice
-  ) public {
+  function addTokenPair(address _baseToken, address _secondaryToken, uint256 _priceComparisonPrecision, uint256 _initialPrice) public {
     // The TokenPairListing validates the caller is an authorized changer
     require(_baseToken == commonBaseTokenAddress || validPair(commonBaseTokenAddress, _baseToken), "Invalid Pair");
     TokenPairListing.addTokenPair(_baseToken, _secondaryToken, _priceComparisonPrecision, _initialPrice);
@@ -38,8 +33,7 @@ contract TokenPairConverter is TokenPairListing {
     if the the token it is allready the base of the pair, this parameter it is unimportant
     @return convertedAmount the amount converted into the common base token
   */
-  function convertTokenToCommonBase(address _tokenAddress, uint256 _amount, address _baseAddress)
-    public view returns (uint256 convertedAmount) {
+  function convertTokenToCommonBase(address _tokenAddress, uint256 _amount, address _baseAddress) public view returns (uint256 convertedAmount) {
     if (_tokenAddress == commonBaseTokenAddress) {
       return _amount;
     }
@@ -50,7 +44,6 @@ contract TokenPairConverter is TokenPairListing {
 
     pair = tokenPair(commonBaseTokenAddress, _baseAddress);
     if (pair.isValid()) {
-
       uint256 intermediaryAmount = MoCExchangeLib.convertToBase(_amount, pair.EMAPrice, pair.priceComparisonPrecision);
       pair = tokenPair(_baseAddress, _tokenAddress);
       if (pair.isValid()) {
@@ -80,6 +73,7 @@ contract TokenPairConverter is TokenPairListing {
     commonBaseTokenAddress = _commonBaseTokenAddress;
     ConfigurableTick.initialize(_expectedOrdersForTick, _maxBlocksForTick, _minBlocksForTick, _governor);
   }
+
   // Leave a gap betweeen inherited contracts variables in order to be
   // able to add more variables in them later
   uint256[50] private upgradeGap;

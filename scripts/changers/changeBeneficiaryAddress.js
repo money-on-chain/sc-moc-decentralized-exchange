@@ -1,5 +1,6 @@
 const { deployBeneficiaryAddressChanger } = require('./deployContracts');
 const { executeChange } = require('./networkHelper');
+
 const input = {
   network: process.argv[3] || 'rskTestnet',
   beneficiaryAddress: process.argv[2]

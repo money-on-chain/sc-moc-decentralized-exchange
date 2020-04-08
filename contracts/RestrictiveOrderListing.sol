@@ -2,8 +2,8 @@ pragma solidity 0.5.8;
 
 import "./OrderListing.sol";
 
-contract RestrictiveOrderListing is OrderListing {
 
+contract RestrictiveOrderListing is OrderListing {
   uint256 public minOrderAmount;
   uint64 public maxOrderLifespan;
 
@@ -18,7 +18,6 @@ contract RestrictiveOrderListing is OrderListing {
     require(convertedAmount >= minOrderAmount, "Amount too low");
     _;
   }
-
 
   /**
     @notice Checks if the amount is valid given a minimum; reverts if not
@@ -45,7 +44,6 @@ contract RestrictiveOrderListing is OrderListing {
   function setMinOrderAmount(uint256 _minOrderAmount) public onlyAuthorizedChanger {
     minOrderAmount = _minOrderAmount;
   }
-
 
   /**
     @notice Sets the maximum lifespan for an order; only callable through governance
@@ -95,7 +93,7 @@ contract RestrictiveOrderListing is OrderListing {
     maxOrderLifespan = _maxOrderLifespan;
   }
 
-/**
+  /**
     @notice Inserts an order in the buy orderbook of a given pair with a hint;
     the contract should not be paused. Takes the funds with a transferFrom
     @param _baseToken the base token of the pair
@@ -114,14 +112,9 @@ contract RestrictiveOrderListing is OrderListing {
     uint256 _price,
     uint64 _lifespan,
     uint256 _previousOrderIdHint
-  ) public
-  isValidAmount(_baseToken, _amount, _baseToken)
-  isValidLifespan(_lifespan)
-  isValidPrice(_price)
-  {
+  ) public isValidAmount(_baseToken, _amount, _baseToken) isValidLifespan(_lifespan) isValidPrice(_price) {
     OrderListing.insertBuyOrderAfter(_baseToken, _secondaryToken, _amount, _price, _lifespan, _previousOrderIdHint);
   }
-
 
   /**
     @notice Inserts an order in the sell orderbook of a given pair with a hint;
@@ -142,11 +135,7 @@ contract RestrictiveOrderListing is OrderListing {
     uint256 _price,
     uint64 _lifespan,
     uint256 _previousOrderIdHint
-  ) public
-  isValidAmount(_secondaryToken, _amount, _baseToken)
-  isValidLifespan(_lifespan)
-  isValidPrice(_price)
-  {
+  ) public isValidAmount(_secondaryToken, _amount, _baseToken) isValidLifespan(_lifespan) isValidPrice(_price) {
     OrderListing.insertSellOrderAfter(_baseToken, _secondaryToken, _amount, _price, _lifespan, _previousOrderIdHint);
   }
 

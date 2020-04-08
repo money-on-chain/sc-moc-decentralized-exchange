@@ -1,7 +1,8 @@
 pragma solidity 0.5.8;
 
-import "moc---gobernanza/contracts/Governance/Governed.sol";
-import { TickState } from "./libs/TickState.sol";
+import "areopagus/contracts/Governance/Governed.sol";
+import {TickState} from "./libs/TickState.sol";
+
 
 contract ConfigurableTick is Governed {
   TickState.Config public tickConfig;
@@ -14,7 +15,6 @@ contract ConfigurableTick is Governed {
     require(_expectedOrdersForTick >= 2, "Expected orders for tick too low");
     tickConfig.expectedOrdersForTick = _expectedOrdersForTick;
   }
-
 
   /**
     @notice Sets a new maxBlocksForTick, it must be higher or equal than the minimum
@@ -33,7 +33,8 @@ contract ConfigurableTick is Governed {
     require(_minBlocksForTick <= tickConfig.maxBlocksForTick, "min BlockForTick should be lower than max");
     tickConfig.minBlocksForTick = _minBlocksForTick;
   }
- /**
+
+  /**
     @notice Initialize the contract, kind of like a constructor, but able to be used in a proxy-pattern
     contract
     @param _expectedOrdersForTick amount of orders expected to match in each tick
@@ -41,12 +42,10 @@ contract ConfigurableTick is Governed {
     @param _minBlocksForTick the min amount of blocks to wait until allowing to run the tick
     @param _governor Address in charge of determining who is authorized and who is not
  */
-  function initialize(
-    uint64 _expectedOrdersForTick,
-    uint64 _maxBlocksForTick,
-    uint64 _minBlocksForTick,
-    address _governor
-  ) internal initializer {
+  function initialize(uint64 _expectedOrdersForTick, uint64 _maxBlocksForTick, uint64 _minBlocksForTick, address _governor)
+    internal
+    initializer
+  {
     require(_expectedOrdersForTick >= 2, "Expected orders for tick too low");
     require(_maxBlocksForTick >= _minBlocksForTick, "min BlockForTick should be lower than max");
     tickConfig = TickState.Config(_expectedOrdersForTick, _maxBlocksForTick, _minBlocksForTick);

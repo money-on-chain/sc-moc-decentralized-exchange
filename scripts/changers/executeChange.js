@@ -5,9 +5,7 @@ const input = {
   changerAddress: process.argv[2]
 };
 
-const execute = async () => {
-  return executeChange(input.network, input.changerAddress);
-};
+const execute = async () => executeChange(input.network, input.changerAddress);
 
 execute()
   .then(() => console.log('Completed'))

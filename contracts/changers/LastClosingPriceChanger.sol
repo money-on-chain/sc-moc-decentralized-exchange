@@ -1,13 +1,14 @@
 pragma solidity 0.5.8;
 
-import "moc---gobernanza/contracts/Governance/ChangeContract.sol";
+import "areopagus/contracts/Governance/ChangeContract.sol";
 
 import "../TokenPairListing.sol";
+
 
 /**
   @notice Changer to change the last closing price of a given pair in the MoC Decentralized Exchange
  */
-contract LastClosingPriceChanger is ChangeContract{
+contract LastClosingPriceChanger is ChangeContract {
   TokenPairListing public tokenPairListing;
   address public baseToken;
   address public secondaryToken;
@@ -21,13 +22,7 @@ contract LastClosingPriceChanger is ChangeContract{
     @param _secondaryToken Address of the secondary token of the pair
     @param _price New price to set[base/secondary]
    */
-  constructor (
-    TokenPairListing _tokenPairListing,
-    address _baseToken,
-    address _secondaryToken,
-    uint256 _price
-  )
-  public {
+  constructor(TokenPairListing _tokenPairListing, address _baseToken, address _secondaryToken, uint256 _price) public {
     tokenPairListing = _tokenPairListing;
     baseToken = _baseToken;
     secondaryToken = _secondaryToken;

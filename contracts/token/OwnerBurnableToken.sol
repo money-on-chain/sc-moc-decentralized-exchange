@@ -3,6 +3,7 @@ pragma solidity 0.5.8;
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Mintable.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
+
 /**
    @title Owner Burnable Token
    @dev Token that allows the owner to irreversibly burned (destroyed) any token.

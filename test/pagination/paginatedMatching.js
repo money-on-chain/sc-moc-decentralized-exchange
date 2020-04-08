@@ -800,7 +800,7 @@ describe('Matching can be run in several pages', function() {
   });
   // It is kind of a stress test so we dont want to run it every time
   // because it may make the test to long to run
-  contract.skip(
+  contract(
     'The pagination make a tick able to finish no matter how many orders there are to be processed, and its types',
     function(accounts) {
       const [, buyer, seller] = accounts;

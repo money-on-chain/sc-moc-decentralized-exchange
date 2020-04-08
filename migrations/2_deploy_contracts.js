@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 const BigNumber = require('bignumber.js');
 const _ = require('lodash');
 const chunk = require('lodash/chunk');
@@ -188,7 +189,7 @@ module.exports = async function(deployer, currentNetwork, [owner]) {
   // deployer.deploy returns undefined. This is not documented in
   // https://www.trufflesuite.com/docs/truffle/getting-started/running-migrations
 
-  const { haveToAddTokenPairs } =  config;
+  const { haveToAddTokenPairs } = config;
 
   const tokenPairsToAdd = [
     [doc.address, bpro.address, DEFAULT_PRICE_PRECISION_STRING, DEFAULT_PRICE_PRECISION_STRING],
@@ -248,7 +249,8 @@ module.exports = async function(deployer, currentNetwork, [owner]) {
   console.log(
     JSON.stringify(
       {
-        // The JSON.stringify is not strictly necessary, it is just for convenience to ease the copy-pasting
+        // The JSON.stringify is not strictly necessary,
+        // it is just for convenience to ease the copy-pasting
         dex: dex.address,
         doc: doc.address,
         wrbtc: wrbtc.address,
