@@ -1,6 +1,6 @@
 {
   "name": "decentralized-exchange-sc",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "private": true,
   "homepage": "https://gitlab.com/atixlabs/moc/sc-moc-decentralized-exchange",
   "description": "Suite of smart contracts that implement a Decentralized Exchange",
