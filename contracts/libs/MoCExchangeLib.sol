@@ -23,6 +23,12 @@ library MoCExchangeLib {
   enum MatchType {BUYER_FILL, SELLER_FILL, DOUBLE_FILL}
 
   /**
+    @notice Posible types of a match depending on which order is filled
+    @dev At least one order has to be filled in any match in our exchange
+   */
+  enum OrderType {LIMIT_ORDER, MARKET_ORDER}
+
+  /**
     @notice Posible states of a tick. RECEIVING_ORDERS can be seen as the
     non-running tick state as there is no computation pending yet, the exchange is
     waiting for orders to come
@@ -181,13 +187,16 @@ library MoCExchangeLib {
 
   /**
     @notice Struct representing a single order
-    @dev The next attribute is a reference to the next order in the structure this order is in
+    @dev The next attribute is a reference to the next order in the structure this order. 
+    There are two types: MarketOrder (with multiplyFactor and volumen) and LimitOrder 
   */
   struct Order {
+    OrderType orderType;
     uint256 id;
     uint256 exchangeableAmount;
     uint256 reservedCommission;
     uint256 price;
+    uint256 multiplyFactor;
     uint256 next;
     address owner;
     uint64 expiresInTick;
@@ -272,7 +281,7 @@ library MoCExchangeLib {
     uint256 _price,
     uint64 _expiresInTick
   ) public {
-    self.orders[_orderId] = Order(_orderId, _exchangeableAmount, _reservedCommission, _price, 0, _sender, _expiresInTick);
+    self.orders[_orderId] = Order(OrderType.LIMIT_ORDER, _orderId, _exchangeableAmount, _reservedCommission, _price, 0, 0, _sender, _expiresInTick);
     positionOrderAsPending(self, _orderId);
   }
 
@@ -399,7 +408,7 @@ library MoCExchangeLib {
     uint64 _expiresInTick
   ) private {
     // Next order is a position attribute so it should be set in another place
-    self.orders[_orderId] = Order(_orderId, _exchangeableAmount, _reservedCommission, _price, 0, _sender, _expiresInTick);
+    self.orders[_orderId] = Order(OrderType.LIMIT_ORDER, _orderId, _exchangeableAmount, _reservedCommission, _price, 0, 0, _sender, _expiresInTick);
   }
 
   /**

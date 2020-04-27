@@ -19,6 +19,7 @@ contract TokenPairListing is ConfigurableTick, EventfulTokenPairListing {
   using MoCExchangeLib for MoCExchangeLib.Data;
   using TickState for TickState.Data;
   using MoCExchangeLib for MoCExchangeLib.Pair;
+  using MoCExchangeLib for MoCExchangeLib.OrderType;
   using SafeMath for uint256;
 
   // tokenPairAddresses stores the addresses of every listed pair
@@ -124,8 +125,8 @@ or its inverse must not be listed already
         0,
         new uint256[](0),
         0,
-        MoCExchangeLib.Order(0, 0, 0, 0, 0, address(0), 0),
-        MoCExchangeLib.Order(0, 0, 0, 0, 0, address(0), 0)
+        MoCExchangeLib.Order(MoCExchangeLib.OrderType.LIMIT_ORDER, 0, 0, 0, 0, 0, 0, address(0), 0),
+        MoCExchangeLib.Order(MoCExchangeLib.OrderType.LIMIT_ORDER, 0, 0, 0, 0, 0, 0, address(0), 0)
       ),
       MoCExchangeLib.TickStage.RECEIVING_ORDERS,
       _priceComparisonPrecision,
