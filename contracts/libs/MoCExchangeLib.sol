@@ -178,10 +178,14 @@ library MoCExchangeLib {
   struct Data {
     mapping(uint256 => Order) orders;
     uint256 firstId;
+    uint256 firstMarketOrderId;
     uint256 length;
     uint256 firstPendingToPopId;
     uint256 lastPendingToPopId;
+    uint256 firstPendingMarketOrderToPopId;
+    uint256 lastPendingMarketOrderToPopId;
     uint256 amountOfPendingOrders;
+    uint256 amountOfPendingMarketOrders;
     bool orderDescending;
   }
 
@@ -286,6 +290,30 @@ library MoCExchangeLib {
   }
 
   /**
+    @notice Inserts a market order in a pending queue
+    @dev The type of the order is given implicitly by the data structure where it is saved
+    @param self The data structure in where the order will be inserted
+    @param _orderId Id of the order to be inserted
+    @param _sender Owner of the new order
+    @param _exchangeableAmount The quantity of tokens that was left to be exchanged
+    @param _reservedCommission Commission reserved to be charged later
+    @param _multiplyFactor Multiply factor to compute the the price of a market order
+    @param _expiresInTick Number of tick in which the order can no longer be matched
+  */
+  function insertMarketOrderAsPending(
+    Data storage self,
+    uint256 _orderId,
+    address _sender,
+    uint256 _exchangeableAmount,
+    uint256 _reservedCommission,
+    uint256 _multiplyFactor,
+    uint64 _expiresInTick
+  ) public {
+    self.orders[_orderId] = Order(OrderType.MARKET_ORDER, _orderId, _exchangeableAmount, _reservedCommission, 0, _multiplyFactor, 0, _sender, _expiresInTick);
+    positionMarketOrderAsPending(self, _orderId);
+  }
+
+  /**
     @notice Checks that the order should be in the place where it is trying to be inserted, reverts otherwise
     @param _price Target price of the new order
     @param _intendedPreviousOrderId Id of the order which is intended to be the order before the new one being inserted,
@@ -357,7 +385,17 @@ library MoCExchangeLib {
     @param _order Order to be checked
    */
   function isFirstOfOrderbook(Data storage self, Order storage _order) internal view returns (bool) {
-    return self.firstId == _order.id;
+    return (_order.orderType == OrderType.LIMIT_ORDER && self.firstId == _order.id);
+  }
+
+
+  /**
+    @notice Checks if the market order is the first of the orderbook where it is saved
+    @param self Orderbook where the _order is supposed to be stored(we dont actually check if it is stored there)
+    @param _order Order to be checked
+   */
+  function isFirstOfMarketOrderbook(Data storage self, Order storage _order) internal view returns (bool) {
+    return (_order.orderType == OrderType.MARKET_ORDER && self.firstMarketOrderId == _order.id);
   }
 
   /**
@@ -438,12 +476,30 @@ library MoCExchangeLib {
   function positionOrderAsPending(Data storage self, uint256 _orderId) private {
     if (self.amountOfPendingOrders != 0) {
       Order storage previousLastOrder = self.orders[self.lastPendingToPopId];
+      require(previousLastOrder.orderType == OrderType.LIMIT_ORDER, "It isn't a limit order");
       previousLastOrder.next = _orderId;
     } else {
       self.firstPendingToPopId = _orderId;
     }
     self.lastPendingToPopId = _orderId;
     self.amountOfPendingOrders = self.amountOfPendingOrders.add(1);
+  }
+
+  /**
+    @notice Positions a market order in the provided pendingQueue
+    @param self Container of the pendingQueue
+    @param _orderId Id of the market order to be positioned as pending
+   */
+  function positionMarketOrderAsPending(Data storage self, uint256 _orderId) private {
+    if (self.amountOfPendingMarketOrders != 0) {
+      Order storage previousLastOrder = self.orders[self.lastPendingMarketOrderToPopId];
+      require(previousLastOrder.orderType == OrderType.MARKET_ORDER, "It isn't a market order");
+      previousLastOrder.next = _orderId;
+    } else {
+      self.firstPendingMarketOrderToPopId = _orderId;
+    }
+    self.lastPendingMarketOrderToPopId = _orderId;
+    self.amountOfPendingMarketOrders = self.amountOfPendingMarketOrders.add(1);
   }
 
   /**
@@ -551,12 +607,29 @@ library MoCExchangeLib {
   }
 
   /**
+    @notice Returns the first of market order of an orderbook
+    @param self Container of the orderbook
+   */
+  function firstMarketOrder(Data storage self) internal view returns (Order storage) {
+    return self.orders[self.firstMarketOrderId];
+  }
+
+  /**
     @notice Returns the first order to be popped from the pendingQueue
     @param self Container of the pendingQueue
    */
   function firstPending(Data storage self) internal view returns (Order storage) {
     return self.orders[self.firstPendingToPopId];
   }
+
+  /**
+    @notice Returns the first market order to be popped from the pendingQueue
+    @param self Container of the pendingQueue
+   */
+  function firstPendingMarketOrder(Data storage self) internal view returns (Order storage) {
+    return self.orders[self.firstPendingMarketOrderToPopId];
+  }
+
 
   /**
     @notice Returns true if the given order is expired
@@ -1271,6 +1344,7 @@ If zero, will start from ordebook top.
     address secondaryTokenAddress,
     bool isBuy
   ) public returns (bool doneWork) {
+    //TODO: adapt to MarketOrders
     if (_token.orderbook.amountOfPendingOrders == 0) return false;
     // pop from queue
     Order storage orderToMove = firstPending(_token.orderbook);
