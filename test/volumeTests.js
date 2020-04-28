@@ -68,7 +68,7 @@ describe('volume tests and gas cost report generation, using a 1% commission rat
           gasLimit: 8e6
         },
         rsk: {
-          gasUnit: 'gas',
+          gasUnit: 'gas', 
           gasPrice: 65 * 10 ** 6, // AVG Gas price 65,164,000 wei
           usdPrice: 10000, // as Sep19
           gasLimit: 6.8e6
@@ -196,12 +196,16 @@ describe('volume tests and gas cost report generation, using a 1% commission rat
         totalOrders: 10
       },
       {
+        description: '15 sells against 1 buy',
+        totalOrders: 15
+      },
+      {
         description: '20 sells against 1 buy',
         totalOrders: 20
       },
       {
-        description: '22 sells against 1 buy',
-        totalOrders: 22
+        description: '21 sells against 1 buy',
+        totalOrders: 21
       }
     ].forEach(({ description, totalOrders }) => {
       contract(description, function(accounts) {
