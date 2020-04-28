@@ -173,7 +173,7 @@ If zero, will start from ordebook top.
     uint256 _steps
   ) external whenNotPaused {
     MoCExchangeLib.Pair storage pair = getTokenPair(_baseToken, _secondaryToken);
-    MoCExchangeLib.processExpired( pair, commissionManager, _isBuy, _orderId, _previousOrderIdHint,_steps);
+    MoCExchangeLib.processExpired(pair, commissionManager, _isBuy, _orderId, _previousOrderIdHint,_steps);
   }
 
   /**
