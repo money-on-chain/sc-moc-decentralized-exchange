@@ -173,36 +173,7 @@ If zero, will start from ordebook top.
     uint256 _steps
   ) external whenNotPaused {
     MoCExchangeLib.Pair storage pair = getTokenPair(_baseToken, _secondaryToken);
-    MoCExchangeLib.Token storage token = _isBuy ? pair.baseToken : pair.secondaryToken;
-    MoCExchangeLib.Order storage toEvaluate = _orderId == 0 ? token.orderbook.first() : token.orderbook.get(_orderId);
-    uint256 nextOrderId = toEvaluate.next;
-    uint256 previousOrderId = _previousOrderIdHint;
-    uint256 currStep = 0;
-    bool hasProcess = false;
-    while (currStep < _steps && toEvaluate.id != 0) {
-      currStep++;
-      if (MoCExchangeLib.isExpired(toEvaluate, pair.tickState.number)) {
-        // Event if process expiring could return fail as transaction fails, the behaviour is the same,
-        // order needs to be removed and the process must continue.
-        MoCExchangeLib.processExpiredOrder(
-          commissionManager,
-          token,
-          toEvaluate.id,
-          toEvaluate.exchangeableAmount,
-          toEvaluate.reservedCommission,
-          toEvaluate.owner
-        );
-        nextOrderId = toEvaluate.next;
-        // TODO: Given this is a loop, we could track the actual prev instead of just the id
-        token.orderbook.removeOrder(toEvaluate, previousOrderId);
-        hasProcess = true;
-      } else {
-        previousOrderId = toEvaluate.id;
-        nextOrderId = toEvaluate.next;
-      }
-      toEvaluate = token.orderbook.get(nextOrderId);
-    }
-    require(hasProcess, "No expired order found");
+    MoCExchangeLib.processExpired( pair, commissionManager, _isBuy, _orderId, _previousOrderIdHint,_steps);
   }
 
   /**
@@ -299,7 +270,7 @@ and disabled first
     return getTickStage(_baseToken, _secondaryToken) != MoCExchangeLib.TickStage.RECEIVING_ORDERS;
   }
 
-  /**
+/**
 @notice Calculates closing price as if the tick closes at this moment
 @return emergentPrice: AVG price of the last matched Orders
 @return lastBuyMatchId Id of the last Buy order to match
@@ -392,7 +363,7 @@ for the execution of a tick of a given pair
     return keepGoing;
   }
 
-  /**
+/**
 @notice Hook called when the simulation of the matching of orders finish; marks as so the tick stage
 Has one discarded param; kept to have a fixed signature
 @param _groupId Id that represent the group of tasks which should be done
@@ -400,13 +371,7 @@ for the execution of a tick of a given pair
 */
   function onSimulationFinish(bytes32 _groupId, bytes32) private {
     MoCExchangeLib.Pair storage pair = getTokenPair(_groupId);
-    uint256 factorPrecision = 10**18; // FIXME how do i access this constant from another file?
-    assert(pair.tickStage == MoCExchangeLib.TickStage.RUNNING_SIMULATION);
-    if (pair.pageMemory.matchesAmount > 0) {
-      pair.pageMemory.emergentPrice = Math.average(pair.pageMemory.lastBuyMatch.price, pair.pageMemory.lastSellMatch.price);
-      pair.lastClosingPrice = pair.pageMemory.emergentPrice;
-      pair.EMAPrice = MoCExchangeLib.calculateNewEMA(pair.EMAPrice, pair.lastClosingPrice, pair.smoothingFactor, factorPrecision);
-    }
+    MoCExchangeLib.onSimulationFinish(pair);
   }
 
   /**

@@ -967,6 +967,58 @@ library MoCExchangeLib {
   }
 
   /**
+@notice Process expired Orders for the given orderbook, returning funds to the owner while applying commission
+@dev iterates _steps times over the orderbook starting from _orderId and process any encountered expired order
+@param _pair Pair of tokens
+@param _commissionManager CommisionManager from MocDecentralizedExchange
+@param _isBuy true if buy order, needed to identify the orderbook
+@param _orderId Order id to start expiring process. If zero, will start from ordebook top.
+@param _previousOrderIdHint previous order id hint in the orderbook to _orderId, used as on optimization to search for.
+If zero, will start from ordebook top.
+@param _steps Number of iterations to look for expired orders to process. Use one, if just looking to process _orderId only
+*/
+  function processExpired(
+    Pair storage _pair,
+    CommissionManager _commissionManager,
+    bool _isBuy,
+    uint256 _orderId,
+    uint256 _previousOrderIdHint,
+    uint256 _steps
+  ) public {
+    //TODO: Add to white list
+    MoCExchangeLib.Token storage token = _isBuy ? _pair.baseToken : _pair.secondaryToken;
+    MoCExchangeLib.Order storage toEvaluate = _orderId == 0 ? first(token.orderbook) : get(token.orderbook, _orderId);
+    uint256 nextOrderId = toEvaluate.next;
+    uint256 previousOrderId = _previousOrderIdHint;
+    uint256 currStep = 0;
+    bool hasProcess = false;
+    while (currStep < _steps && toEvaluate.id != 0) {
+      currStep++;
+      if (isExpired(toEvaluate, _pair.tickState.number)) {
+        // Event if process expiring could return fail as transaction fails, the behaviour is the same,
+        // order needs to be removed and the process must continue.
+        processExpiredOrder(
+          _commissionManager,
+          token,
+          toEvaluate.id,
+          toEvaluate.exchangeableAmount,
+          toEvaluate.reservedCommission,
+          toEvaluate.owner
+        );
+        nextOrderId = toEvaluate.next;
+        // TODO: Given this is a loop, we could track the actual prev instead of just the id
+        removeOrder(token.orderbook, toEvaluate, previousOrderId);
+        hasProcess = true;
+      } else {
+        previousOrderId = toEvaluate.id;
+        nextOrderId = toEvaluate.next;
+      }
+      toEvaluate = get(token.orderbook, nextOrderId);
+    }
+    require(hasProcess, "No expired order found");
+  }
+
+  /**
     @notice returns funds to the owner, paying commission in the process and emits ExpiredOrderProcessed event
     @param _commissionManager commission manager.
     @param _token order Token data
@@ -996,6 +1048,22 @@ library MoCExchangeLib {
     if (!transferResult) returnedAmount = 0;
     emit ExpiredOrderProcessed(_orderId, _owner, returnedAmount, commission, returnedCommission);
     return transferResult;
+  }
+
+  /**
+  @notice Hook called when the simulation of the matching of orders finish; marks as so the tick stage
+  Has one discarded param; kept to have a fixed signature
+  @param _pair the pair to finish simulation
+  */
+  function onSimulationFinish(Pair storage _pair) public {
+    //TODO add white list
+    uint256 factorPrecision = 10**18; // FIXME how do i access this constant from another file?
+    assert(_pair.tickStage == MoCExchangeLib.TickStage.RUNNING_SIMULATION);
+    if (_pair.pageMemory.matchesAmount > 0) {
+      _pair.pageMemory.emergentPrice = Math.average(_pair.pageMemory.lastBuyMatch.price, _pair.pageMemory.lastSellMatch.price);
+      _pair.lastClosingPrice = _pair.pageMemory.emergentPrice;
+      _pair.EMAPrice = calculateNewEMA(_pair.EMAPrice, _pair.lastClosingPrice, _pair.smoothingFactor, factorPrecision);
+    }
   }
 
   /**
