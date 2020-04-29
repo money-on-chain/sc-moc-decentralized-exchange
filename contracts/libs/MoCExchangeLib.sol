@@ -67,6 +67,14 @@ library MoCExchangeLib {
   );
 
   /**
+    @notice All the charged commission for a given token was withdrawn
+    @param token The address of the withdrawn tokens
+    @param commissionBeneficiary Receiver of the tokens
+    @param withdrawnAmount Amount that was withdrawn
+   */
+  event CommissionWithdrawn(address token, address commissionBeneficiary, uint256 withdrawnAmount);  
+
+  /**
     @notice A new order has been inserted in the pending queue. It is waiting to be moved to the orderbook
     @dev On the RSK network, having an event with only one parameter which is indexed breaks the web3
     importer, so a dummy argument is added.
@@ -272,6 +280,19 @@ library MoCExchangeLib {
   }
 
   /**
+    @notice Withdraws all the already charged(because of a matching, a cancellation or an expiration)
+    commissions of a given token
+    @param token Address of the token to withdraw the commissions from
+  */
+  function withdrawCommissions(address token, CommissionManager _commissionManager) public {
+    uint256 amountToWithdraw = _commissionManager.exchangeCommissions(token);
+    _commissionManager.clearExchangeCommissions(token);
+    address commissionBeneficiary = _commissionManager.beneficiaryAddress();
+    bool success = IERC20(token).transfer(commissionBeneficiary, amountToWithdraw);
+    require(success, "Transfer failed");
+    emit CommissionWithdrawn(token, commissionBeneficiary, amountToWithdraw);
+  }
+  /**
     @notice Inserts an order in an orderbook with a hint
     @dev The type of the order is given implicitly by the data structure where it is saved
     @param self The data structure in where the order will be inserted
@@ -357,6 +378,35 @@ library MoCExchangeLib {
       _expiresInTick
     );
     positionOrderAsPending(self, _orderId);
+  }
+
+  /**
+    @notice returns the corresponding user amount. Emits the CancelOrder event
+    @param _pair Token Pair involved in the canceled Order
+    @param _orderId Order id to cancel
+    @param _previousOrderIdHint previous order in the orderbook, used as on optimization to search for.
+    @param _isBuy true if it's a buy order, meaning the funds should be from base Token
+  */
+  function doCancelOrder(
+    Pair storage _pair, 
+    uint256 _orderId, 
+    uint256 _previousOrderIdHint, 
+    bool _isBuy
+    )
+    public returns (uint256, uint256)
+  {
+    Token storage token = _isBuy ? _pair.baseToken : _pair.secondaryToken;
+    Order storage toRemove = get(token.orderbook, _orderId);
+    require(toRemove.id != 0, "Order not found");
+    // Copy order needed values before deleting it
+    (uint256 exchangeableAmount, uint256 reservedCommission, address owner) = (
+      toRemove.exchangeableAmount,
+      toRemove.reservedCommission,
+      toRemove.owner
+    );
+    removeOrder(token.orderbook, toRemove, _previousOrderIdHint);
+    require(owner == msg.sender, "Not order owner");
+    return (exchangeableAmount, reservedCommission);
   }
 
   /**

@@ -43,14 +43,6 @@ contract EventfulOrderListing {
   );
 
   /**
-    @notice All the charged commission for a given token was withdrawn
-    @param token The address of the withdrawn tokens
-    @param commissionBeneficiary Receiver of the tokens
-    @param withdrawnAmount Amount that was withdrawn
-   */
-  event CommissionWithdrawn(address token, address commissionBeneficiary, uint256 withdrawnAmount);
-
-  /**
     @dev Cloned from SafeTransfer.sol or the event it is not recogniced and emited from that lib
   */
   event TransferFailed(address indexed _tokenAddress, address indexed _to, uint256 _amount, bool _isRevert);
@@ -187,7 +179,7 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     @param _previousOrderIdHint previous order in the orderbook, used as on optimization to search for.
   */
   function cancelBuyOrder(address _baseToken, address _secondaryToken, uint256 _orderId, uint256 _previousOrderIdHint) public whenNotPaused {
-    doCancelOrder(getTokenPair(_baseToken, _secondaryToken), _orderId, _previousOrderIdHint, msg.sender, true);
+    doCancelOrder(getTokenPair(_baseToken, _secondaryToken), _orderId, _previousOrderIdHint, true);
   }
 
   /**
@@ -199,7 +191,7 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     @param _previousOrderIdHint previous order in the orderbook, used as on optimization to search for.
   */
   function cancelSellOrder(address _baseToken, address _secondaryToken, uint256 _orderId, uint256 _previousOrderIdHint) public whenNotPaused {
-    doCancelOrder(getTokenPair(_baseToken, _secondaryToken), _orderId, _previousOrderIdHint, msg.sender, false);
+    doCancelOrder(getTokenPair(_baseToken, _secondaryToken), _orderId, _previousOrderIdHint, false);
   }
 
   /**
@@ -208,12 +200,7 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     @param token Address of the token to withdraw the commissions from
    */
   function withdrawCommissions(address token) public nonReentrant {
-    uint256 amountToWithdraw = commissionManager.exchangeCommissions(token);
-    commissionManager.clearExchangeCommissions(token);
-    address commissionBeneficiary = commissionManager.beneficiaryAddress();
-    bool success = IERC20(token).transfer(commissionBeneficiary, amountToWithdraw);
-    require(success, "Transfer failed");
-    emit CommissionWithdrawn(token, commissionBeneficiary, amountToWithdraw);
+    MoCExchangeLib.withdrawCommissions(token, commissionManager);
   }
 
   /**
@@ -221,35 +208,24 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     @param _pair Token Pair involved in the canceled Order
     @param _orderId Order id to cancel
     @param _previousOrderIdHint previous order in the orderbook, used as on optimization to search for.
-    @param _sender address of the account executing the cancel, revert if not order's owner
     @param _isBuy true if it's a buy order, meaning the funds should be from base Token
   */
-  function doCancelOrder(MoCExchangeLib.Pair storage _pair, uint256 _orderId, uint256 _previousOrderIdHint, address _sender, bool _isBuy)
+  function doCancelOrder(MoCExchangeLib.Pair storage _pair, uint256 _orderId, uint256 _previousOrderIdHint, bool _isBuy)
     internal
   {
     MoCExchangeLib.Token storage token = _isBuy ? _pair.baseToken : _pair.secondaryToken;
-    MoCExchangeLib.Order storage toRemove = token.orderbook.get(_orderId);
-    require(toRemove.id != 0, "Order not found");
-
-    // Copy order needed values before deleting it
-    (uint256 exchangeableAmount, uint256 reservedCommission, address owner) = (
-      toRemove.exchangeableAmount,
-      toRemove.reservedCommission,
-      toRemove.owner
-    );
-    token.orderbook.removeOrder(toRemove, _previousOrderIdHint);
-    require(owner == _sender, "Not order owner");
-
+    (uint256 exchangeableAmount, uint256 reservedCommission) = MoCExchangeLib.doCancelOrder(_pair, _orderId, _previousOrderIdHint, _isBuy);
+    
     (bool transferResult, uint256 returnedAmount, uint256 commission, uint256 returnedCommission) = MoCExchangeLib.refundOrder(
       commissionManager,
       token.token,
       exchangeableAmount,
       reservedCommission,
-      _sender,
+      msg.sender,
       false
     );
     require(transferResult, "Token transfer failed");
-    emit OrderCancelled(_orderId, _sender, returnedAmount, commission, returnedCommission, _isBuy);
+    emit OrderCancelled(_orderId, msg.sender, returnedAmount, commission, returnedCommission, _isBuy);
   }
 
   /**
@@ -334,23 +310,26 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     @notice Inserts a market order in the buy orderbook of a given pair with a hint;
     the pair should not be disabled; the contract should not be paused. Takes the funds
     with a transferFrom
-    @param _pair Storage structure that represents the pair
+    @param _baseToken the base token of the pair
+    @param _secondaryToken the secondary token of the pair
     @param _exchangeableAmout The quantity of tokens to put in the orderbook
     @param _multiplyFactor Maximum price to be paid [base/secondary]
-    @param _lifespan After _lifespan ticks the order will be expired and no longer matched, must be lower or equal than the maximum
     @param _previousOrderIdHint Order that comes immediately before the new order;
+    @param _lifespan After _lifespan ticks the order will be expired and no longer matched, must be lower or equal than the maximum
     0 is considered as no hint and the smart contract must iterate
     INSERT_FIRST is considered a hint to be put at the start
   */
   function insertBuyMarketOrderAfter(
-    MoCExchangeLib.Pair storage _pair,
+    address _baseToken,
+    address _secondaryToken,
     uint256 _exchangeableAmout,
     uint256 _multiplyFactor,
-    uint64 _lifespan,
-    uint256 _previousOrderIdHint
-  ) private {
+    uint256 _previousOrderIdHint,
+    uint64 _lifespan
+  ) public {
+    MoCExchangeLib.Pair storage pair = getTokenPair(_baseToken, _secondaryToken);
     uint256 initialFee = commissionManager.calculateInitialFee(_exchangeableAmout.mul(_multiplyFactor));
-    _pair.doInsertMarketOrder(
+    pair.doInsertMarketOrder(
       nextId(),
       _exchangeableAmout,
       initialFee,
@@ -399,23 +378,26 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     @notice Inserts a market order in the buy orderbook of a given pair with a hint;
     the pair should not be disabled; the contract should not be paused. Takes the funds
     with a transferFrom
-    @param _pair Storage structure that represents the pair
+    @param _baseToken the base token of the pair
+    @param _secondaryToken the secondary token of the pair
     @param _exchangeableAmout The quantity of tokens to put in the orderbook
     @param _multiplyFactor Maximum price to be paid [base/secondary]
+    @param _previousOrderIdHint Order that comes immediately before the new order;    
     @param _lifespan After _lifespan ticks the order will be expired and no longer matched, must be lower or equal than the maximum
-    @param _previousOrderIdHint Order that comes immediately before the new order;
     0 is considered as no hint and the smart contract must iterate
     INSERT_FIRST is considered a hint to be put at the start
   */
   function insertSellMarketOrderAfter(
-    MoCExchangeLib.Pair storage _pair,
+    address _baseToken,
+    address _secondaryToken,
     uint256 _exchangeableAmout,
     uint256 _multiplyFactor,
-    uint64 _lifespan,
-    uint256 _previousOrderIdHint
-  ) private {
+    uint256 _previousOrderIdHint,
+    uint64 _lifespan
+  ) public {
+    MoCExchangeLib.Pair storage pair = getTokenPair(_baseToken, _secondaryToken);
     uint256 initialFee = commissionManager.calculateInitialFee(_exchangeableAmout.mul(_multiplyFactor));
-    _pair.doInsertMarketOrder(
+    pair.doInsertMarketOrder(
       nextId(),
       _exchangeableAmout,
       initialFee,
