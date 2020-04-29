@@ -67,6 +67,14 @@ library MoCExchangeLib {
   );
 
   /**
+    @notice All the charged commission for a given token was withdrawn
+    @param token The address of the withdrawn tokens
+    @param commissionBeneficiary Receiver of the tokens
+    @param withdrawnAmount Amount that was withdrawn
+   */
+  event CommissionWithdrawn(address token, address commissionBeneficiary, uint256 withdrawnAmount);  
+
+  /**
     @notice A new order has been inserted in the pending queue. It is waiting to be moved to the orderbook
     @dev On the RSK network, having an event with only one parameter which is indexed breaks the web3
     importer, so a dummy argument is added.
@@ -271,6 +279,19 @@ library MoCExchangeLib {
     );
   }
 
+  /**
+    @notice Withdraws all the already charged(because of a matching, a cancellation or an expiration)
+    commissions of a given token
+    @param token Address of the token to withdraw the commissions from
+  */
+  function withdrawCommissions(address token, CommissionManager _commissionManager) public {
+    uint256 amountToWithdraw = _commissionManager.exchangeCommissions(token);
+    _commissionManager.clearExchangeCommissions(token);
+    address commissionBeneficiary = _commissionManager.beneficiaryAddress();
+    bool success = IERC20(token).transfer(commissionBeneficiary, amountToWithdraw);
+    require(success, "Transfer failed");
+    emit CommissionWithdrawn(token, commissionBeneficiary, amountToWithdraw);
+  }
   /**
     @notice Inserts an order in an orderbook with a hint
     @dev The type of the order is given implicitly by the data structure where it is saved
