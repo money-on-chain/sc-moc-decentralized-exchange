@@ -292,6 +292,50 @@ library MoCExchangeLib {
     require(success, "Transfer failed");
     emit CommissionWithdrawn(token, commissionBeneficiary, amountToWithdraw);
   }
+
+  /**
+    @notice returns the corresponding user amount. Emits the CancelOrder event
+    @param _pair Token Pair involved in the canceled Order
+    @param _orderId Order id to cancel
+    @param _previousOrderIdHint previous order in the orderbook, used as on optimization to search for.
+    @param _sender address of the account executing the cancel, revert if not order's owner
+    @param _isBuy true if it's a buy order, meaning the funds should be from base Token
+  */
+  function doCancelOrder(
+    Pair storage _pair, 
+    CommissionManager _commissionManager,
+    uint256 _orderId, 
+    uint256 _previousOrderIdHint, 
+    address _sender, 
+    bool _isBuy
+    )
+    public returns (uint256, uint256, uint256)
+  {
+    Token storage token = _isBuy ? _pair.baseToken : _pair.secondaryToken;
+    Order storage toRemove = get(token.orderbook, _orderId);
+    require(toRemove.id != 0, "Order not found");
+
+    // Copy order needed values before deleting it
+    (uint256 exchangeableAmount, uint256 reservedCommission, address owner) = (
+      toRemove.exchangeableAmount,
+      toRemove.reservedCommission,
+      toRemove.owner
+    );
+    removeOrder(token.orderbook, toRemove, _previousOrderIdHint);
+    require(owner == _sender, "Not order owner");
+
+    (bool transferResult, uint256 returnedAmount, uint256 commission, uint256 returnedCommission) = refundOrder(
+      _commissionManager,
+      token.token,
+      exchangeableAmount,
+      reservedCommission,
+      _sender,
+      false
+    );
+    require(transferResult, "Token transfer failed");
+    return (returnedAmount, commission, returnedCommission);
+  }
+
   /**
     @notice Inserts an order in an orderbook with a hint
     @dev The type of the order is given implicitly by the data structure where it is saved

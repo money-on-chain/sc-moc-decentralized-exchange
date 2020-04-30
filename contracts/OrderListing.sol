@@ -335,7 +335,7 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     uint256 _exchangeableAmout,
     uint256 _multiplyFactor,
     uint64 _lifespan
-  ) private {
+  ) public {
     MoCExchangeLib.Pair storage pair = getTokenPair(_baseToken, _secondaryToken);
     uint256 initialFee = commissionManager.calculateInitialFee(_exchangeableAmout.mul(_multiplyFactor));
     pair.doInsertMarketOrder(
@@ -401,7 +401,7 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     uint256 _exchangeableAmout,
     uint256 _multiplyFactor,
     uint64 _lifespan
-  ) private {
+  ) public {
     MoCExchangeLib.Pair storage pair = getTokenPair(_baseToken, _secondaryToken);
     uint256 initialFee = commissionManager.calculateInitialFee(_exchangeableAmout.mul(_multiplyFactor));
     pair.doInsertMarketOrder(
