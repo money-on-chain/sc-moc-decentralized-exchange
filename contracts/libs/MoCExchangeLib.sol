@@ -15,7 +15,7 @@ import {TickState} from "./TickState.sol";
 library MoCExchangeLib {
   using TickState for TickState.Data;
   using SafeMath for uint256;
-
+  uint256 constant RATE_PRECISION = uint256(10**18);
   /**
     @notice Posible types of a match depending on which order is filled
     @dev At least one order has to be filled in any match in our exchange
@@ -433,7 +433,7 @@ library MoCExchangeLib {
       OrderType.MARKET_ORDER,
       _orderId, _exchangeableAmount,
       _reservedCommission,
-      _multiplyFactor.mul(_exchangeableAmount),
+      priceOfMarketOrders(_exchangeableAmount, _multiplyFactor),
       _multiplyFactor,
       0,
       _sender,
@@ -955,14 +955,20 @@ library MoCExchangeLib {
     bool _isBuy
   ) public returns (uint256) {
     require(!_self.disabled, "Pair has been disabled");
+    //It is not a modifier because of stack to deep
+    require(_multiplyFactor != 0, "MultiplyFactor cannot be zero");
+    //It is not a modifier because of stack to deep
+    require(_exchangeableAmount != 0, "Exchangeable amount cannot be zero");
 
     Token storage token = _isBuy ? _self.baseToken : _self.secondaryToken;
-
-    uint256 toTransfer = (_exchangeableAmount.mul(_multiplyFactor)).add(_reservedCommission);
+    uint256 toTransfer = priceOfMarketOrders(_exchangeableAmount, _multiplyFactor).add(_reservedCommission);
+    
+    //TODO: check why it is reverting with subraction in SafeMath
     require(token.token.transferFrom(_sender, address(this), toTransfer), "Token transfer failed");
-
+    
     bool goesToPendingQueue = _self.tickStage != TickStage.RECEIVING_ORDERS;
     uint64 expiresInTick = _self.tickState.number + _lifespan;
+    
     if (goesToPendingQueue) {
       insertMarketOrderAsPending(token.orderbook, _id, _sender, _exchangeableAmount, _reservedCommission, _multiplyFactor, expiresInTick);
       emit NewOrderAddedToPendingQueue(_id, 0);
@@ -994,10 +1000,10 @@ library MoCExchangeLib {
     @param _multiplyFactor factor
     @return price
    */
-  function priceOfMarketOrders(uint256 _exchangeableAmount, uint256 _multiplyFactor) internal pure returns (uint256) {
+  function priceOfMarketOrders(uint256 _exchangeableAmount, uint256 _multiplyFactor) public pure returns (uint256) {
     //TODO: get price from last tick or oracle
     uint256 HARDCODE_PRICE = 1;
-    return _exchangeableAmount.mul(_multiplyFactor).mul(HARDCODE_PRICE);
+    return _exchangeableAmount.mul(_multiplyFactor).mul(HARDCODE_PRICE).div(RATE_PRECISION);
   }
 
   /**

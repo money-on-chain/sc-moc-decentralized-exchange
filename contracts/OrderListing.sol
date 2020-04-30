@@ -307,41 +307,6 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
   }
 
   /**
-    @notice Inserts a market order in the buy orderbook of a given pair with a hint;
-    the pair should not be disabled; the contract should not be paused. Takes the funds
-    with a transferFrom
-    @param _baseToken the base token of the pair
-    @param _secondaryToken the secondary token of the pair
-    @param _exchangeableAmout The quantity of tokens to put in the orderbook
-    @param _multiplyFactor Maximum price to be paid [base/secondary]
-    @param _previousOrderIdHint Order that comes immediately before the new order;
-    @param _lifespan After _lifespan ticks the order will be expired and no longer matched, must be lower or equal than the maximum
-    0 is considered as no hint and the smart contract must iterate
-    INSERT_FIRST is considered a hint to be put at the start
-  */
-  function insertBuyMarketOrderAfter(
-    address _baseToken,
-    address _secondaryToken,
-    uint256 _exchangeableAmout,
-    uint256 _multiplyFactor,
-    uint256 _previousOrderIdHint,
-    uint64 _lifespan
-  ) public {
-    MoCExchangeLib.Pair storage pair = getTokenPair(_baseToken, _secondaryToken);
-    uint256 initialFee = commissionManager.calculateInitialFee(_exchangeableAmout.mul(_multiplyFactor));
-    pair.doInsertMarketOrder(
-      nextId(),
-      _exchangeableAmout,
-      initialFee,
-      _multiplyFactor,
-      _lifespan,
-      _previousOrderIdHint,
-      msg.sender,
-      true
-    );  
-  }
-
-  /**
     @notice Inserts an order in the sell orderbook of a given pair with a hint;
     the pair should not be disabled; the contract should not be paused. Takes the funds
     with a transferFrom
@@ -382,21 +347,24 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     @param _secondaryToken the secondary token of the pair
     @param _exchangeableAmout The quantity of tokens to put in the orderbook
     @param _multiplyFactor Maximum price to be paid [base/secondary]
-    @param _previousOrderIdHint Order that comes immediately before the new order;    
+    @param _previousOrderIdHint Order that comes immediately before the new order;
     @param _lifespan After _lifespan ticks the order will be expired and no longer matched, must be lower or equal than the maximum
+    @param _isBuy true if it is a buy market order
     0 is considered as no hint and the smart contract must iterate
     INSERT_FIRST is considered a hint to be put at the start
   */
-  function insertSellMarketOrderAfter(
+  function insertMarketOrderAfter(
     address _baseToken,
     address _secondaryToken,
     uint256 _exchangeableAmout,
     uint256 _multiplyFactor,
     uint256 _previousOrderIdHint,
-    uint64 _lifespan
-  ) public {
+    uint64 _lifespan,
+    bool _isBuy
+  ) public whenNotPaused {
     MoCExchangeLib.Pair storage pair = getTokenPair(_baseToken, _secondaryToken);
-    uint256 initialFee = commissionManager.calculateInitialFee(_exchangeableAmout.mul(_multiplyFactor));
+    uint256 totalPrice = MoCExchangeLib.priceOfMarketOrders(_exchangeableAmout, _multiplyFactor);
+    uint256 initialFee = commissionManager.calculateInitialFee(totalPrice);
     pair.doInsertMarketOrder(
       nextId(),
       _exchangeableAmout,
@@ -405,10 +373,9 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
       _lifespan,
       _previousOrderIdHint,
       msg.sender,
-      false
+      _isBuy
     );  
   }
-
 
   // Leave a gap betweeen inherited contracts variables in order to be
   // able to add more variables in them later

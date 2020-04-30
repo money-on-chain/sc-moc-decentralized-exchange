@@ -13,6 +13,7 @@
     "fast-test": "truffle test",
     "debugtx": "./scripts/debugtx $1",
     "eslint": "eslint ./ --ext .js",
+    "eslint-fix": "./node_modules/.bin/eslint ./ --ext .js --fix",
     "truffle-test": "./node_modules/truffle/build/cli.bundled.js test",
     "truffle-contract-size": "./node_modules/truffle/build/cli.bundled.js run contract-size",
     "coverage": "SOLIDITY_COVERAGE=true npm run test",
