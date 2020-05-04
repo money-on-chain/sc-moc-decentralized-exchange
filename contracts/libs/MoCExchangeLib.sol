@@ -341,7 +341,7 @@ library MoCExchangeLib {
     uint256 _intendedPreviousOrderId
   ) public {
     uint256 price = priceOfMarketOrders(_exchangeableAmount, _multiplyFactor);
-    validatePreviousOrder(self, price, _intendedPreviousOrderId, true);
+    validatePreviousMarketOrder(self, _multiplyFactor, _intendedPreviousOrderId);
     createMarketOrder(self, _orderId, _sender, _exchangeableAmount, _reservedCommission, _multiplyFactor, price, _expiresInTick);
     positionOrder(self, _orderId, _intendedPreviousOrderId);
   }
@@ -457,6 +457,21 @@ library MoCExchangeLib {
     }
   }
 
+    /**
+    @notice Checks that the order should be in the place where it is trying to be inserted, reverts otherwise
+    @param _multiplyFactor Target multiplyFactor of the new order
+    @param _intendedPreviousOrderId Id of the order which is intended to be the order before the new one being inserted,
+    if 0 it is asumed to be put at the start
+   */
+  function validatePreviousMarketOrder(Data storage self, uint256 _multiplyFactor, uint256 _intendedPreviousOrderId) public view {
+    if (_intendedPreviousOrderId == 0) {
+      // order is intended to be the first in the Data
+      validateIntendedFirstMarketOrderInTheData(self, _multiplyFactor);
+    } else {
+      validateMarketOrderIntendedPreviousOrder(self, _intendedPreviousOrderId, _multiplyFactor);
+    }
+  }
+
   /**
     @notice Checks that the order should be in the first place of the orderbook where it is trying to be inserted
     @param _price Target price of the new order
@@ -466,6 +481,18 @@ library MoCExchangeLib {
       // there is one or more orders in the Data, so the price should be the most competitive
       Order storage firstOrder = _isMarketOrder ? firstMarketOrder(self) : first(self);
       require(priceGoesBefore(self, _price, firstOrder.price), "Price doesnt belong to start");
+    }
+  }
+
+  /**
+    @notice Checks that the market order should be in the first place of the orderbook where it is trying to be inserted
+    @param _multiplyFactor Target multiplyFactor of the new order
+  */
+  function validateIntendedFirstMarketOrderInTheData(Data storage self, uint256 _multiplyFactor) private view {
+    if (self.length != 0) {
+      // there is one or more orders in the Data, so the price should be the most competitive
+      Order storage firstOrder = firstMarketOrder(self);
+      require(multiplyFactorGoesBefore(self, _multiplyFactor, firstOrder.multiplyFactor), "Multiply factor doesnt belong to start");
     }
   }
 
@@ -484,6 +511,23 @@ library MoCExchangeLib {
     // the price goes before the next order, if there is a next order
     require(nextOrder.id == 0 || priceGoesBefore(self, _price, nextOrder.price), "Order should go after");
   }
+
+  /**
+  @notice Checks that the market order should be in the place where it is trying to be inserted, reverts otherwise
+  @param _multiplyFactor Target multiplyOrder of the new order
+  @param _intendedPreviousOrderId Id of the order which is intended to be the order before the new one being inserted
+  */
+  function validateMarketOrderIntendedPreviousOrder(Data storage self, uint256 _intendedPreviousOrderId, uint256 _multiplyFactor) private view {
+    Order storage previousOrder = get(self, _intendedPreviousOrderId);
+    // the order for the _intendedPreviousOrderId provided exist
+    require(previousOrder.id != 0, "PreviousOrder doesnt exist");
+    // the price goes after the intended previous order
+    require(!multiplyFactorGoesBefore(self, _multiplyFactor, previousOrder.multiplyFactor), "Market Order should go before");
+    Order storage nextOrder = get(self, previousOrder.next);
+    // the price goes before the next order, if there is a next order
+    require(nextOrder.id == 0 || multiplyFactorGoesBefore(self, _multiplyFactor, nextOrder.multiplyFactor), "Market Order should go after");
+  }
+
 
   /**
     @notice drops first element and returs the new top
@@ -769,6 +813,15 @@ library MoCExchangeLib {
    */
   function priceGoesBefore(Data storage self, uint256 _price, uint256 _existingPrice) private view returns (bool) {
     return (self.orderDescending && (_price > _existingPrice)) || (!self.orderDescending && (_price < _existingPrice));
+  }
+
+  /**
+    @notice Returns true if an order with a _multiplyFactor should go before a prexistent order with _existingMultiplyFactor in an orderbook
+    @param _multiplyFactor New multiplyFactor to compare
+    @param _existingMultiplyFactor Existing order's multiplyFactor to compare
+  */
+  function multiplyFactorGoesBefore(Data storage self, uint256 _multiplyFactor, uint256 _existingMultiplyFactor) private view returns (bool) {
+    return (self.orderDescending && (_multiplyFactor > _existingMultiplyFactor)) || (!self.orderDescending && (_multiplyFactor < _existingMultiplyFactor));
   }
 
   /**
