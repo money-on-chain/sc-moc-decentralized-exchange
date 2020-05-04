@@ -308,14 +308,14 @@ describe('Market Order insertion event tests', function() {
           );
         });
       });
-      describe('AND WHEN inserting a buy order after a previous one', function() {
+      describe('AND WHEN inserting a buy market order after a previous one', function() {
         before(async function() {
           tx = await dex.insertMarketOrderAfter(
             base.address,
             secondary.address,
             wadify(3),
             pricefy(1.5),
-            2,
+            INSERT_FIRST,
             2,
             true,
             {
