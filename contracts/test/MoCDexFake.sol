@@ -64,6 +64,13 @@ contract MoCDexFake is MoCDecentralizedExchange {
       current = orderbook.get(current.next);
     }
     require(current.id != 0, "invalid index");
-    return (current.id, current.owner, current.exchangeableAmount, current.multiplyFactor, current.reservedCommission, current.price, current.next);
+    return(
+      current.id,
+      current.owner,
+      current.exchangeableAmount,
+      current.multiplyFactor,
+      current.reservedCommission,
+      current.price, current.next
+    );
   }
 }

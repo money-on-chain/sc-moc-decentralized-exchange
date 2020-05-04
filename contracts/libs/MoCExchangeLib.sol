@@ -821,7 +821,9 @@ library MoCExchangeLib {
     @param _existingMultiplyFactor Existing order's multiplyFactor to compare
   */
   function multiplyFactorGoesBefore(Data storage self, uint256 _multiplyFactor, uint256 _existingMultiplyFactor) private view returns (bool) {
-    return (self.orderDescending && (_multiplyFactor > _existingMultiplyFactor)) || (!self.orderDescending && (_multiplyFactor < _existingMultiplyFactor));
+    return (
+      self.orderDescending && (_multiplyFactor > _existingMultiplyFactor)) || (!self.orderDescending && (_multiplyFactor < _existingMultiplyFactor)
+    );
   }
 
   /**
