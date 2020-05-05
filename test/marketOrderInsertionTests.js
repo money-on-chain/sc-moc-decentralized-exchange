@@ -12,7 +12,7 @@ let INSERT_FIRST;
 const DEFAULT_TOKEN_PRICE = 1;
 
 
-describe.skip('Tests related to the insertion of a market order', function () {
+describe('Tests related to the insertion of a market order', function () {
   let dex;
   let base;
   let secondary;
@@ -127,7 +127,7 @@ describe.skip('Tests related to the insertion of a market order', function () {
       });
     });
   });
-  contract('Ordered insertion of 10 market orders', function (accounts) {
+  contract('Ordered insertion of 10 sell market orders', function (accounts) {
     // eslint-disable-next-line mocha/no-sibling-hooks
     before(function () {
       return initContractsAndAllowance(accounts);
@@ -142,44 +142,103 @@ describe.skip('Tests related to the insertion of a market order', function () {
             pair[0],
             pair[1],
             wadify(10),
-            pricefy(1 + i/10),
+            pricefy(i + 1),
             INSERT_FIRST,
             lifespan,
             false,
             {
               from: accounts[DEFAULT_ACCOUNT_INDEX]
             }
-          );          
+          );       
         }
       });
-      it('THEN they end up ordered', async function () {
+      it('THEN the sell market orders are up ordered', async function () {
         await Promise.all(
           [...Array(10).keys()].map(async it => {
             const order = await dex.getSellOrderAtIndex(...pair, it);
-            testHelper.assertBigPrice(order.multiplyFactor, it + 1, 'orders are not ordered, order price');
+            testHelper.assertBigPrice(order.multiplyFactor, it + 1, 'sell market orders are not ordered, order price');
           })
         );
       });
+      it('AND the orderbook length is updated accordingly', async function() {
+        testHelper.assertBig(await dex.sellOrdersLength(...pair), 10, 'sell orders length incorrect');
+      });      
     });
-    describe.skip('GIVEN ten buy orders are inserted in order', function () {
+  });
+  contract('Ordered insertion of 10 buy market orders', function (accounts) {
+    // eslint-disable-next-line mocha/no-sibling-hooks
+    before(function () {
+      return initContractsAndAllowance(accounts);
+    });
+    describe('GIVEN ten buy orders are inserted in order', function () {
       before(async function () {
         let i;
         for (i = 0; i < 10; i++) {
           // intentionally sequential
           // eslint-disable-next-line
-          await dex.insertBuyOrder(...pair, wadify(10), pricefy(1 + i), 5, {
-            from: accounts[DEFAULT_ACCOUNT_INDEX]
-          });
+          await dex.insertMarketOrderAfter(
+            pair[0],
+            pair[1],
+            wadify(10),
+            pricefy(i + 1),
+            INSERT_FIRST,
+            lifespan,
+            true,
+            {
+              from: accounts[DEFAULT_ACCOUNT_INDEX]
+            }
+          );        
         }
       });
-      it('THEN they end up ordered', async function () {
+      it('THEN the buy market orders are up ordered', async function () {
         await Promise.all(
           [...Array(10).keys()].map(async it => {
             const order = await dex.getBuyOrderAtIndex(...pair, it);
-            testHelper.assertBigPrice(order.price, 10 - it, 'orders are not ordered, order price');
+            testHelper.assertBigPrice(order.multiplyFactor, 10 - it, 'buy market orders are not ordered, order price');
           })
         );
       });
+      it('AND the buy orderbook length is updated accordingly', async function() {
+        testHelper.assertBig(await dex.buyOrdersLength(...pair), 10, 'buy orders length incorrect');
+      });       
+    });
+  });   
+  contract('Ordered insertion of 10 sell market orders with same amount', function (accounts) {
+    // eslint-disable-next-line mocha/no-sibling-hooks
+    before(function () {
+      return initContractsAndAllowance(accounts);
+    });
+    describe('GIVEN ten sell orders are inserted in order', function () {
+      before(async function () {
+        let i;
+        for (i = 0; i < 10; i++) {
+          // intentionally sequential
+          // eslint-disable-next-line
+          await dex.insertMarketOrderAfter(
+            pair[0],
+            pair[1],
+            wadify(10),
+            pricefy(1.4),
+            INSERT_FIRST,
+            lifespan,
+            false,
+            {
+              from: accounts[DEFAULT_ACCOUNT_INDEX]
+            }
+          );       
+        }
+      });
+      it('THEN the sell market orders are up ordered', async function () {
+        await Promise.all(
+          [...Array(10).keys()].map(async it => {
+            const order = await dex.getSellOrderAtIndex(...pair, it);
+            testHelper.assertBigPrice(order.multiplyFactor, 1.4, 'sell market orders are not ordered, order price');
+          })
+        );
+      });
+      it('AND the orderbook length is updated accordingly', async function() {
+        testHelper.assertBig(await dex.sellOrdersLength(...pair), 10, 'sell orders length incorrect');
+      });      
     });
   });
 });

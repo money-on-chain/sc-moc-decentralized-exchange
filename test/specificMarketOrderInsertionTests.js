@@ -2,6 +2,7 @@ const { expectRevert } = require('openzeppelin-test-helpers');
 const testHelperBuilder = require('./testHelpers/testHelper');
 
 const ERROR_MSG_POSITION_TOO_LOW = 'Market Order should go after';
+const ERROR_MSG_POSITION_TOO_HIGH = "Market Order should go before";
 const ERROR_MSG_NOT_BELONGING_TO_START = 'Multiply factor doesnt belong to start';
 const ERROR_MSG_PREVIOUS_ORDER_DOESNT_EXIST = 'PreviousOrder doesnt exist';
 
@@ -75,7 +76,7 @@ describe('specific market order insertion tests', function() {
           pair[0],
           pair[1],
           wadify(5),
-          pricefy(1.1),
+          pricefy(0.8),
           INSERT_FIRST,
           lifespan,
           true,
@@ -96,15 +97,15 @@ describe('specific market order insertion tests', function() {
           }
         );
       });
-      it('THEN the first market order should be of 4 tokens', async function() {
+      it('THEN the first market order should be of 5 tokens', async function() {
         const order = await dex.getBuyOrderAtIndex(...pair, 0);
         testHelper.assertBigWad(order.exchangeableAmount, 4, 'exchangeable amount');
         testHelper.assertBigPrice(order.multiplyFactor, 0.9, 'multiply factor');
       });
-      it('THEN the first market order should be of 5 tokens', async function() {
+      it('THEN the first market order should be of 4 tokens', async function() {
         const order = await dex.getBuyOrderAtIndex(...pair, 1);
         testHelper.assertBigWad(order.exchangeableAmount, 5, 'exchangeable amount');
-        testHelper.assertBigPrice(order.multiplyFactor, 1.1, 'multiply factor');
+        testHelper.assertBigPrice(order.multiplyFactor, 0.8, 'multiply factor');
       });
       describe('WHEN inserting a buy market order first in the orderbook', function() {
         before(async function() {
@@ -112,8 +113,8 @@ describe('specific market order insertion tests', function() {
             pair[0],
             pair[1],
             wadify(3),
-            pricefy(0.6),
-            0,
+            pricefy(0.95),
+            INSERT_FIRST,
             lifespan,
             true,
             {
@@ -124,7 +125,7 @@ describe('specific market order insertion tests', function() {
         it('THEN it end up ordered', async function() {
           const order = await dex.getBuyOrderAtIndex(...pair, 0);
           testHelper.assertBigWad(order.exchangeableAmount, 3, 'exchangeable amount');
-          testHelper.assertBigPrice(order.multiplyFactor, 0.6, 'multiply factor');
+          testHelper.assertBigPrice(order.multiplyFactor, 0.95, 'multiply factor');
         });
       });
       it('WHEN trying to insert one before a more competitive one, THEN it reverts', async function() {
@@ -181,14 +182,14 @@ describe('specific market order insertion tests', function() {
             pair[1],
             wadify(2),
             pricefy(1.1),
-            INSERT_FIRST,
+            1,
             lifespan,
             false,
             {
               from
             }
           ),
-          ERROR_MSG_NOT_BELONGING_TO_START
+          ERROR_MSG_POSITION_TOO_HIGH
         );
       });
     });
