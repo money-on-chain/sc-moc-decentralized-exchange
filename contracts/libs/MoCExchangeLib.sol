@@ -314,7 +314,7 @@ library MoCExchangeLib {
     uint64 _expiresInTick,
     uint256 _intendedPreviousOrderId
   ) public {
-    validatePreviousOrder(self, _price, _intendedPreviousOrderId, false);
+    validatePreviousOrder(self, _price, _intendedPreviousOrderId);
     createOrder(self, _orderId, _sender, _exchangeableAmount, _reservedCommission, _price, _expiresInTick);
     positionOrder(self, _orderId, _intendedPreviousOrderId);
   }
@@ -448,10 +448,10 @@ library MoCExchangeLib {
     @param _intendedPreviousOrderId Id of the order which is intended to be the order before the new one being inserted,
     if 0 it is asumed to be put at the start
    */
-  function validatePreviousOrder(Data storage self, uint256 _price, uint256 _intendedPreviousOrderId, bool _isMarketOrder) public view {
+  function validatePreviousOrder(Data storage self, uint256 _price, uint256 _intendedPreviousOrderId) public view {
     if (_intendedPreviousOrderId == 0) {
       // order is intended to be the first in the Data
-      validateIntendedFirstOrderInTheData(self, _price, _isMarketOrder);
+      validateIntendedFirstOrderInTheData(self, _price);
     } else {
       validateOrderIntendedPreviousOrder(self, _intendedPreviousOrderId, _price);
     }
@@ -476,10 +476,10 @@ library MoCExchangeLib {
     @notice Checks that the order should be in the first place of the orderbook where it is trying to be inserted
     @param _price Target price of the new order
    */
-  function validateIntendedFirstOrderInTheData(Data storage self, uint256 _price, bool _isMarketOrder) private view {
+  function validateIntendedFirstOrderInTheData(Data storage self, uint256 _price) private view {
     if (self.length != 0) {
       // there is one or more orders in the Data, so the price should be the most competitive
-      Order storage firstOrder = _isMarketOrder ? firstMarketOrder(self) : first(self);
+      Order storage firstOrder = first(self);
       require(priceGoesBefore(self, _price, firstOrder.price), "Price doesnt belong to start");
     }
   }
@@ -1681,7 +1681,7 @@ If zero, will start from ordebook top.
     uint256 previousOrderId;
     if (pageMemory.hintIdsIndex < pageMemory.hintIds.length) {
       previousOrderId = pageMemory.hintIds[pageMemory.hintIdsIndex++];
-      validatePreviousOrder(_token.orderbook, orderToMove.price, previousOrderId, false);
+      validatePreviousOrder(_token.orderbook, orderToMove.price, previousOrderId);
     } else {
       previousOrderId = findPreviousOrderToPrice(_token.orderbook, orderToMove.price);
     }
