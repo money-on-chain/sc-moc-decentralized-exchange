@@ -275,7 +275,7 @@ library MoCExchangeLib {
       _reservedCommission,
       _multiplyFactor,
       _expiresInTick,
-      findPreviousMarketOrderToPrice(self, priceOfMarketOrders(_exchangeableAmount, _multiplyFactor))
+      findPreviousMarketOrderToMultiplyFactor(self, priceOfMarketOrders(_exchangeableAmount, _multiplyFactor))
     );
   }
 
@@ -343,7 +343,7 @@ library MoCExchangeLib {
     uint256 price = priceOfMarketOrders(_exchangeableAmount, _multiplyFactor);
     validatePreviousMarketOrder(self, _multiplyFactor, _intendedPreviousOrderId);
     createMarketOrder(self, _orderId, _sender, _exchangeableAmount, _reservedCommission, _multiplyFactor, price, _expiresInTick);
-    positionOrder(self, _orderId, _intendedPreviousOrderId);
+    positionMarketOrder(self, _orderId, _intendedPreviousOrderId);
   }
 
   /**
@@ -685,6 +685,25 @@ library MoCExchangeLib {
   }
 
   /**
+    @notice Positions an order in the provided orderbook
+    @param self Container of the orderbook
+    @param _orderId Id of the order to be positioned
+    @param _previousOrderId Id of the order that should be immediately before the newly positioned order, 0 if should go at the start
+   */
+  function positionMarketOrder(Data storage self, uint256 _orderId, uint256 _previousOrderId) private {
+    Order storage order = get(self, _orderId);
+    self.length = self.length.add(1);
+    if (_previousOrderId != 0) {
+      Order storage previousOrder = get(self, _previousOrderId);
+      order.next = previousOrder.next;
+      previousOrder.next = _orderId;
+    } else {
+      order.next = self.firstMarketOrderId;
+      self.firstMarketOrderId = _orderId;
+    }
+  }  
+
+  /**
     @notice Positions an order in the provided pendingQueue
     @param self Container of the pendingQueue
     @param _orderId Id of the order to be positioned as pending
@@ -755,27 +774,27 @@ library MoCExchangeLib {
     @param self Container of the orderbook
     @param _price Price of the order to possition. It's equal to exchangableAmount * multiplyFactor
    */
-  function findPreviousMarketOrderToPrice(Data storage self, uint256 _price) public view returns (uint256) {
+  function findPreviousMarketOrderToMultiplyFactor(Data storage self, uint256 _price) public view returns (uint256) {
     if (self.length == 0) {
       return 0;
     }
 
     Order storage pivotOrder = firstMarketOrder(self);
 
-    bool newPriceGoesFirst = priceGoesBefore(self, _price, pivotOrder.price);
-    if (newPriceGoesFirst) {
+    bool newMultiplyFactorGoesBefore = multiplyFactorGoesBefore(self, _price, pivotOrder.multiplyFactor);
+    if (newMultiplyFactorGoesBefore) {
       return 0;
     }
     if (pivotOrder.next != 0) {
       Order storage nextOrder = get(self, pivotOrder.next);
-      newPriceGoesFirst = priceGoesBefore(self, _price, nextOrder.price);
+      newMultiplyFactorGoesBefore = multiplyFactorGoesBefore(self, _price, nextOrder.multiplyFactor);
 
-      while (!newPriceGoesFirst && pivotOrder.next != 0) {
+      while (!newMultiplyFactorGoesBefore && pivotOrder.next != 0) {
         pivotOrder = nextOrder;
 
         if (pivotOrder.next != 0) {
           nextOrder = get(self, pivotOrder.next);
-          newPriceGoesFirst = priceGoesBefore(self, _price, nextOrder.price);
+          newMultiplyFactorGoesBefore = multiplyFactorGoesBefore(self, _price, nextOrder.multiplyFactor);
         }
       }
     }
