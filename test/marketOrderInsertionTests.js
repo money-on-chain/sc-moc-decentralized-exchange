@@ -12,7 +12,7 @@ let INSERT_FIRST;
 const DEFAULT_TOKEN_PRICE = 1;
 
 
-describe.only('Tests related to the insertion of a market order', function () {
+describe('Tests related to the insertion of a market order', function () {
   let dex;
   let base;
   let secondary;
@@ -203,4 +203,42 @@ describe.only('Tests related to the insertion of a market order', function () {
       });       
     });
   });   
+  contract('Ordered insertion of 10 sell market orders with same amount', function (accounts) {
+    // eslint-disable-next-line mocha/no-sibling-hooks
+    before(function () {
+      return initContractsAndAllowance(accounts);
+    });
+    describe('GIVEN ten sell orders are inserted in order', function () {
+      before(async function () {
+        let i;
+        for (i = 0; i < 10; i++) {
+          // intentionally sequential
+          // eslint-disable-next-line
+          await dex.insertMarketOrderAfter(
+            pair[0],
+            pair[1],
+            wadify(10),
+            pricefy(1.4),
+            INSERT_FIRST,
+            lifespan,
+            false,
+            {
+              from: accounts[DEFAULT_ACCOUNT_INDEX]
+            }
+          );       
+        }
+      });
+      it('THEN the sell market orders are up ordered', async function () {
+        await Promise.all(
+          [...Array(10).keys()].map(async it => {
+            const order = await dex.getSellOrderAtIndex(...pair, it);
+            testHelper.assertBigPrice(order.multiplyFactor, 1.4, 'sell market orders are not ordered, order price');
+          })
+        );
+      });
+      it('AND the orderbook length is updated accordingly', async function() {
+        testHelper.assertBig(await dex.sellOrdersLength(...pair), 10, 'sell orders length incorrect');
+      });      
+    });
+  });
 });
