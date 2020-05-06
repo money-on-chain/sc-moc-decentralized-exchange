@@ -63,6 +63,12 @@ contract MoCDexFake is MoCDecentralizedExchange {
     for (uint256 i = 0; i < _index && current.id != 0; i++) {
       current = orderbook.get(current.next);
     }
+    if (current.id == 0){
+      current = orderbook.firstMarketOrder();
+      for (uint256 i = 0; i < _index && current.id != 0; i++) {
+        current = orderbook.get(current.next);
+      }      
+    }
     require(current.id != 0, "invalid index");
     return(
       current.id,

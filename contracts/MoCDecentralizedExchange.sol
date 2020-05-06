@@ -423,25 +423,7 @@ for the execution of a tick of a given pair
 */
   function movePendingOrdersStepFunction(bytes32 _groupId, bytes32, uint256) private returns (bool shouldKeepGoing) {
     MoCExchangeLib.Pair storage pair = getTokenPair(_groupId);
-    assert(pair.tickStage == MoCExchangeLib.TickStage.MOVING_PENDING_ORDERS);
-    // Cannot return shouldKeepGoing based on movedBuyOrder to avoid DOS attacks where someone
-    // inserts new pending orders as soon as we finished inserting the other orders
-    bool movedBuyOrder = MoCExchangeLib.movePendingOrderFrom(
-      pair.baseToken,
-      pair.pageMemory,
-      address(pair.baseToken.token),
-      address(pair.secondaryToken.token),
-      true
-    );
-    if (!movedBuyOrder) {
-      MoCExchangeLib.movePendingOrderFrom(
-        pair.secondaryToken,
-        pair.pageMemory,
-        address(pair.baseToken.token),
-        address(pair.secondaryToken.token),
-        false
-      );
-    }
+    MoCExchangeLib.movePendingOrdersStepFunction(pair);
     return pendingSellOrdersLength(pair) != 0 || pendingBuyOrdersLength(pair) != 0;
   }
 
@@ -458,26 +440,15 @@ for the execution of a tick of a given pair
   }
 
   /**
-@notice Hook that gets triggered when the tick of a given pair finishes.
-@dev Marks the state of the tick as finished(it is receiving orders again),
-sets the nextTick configs and cleans the pageMemory
-@param _groupId Id that represent the group of tasks which should be done
-for the execution of a tick of a given pair
-*/
+  @notice Hook that gets triggered when the tick of a given pair finishes.
+  @dev Marks the state of the tick as finished(it is receiving orders again),
+  sets the nextTick configs and cleans the pageMemory
+  @param _groupId Id that represent the group of tasks which should be done
+  for the execution of a tick of a given pair
+  */
   function onTickFinish(bytes32 _groupId) private {
     MoCExchangeLib.Pair storage pair = getTokenPair(_groupId);
-    assert(pair.tickStage == MoCExchangeLib.TickStage.MOVING_PENDING_ORDERS);
-    pair.tickStage = MoCExchangeLib.TickStage.RECEIVING_ORDERS;
-    pair.tickState.nextTick(
-      address(pair.baseToken.token),
-      address(pair.secondaryToken.token),
-      tickConfig,
-      pair.pageMemory.emergentPrice,
-      pair.pageMemory.matchesAmount
-    );
-
-    // make sure nothing from this page is reused in the next
-    delete (pair.pageMemory);
+    MoCExchangeLib.onTickFinish(pair, tickConfig);
   }
 
   /**

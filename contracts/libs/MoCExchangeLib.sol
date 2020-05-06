@@ -275,7 +275,7 @@ library MoCExchangeLib {
       _reservedCommission,
       _multiplyFactor,
       _expiresInTick,
-      findPreviousMarketOrderToMultiplyFactor(self, priceOfMarketOrders(_exchangeableAmount, _multiplyFactor))
+      findPreviousMarketOrderToMultiplyFactor(self, _multiplyFactor)
     );
   }
 
@@ -292,6 +292,8 @@ library MoCExchangeLib {
     require(success, "Transfer failed");
     emit CommissionWithdrawn(token, commissionBeneficiary, amountToWithdraw);
   }
+
+  
   /**
     @notice Inserts an order in an orderbook with a hint
     @dev The type of the order is given implicitly by the data structure where it is saved
@@ -378,6 +380,29 @@ library MoCExchangeLib {
       _expiresInTick
     );
     positionOrderAsPending(self, _orderId);
+  }
+
+  /**
+  @notice Hook that gets triggered when the tick of a given pair finishes.
+  @dev Marks the state of the tick as finished(it is receiving orders again),
+  sets the nextTick configs and cleans the pageMemory
+  @param _pair The group of tokens
+  @param _tickConfig The tick configuration
+  for the execution of a tick of a given pair
+  */
+  function onTickFinish(Pair storage _pair, TickState.Config storage _tickConfig) public {
+    assert(_pair.tickStage == TickStage.MOVING_PENDING_ORDERS);
+    _pair.tickStage = TickStage.RECEIVING_ORDERS;
+    _pair.tickState.nextTick(
+      address(_pair.baseToken.token),
+      address(_pair.secondaryToken.token),
+      _tickConfig,
+      _pair.pageMemory.emergentPrice,
+      _pair.pageMemory.matchesAmount
+    );
+
+    // make sure nothing from this page is reused in the next
+    delete (_pair.pageMemory);
   }
 
   /**
@@ -1671,6 +1696,38 @@ If zero, will start from ordebook top.
     uint256 commissionToReturn = _reservedCommission.sub(chargedCommission);
     bool transferResult = SafeTransfer.doTransfer(_token, _account, _exchangeableAmount.add(commissionToReturn));
     return (transferResult, _exchangeableAmount, chargedCommission, commissionToReturn);
+  }
+
+  /**
+    @notice Moves an order from the pending queue to the orderbook
+    Has two discarded param; kept to have a fixed signature
+    @dev First it tries to move everything in the buy queue and then goes to the selling queue
+    Nevertheless always checks the buy order, no mather if we finished it already in case there is
+    a new buy order while we process the sell order.
+    It is important that this is the absolute LAST task of the ticks group
+    @param _pair The pair of tokens
+    @return True if there are still pending orders to move; false otherwise
+  */
+  function movePendingOrdersStepFunction(Pair storage _pair) public {
+    assert(_pair.tickStage == MoCExchangeLib.TickStage.MOVING_PENDING_ORDERS);
+    // Cannot return shouldKeepGoing based on movedBuyOrder to avoid DOS attacks where someone
+    // inserts new pending orders as soon as we finished inserting the other orders
+    bool movedBuyOrder = movePendingOrderFrom(
+      _pair.baseToken,
+      _pair.pageMemory,
+      address(_pair.baseToken.token),
+      address(_pair.secondaryToken.token),
+      true
+    );
+    if (!movedBuyOrder) {
+      movePendingOrderFrom(
+        _pair.secondaryToken,
+        _pair.pageMemory,
+        address(_pair.baseToken.token),
+        address(_pair.secondaryToken.token),
+        false
+      );
+    }
   }
 
   /**

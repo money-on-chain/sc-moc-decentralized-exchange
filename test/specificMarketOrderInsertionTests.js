@@ -2,8 +2,7 @@ const { expectRevert } = require('openzeppelin-test-helpers');
 const testHelperBuilder = require('./testHelpers/testHelper');
 
 const ERROR_MSG_POSITION_TOO_LOW = 'Market Order should go after';
-const ERROR_MSG_POSITION_TOO_HIGH = "Market Order should go before";
-const ERROR_MSG_NOT_BELONGING_TO_START = 'Multiply factor doesnt belong to start';
+const ERROR_MSG_POSITION_TOO_HIGH = 'Market Order should go before';
 const ERROR_MSG_PREVIOUS_ORDER_DOESNT_EXIST = 'PreviousOrder doesnt exist';
 
 describe('specific market order insertion tests', function() {

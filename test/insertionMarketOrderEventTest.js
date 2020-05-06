@@ -308,7 +308,7 @@ describe('Market Order insertion event tests', function() {
           );
         });
       });
-      describe('WHEN inserting a buy market order after a previous one with a giant lifespan', function() {
+      describe('WHEN inserting a less competitive buy market order with same multiplyFactor', function() {
         it('THEN it should revert', function() {
           return expectRevert(
             dex.insertMarketOrderAfter(
@@ -316,17 +316,17 @@ describe('Market Order insertion event tests', function() {
               secondary.address,
               wadify(3),
               pricefy(1.5),
-              INSERT_FIRST,
               2,
+              5,
               true,
               {
                 from
               }
             ),
-            'Multiply factor doesnt belong to start'
+            'Market Order should go after'
           );
         });
-      });      
+      });
       describe('AND WHEN inserting a buy market order after a previous one', function() {
         before(async function() {
           tx = await dex.insertMarketOrderAfter(
