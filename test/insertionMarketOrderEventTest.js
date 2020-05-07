@@ -112,6 +112,79 @@ describe('Market Order insertion event tests', function() {
   });
 
   contract('Dex', accounts => {
+    describe('WHEN inserting a buy market order at start', function() {
+      before(async function() {
+        await initContractsAndAllowance(accounts);
+        tx = await dex.insertMarketOrder(
+          base.address,
+          secondary.address,
+          wadify(10),
+          pricefy(1.8),
+          10,
+          true,
+          {
+            from
+          }
+        );
+      });
+      it('THEN the event is emitted for the buy order', function() {
+        assertNewOrderEvent({ isBuy: true, expiresInTick: '11' }, () => ({
+          tx,
+          baseAddress: base.address,
+          secondaryAddress: secondary.address,
+          MoCDex: testHelper.getMoCDex()
+        }));
+      });
+    });
+    describe('AND WHEN inserting a buy order at start with too much lifespan', function() {
+      it('THEN it should revert', function() {
+        return expectRevert(
+          dex.insertMarketOrder(
+            base.address,
+            secondary.address,
+            wadify(10),
+            pricefy(1.8),
+            33,
+            true,
+            {
+              from
+            }
+          ),
+          'Lifespan too high'
+        );
+      });
+    });
+    describe('AND WHEN inserting a buy order at start with 0 exchangeableAmount', function() {
+      it('THEN it should revert', function() {
+        return expectRevert(
+          dex.insertMarketOrder(
+            base.address,
+            secondary.address,
+            wadify(0),
+            pricefy(1.8),
+            10,
+            true,
+            {
+              from
+            }
+          ),
+          'Exchangeable amount cannot be zero'
+        );
+      });
+    });
+    describe('AND WHEN inserting a buy order at start with 0 multiplyFactor', function() {
+      it('THEN it should revert', function() {
+        return expectRevert(
+          dex.insertMarketOrder(base.address, secondary.address, wadify(10), pricefy(0), 10, true, {
+            from
+          }),
+          'MultiplyFactor cannot be zero'
+        );
+      });
+    });
+  });
+
+  contract('Dex', accounts => {
     describe('WHEN inserting a sell market order', function() {
       before(async function() {
         await initContractsAndAllowance(accounts);
@@ -196,7 +269,88 @@ describe('Market Order insertion event tests', function() {
     });
   });
 
-  contract('Dex sell market orders', accounts => {
+  contract('Dex', accounts => {
+    describe('WHEN inserting a sell market order at start', function() {
+      before(async function() {
+        await initContractsAndAllowance(accounts);
+        tx = await dex.insertMarketOrder(
+          base.address,
+          secondary.address,
+          wadify(10),
+          pricefy(0.8),
+          10,
+          false,
+          {
+            from
+          }
+        );
+      });
+      it('THEN an event is emitted for the buy market order', function() {
+        assertNewOrderEvent({ isBuy: false, expiresInTick: '11' }, () => ({
+          tx,
+          baseAddress: base.address,
+          secondaryAddress: secondary.address,
+          MoCDex: testHelper.getMoCDex()
+        }));
+      });
+    });
+    describe('AND WHEN inserting a buy market order at start with too much lifespan', function() {
+      it('THEN it should revert', function() {
+        return expectRevert(
+          dex.insertMarketOrder(
+            base.address,
+            secondary.address,
+            wadify(10),
+            pricefy(0.8),
+            55,
+            false,
+            {
+              from
+            }
+          ),
+          'Lifespan too high'
+        );
+      });
+    });
+    describe('AND WHEN inserting a buy market at start order with 0 exchangeableAmount', function() {
+      it('THEN it should revert', function() {
+        return expectRevert(
+          dex.insertMarketOrder(
+            base.address,
+            secondary.address,
+            wadify(0),
+            pricefy(0.8),
+            10,
+            false,
+            {
+              from
+            }
+          ),
+          'Exchangeable amount cannot be zero'
+        );
+      });
+    });
+    describe('AND WHEN inserting a buy market order at start with 0 multiplyFactor', function() {
+      it('THEN it should revert', function() {
+        return expectRevert(
+          dex.insertMarketOrder(
+            base.address,
+            secondary.address,
+            wadify(10),
+            pricefy(0),
+            10,
+            false,
+            {
+              from
+            }
+          ),
+          'MultiplyFactor cannot be zero'
+        );
+      });
+    });
+  });
+
+  contract('Dex', accounts => {
     describe('WHEN inserting a sell market order after a previous one', function() {
       before(async function() {
         await initContractsAndAllowance(accounts);
@@ -204,7 +358,7 @@ describe('Market Order insertion event tests', function() {
           base.address,
           secondary.address,
           wadify(5),
-          pricefy(1.5),
+          pricefy(1.3),
           INSERT_FIRST,
           5,
           false,
@@ -212,24 +366,22 @@ describe('Market Order insertion event tests', function() {
             from
           }
         );
-        await dex.insertMarketOrderAfter(
+        await dex.insertMarketOrder(
           base.address,
           secondary.address,
           wadify(5),
-          pricefy(1.5),
-          INSERT_FIRST,
+          pricefy(1.6),
           5,
           false,
           {
             from
           }
         );
-        await dex.insertMarketOrderAfter(
+        await dex.insertMarketOrder(
           base.address,
           secondary.address,
           wadify(5),
-          pricefy(1.5),
-          INSERT_FIRST,
+          pricefy(1.6),
           5,
           false,
           {
@@ -240,8 +392,8 @@ describe('Market Order insertion event tests', function() {
           base.address,
           secondary.address,
           wadify(10),
-          pricefy(1.5),
-          INSERT_FIRST,
+          pricefy(1.4),
+          1,
           5,
           false,
           {
@@ -276,12 +428,11 @@ describe('Market Order insertion event tests', function() {
             from
           }
         );
-        await dex.insertMarketOrderAfter(
+        await dex.insertMarketOrder(
           base.address,
           secondary.address,
           wadify(3),
           pricefy(1.6),
-          INSERT_FIRST,
           5,
           true,
           {

@@ -5,7 +5,6 @@ let testHelper;
 let wadify;
 let pricefy;
 let DEFAULT_ACCOUNT_INDEX;
-let INSERT_FIRST;
 const LIFESPAN = 5;
 
 describe('Unordered market order insertion tests', function() {
@@ -30,7 +29,6 @@ describe('Unordered market order insertion tests', function() {
     ]);
     await testHelper.setBalancesAndAllowances({ accounts });
     dex = await testHelper.decorateGetOrderAtIndex(dex);
-    INSERT_FIRST = await dex.INSERT_FIRST.call();
   };
 
   contract('Unordered insertion of 10 sell orders', function(accounts) {
@@ -40,12 +38,11 @@ describe('Unordered market order insertion tests', function() {
         await [...Array(10).keys()].reduce(
           (acc, it) =>
             acc.then(() =>
-              dex.insertMarketOrderAfter(
+              dex.insertMarketOrder(
                 base.address,
                 secondary.address,
                 wadify(10),
                 pricefy(it + 0.1),
-                INSERT_FIRST,
                 LIFESPAN,
                 false,
                 {
@@ -79,12 +76,11 @@ describe('Unordered market order insertion tests', function() {
         await [...Array(10).keys()].reduce(
           (acc, it) =>
             acc.then(() =>
-              dex.insertMarketOrderAfter(
+              dex.insertMarketOrder(
                 base.address,
                 secondary.address,
                 wadify(10),
                 pricefy(2 - it / 10),
-                INSERT_FIRST,
                 LIFESPAN,
                 true,
                 {
@@ -118,12 +114,11 @@ describe('Unordered market order insertion tests', function() {
         await [...Array(10).keys()].reduce(
           (acc, it) =>
             acc.then(() =>
-              dex.insertMarketOrderAfter(
+              dex.insertMarketOrder(
                 base.address,
                 secondary.address,
                 wadify(10),
                 pricefy(1 + ((it % 5) + 1) / 10),
-                INSERT_FIRST,
                 LIFESPAN,
                 false,
                 {
@@ -159,12 +154,11 @@ describe('Unordered market order insertion tests', function() {
         await [...Array(10).keys()].reduce(
           (acc, it) =>
             acc.then(() =>
-              dex.insertMarketOrderAfter(
+              dex.insertMarketOrder(
                 base.address,
                 secondary.address,
                 wadify(10),
                 pricefy(1 + (((10 - it) % 5) + 1) / 10),
-                INSERT_FIRST,
                 LIFESPAN,
                 true,
                 {

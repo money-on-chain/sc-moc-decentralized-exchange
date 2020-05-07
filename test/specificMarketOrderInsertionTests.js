@@ -42,6 +42,91 @@ describe('specific market order insertion tests', function() {
 
   contract('insertion of 1 buy order in order 0 in an empty orderbook', function(accounts) {
     before(initContractsAndAllowance(accounts));
+    describe('GIVEN an empty buy orderbook', function() {
+      describe('WHEN inserting a buy market order in the orderbook', function() {
+        before(function() {
+          return dex.insertMarketOrder(pair[0], pair[1], wadify(2), pricefy(1.1), lifespan, true, {
+            from
+          });
+        });
+        it('THEN the buy orderbook length is updated accordingly', async function() {
+          testHelper.assertBig(
+            await dex.buyOrdersLength(...pair),
+            1,
+            'buy market orders length incorrect'
+          );
+        });
+        it('THEN it ends up ordered', async function() {
+          const order = await dex.getBuyOrderAtIndex(...pair, 0);
+          testHelper.assertBigWad(order.exchangeableAmount, 2, 'exchangeable amount');
+          testHelper.assertBigPrice(order.multiplyFactor, 1.1, 'multiply factor');
+        });
+      });
+    });
+  });
+
+  contract('Dex', function(accounts) {
+    describe('GIVEN 2 buy market orders inserted at start', function() {
+      before(async function() {
+        await initContractsAndAllowance(accounts)();
+        await dex.insertMarketOrder(pair[0], pair[1], wadify(5), pricefy(0.8), lifespan, true, {
+          from
+        });
+        await dex.insertMarketOrder(pair[0], pair[1], wadify(4), pricefy(0.9), lifespan, true, {
+          from
+        });
+      });
+      it('THEN the orderbook length is updated accordingly again', async function() {
+        testHelper.assertBig(await dex.buyOrdersLength(...pair), 2, 'sell orders length incorrect');
+      });
+      it('AND the first buy market order should be of 5 tokens', async function() {
+        const order = await dex.getBuyOrderAtIndex(...pair, 0);
+        testHelper.assertBigWad(order.exchangeableAmount, 4, 'exchangeable amount');
+        testHelper.assertBigPrice(order.multiplyFactor, 0.9, 'multiply factor');
+      });
+      it('AND the first buy market order should be of 4 tokens', async function() {
+        const order = await dex.getBuyOrderAtIndex(...pair, 1);
+        testHelper.assertBigWad(order.exchangeableAmount, 5, 'exchangeable amount');
+        testHelper.assertBigPrice(order.multiplyFactor, 0.8, 'multiply factor');
+      });
+      describe('WHEN inserting a buy market order first in the orderbook', function() {
+        before(async function() {
+          await dex.insertMarketOrder(pair[0], pair[1], wadify(3), pricefy(0.95), lifespan, true, {
+            from
+          });
+        });
+        it('THEN the buy orderbook ends up ordered', async function() {
+          const order = await dex.getBuyOrderAtIndex(...pair, 0);
+          testHelper.assertBigWad(order.exchangeableAmount, 3, 'exchangeable amount');
+          testHelper.assertBigPrice(order.multiplyFactor, 0.95, 'multiply factor');
+        });
+      });
+      it('WHEN trying to insert one before a more competitive one, THEN it reverts', async function() {
+        await expectRevert(
+          dex.insertMarketOrderAfter(pair[0], pair[1], wadify(3), pricefy(0.6), 2, lifespan, true, {
+            from
+          }),
+          ERROR_MSG_POSITION_TOO_LOW
+        );
+      });
+      it('WHEN trying to insert an order with a reference to a non-existent order, THEN it reverts', async function() {
+        await expectRevert(
+          dex.insertMarketOrderAfter(
+            pair[0],
+            pair[1],
+            wadify(4),
+            pricefy(0.6),
+            100,
+            lifespan,
+            true,
+            {
+              from
+            }
+          ),
+          ERROR_MSG_PREVIOUS_ORDER_DOESNT_EXIST
+        );
+      });
+    });
     describe('GIVEN an empty orderbook', function() {
       describe('WHEN inserting a market order first in the orderbook', function() {
         before(function() {
@@ -161,18 +246,9 @@ describe('specific market order insertion tests', function() {
     describe('GIVEN 1 sell order', function() {
       before(async function() {
         await initContractsAndAllowance(accounts)();
-        await dex.insertMarketOrderAfter(
-          pair[0],
-          pair[1],
-          wadify(2),
-          pricefy(1.2),
-          INSERT_FIRST,
-          lifespan,
-          false,
-          {
-            from
-          }
-        );
+        await dex.insertMarketOrder(pair[0], pair[1], wadify(2), pricefy(1.2), lifespan, false, {
+          from
+        });
       });
       it('WHEN trying to insert one after a less competitive one, THEN it reverts', async function() {
         await expectRevert(

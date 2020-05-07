@@ -340,6 +340,29 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
   }
 
   /**
+    @notice Inserts a market order at start in the buy orderbook of a given pair with a hint;
+    the pair should not be disabled; the contract should not be paused. Takes the funds
+    with a transferFrom
+    @param _baseToken the base token of the pair
+    @param _secondaryToken the secondary token of the pair
+    @param _exchangeableAmout The quantity of tokens to put in the orderbook
+    @param _multiplyFactor Maximum price to be paid [base/secondary]
+    @param _lifespan After _lifespan ticks the order will be expired and no longer matched, must be lower or equal than the maximum
+    @param _isBuy true if it is a buy market order
+    0 is considered as no hint and the smart contract must iterate
+  */
+  function insertMarketOrder(
+    address _baseToken,
+    address _secondaryToken,
+    uint256 _exchangeableAmout,
+    uint256 _multiplyFactor,
+    uint64 _lifespan,
+    bool _isBuy
+  ) public whenNotPaused {
+    insertMarketOrderAfter(_baseToken, _secondaryToken, _exchangeableAmout, _multiplyFactor, INSERT_FIRST, _lifespan, _isBuy);
+  }
+
+  /**
     @notice Inserts a market order in the buy orderbook of a given pair with a hint;
     the pair should not be disabled; the contract should not be paused. Takes the funds
     with a transferFrom
