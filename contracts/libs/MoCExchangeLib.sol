@@ -252,29 +252,29 @@ library MoCExchangeLib {
     @dev The type of the order is given implicitly by the data structure where it is saved
     @param self The data structure in where the order will be inserted
     @param _orderId Id of the order to be inserted
-    @param _sender Owner of the new order
     @param _exchangeableAmount Quantity of tokens to addd
     @param _reservedCommission Commission reserved to be charged later
     @param _multiplyFactor Target price of the order[base/secondary]
     @param _expiresInTick Number of tick in which the order can no longer be matched
+    @param _isBuy True if it is a buy market order
   */
   function insertMarketOrder(
     Data storage self,
     uint256 _orderId,
-    address _sender,
     uint256 _exchangeableAmount,
     uint256 _reservedCommission,
     uint256 _multiplyFactor,
-    uint64 _expiresInTick
+    uint64 _expiresInTick, 
+    bool _isBuy
   ) public {
     insertMarketOrder(
       self,
       _orderId,
-      _sender,
       _exchangeableAmount,
       _reservedCommission,
       _multiplyFactor,
       _expiresInTick,
+      _isBuy,
       findPreviousMarketOrderToMultiplyFactor(self, _multiplyFactor)
     );
   }
@@ -326,7 +326,6 @@ library MoCExchangeLib {
     @dev The type of the order is given implicitly by the data structure where it is saved
     @param self The data structure in where the order will be inserted
     @param _orderId Id of the order to be inserted
-    @param _sender Owner of the new order
     @param _exchangeableAmount Amount that was left to be exchanged
     @param _reservedCommission Commission reserved to be charged later
     @param _expiresInTick Number of tick in which the order can no longer be matched
@@ -335,16 +334,16 @@ library MoCExchangeLib {
   function insertMarketOrder(
     Data storage self,
     uint256 _orderId,
-    address _sender,
     uint256 _exchangeableAmount,
     uint256 _reservedCommission,
     uint256 _multiplyFactor,
     uint64 _expiresInTick,
+    bool _isBuy,
     uint256 _intendedPreviousOrderId
   ) public {
-    uint256 price = priceOfMarketOrders(_exchangeableAmount, _multiplyFactor);
+    uint256 price = priceOfMarketOrders(_multiplyFactor, _isBuy);
     validatePreviousMarketOrder(self, _multiplyFactor, _intendedPreviousOrderId);
-    createMarketOrder(self, _orderId, _sender, _exchangeableAmount, _reservedCommission, _multiplyFactor, price, _expiresInTick);
+    createMarketOrder(self, _orderId, msg.sender, _exchangeableAmount, _reservedCommission, _multiplyFactor, price, _expiresInTick);
     positionMarketOrder(self, _orderId, _intendedPreviousOrderId);
   }
 
@@ -444,6 +443,7 @@ library MoCExchangeLib {
     @param _reservedCommission Commission reserved to be charged later
     @param _multiplyFactor Multiply factor to compute the the price of a market order
     @param _expiresInTick Number of tick in which the order can no longer be matched
+    @param _isBuy True if it is a buy market other, false otherwise
   */
   function insertMarketOrderAsPending(
     Data storage self,
@@ -452,13 +452,14 @@ library MoCExchangeLib {
     uint256 _exchangeableAmount,
     uint256 _reservedCommission,
     uint256 _multiplyFactor,
-    uint64 _expiresInTick
+    uint64 _expiresInTick,
+    bool _isBuy
   ) public {
     self.orders[_orderId] = Order(
       OrderType.MARKET_ORDER,
       _orderId, _exchangeableAmount,
       _reservedCommission,
-      priceOfMarketOrders(_exchangeableAmount, _multiplyFactor),
+      priceOfMarketOrders(_multiplyFactor, _isBuy),
       _multiplyFactor,
       0,
       _sender,
@@ -881,7 +882,7 @@ library MoCExchangeLib {
 
   /**
     @notice returns the next valid Order for the given _orderbook
-    @dev gets the net Order, if not valid, recursivelly calls itself until finding the first valid or reaching the end
+    @dev gets the next Order, if not valid, recursivelly calls itself until finding the first valid or reaching the end
     @param _orderbook where the _orderId is from
     @param _tickNumber for current tick
     @param _orderId id of the order from with obtain the next one, zero if beginging
@@ -1060,7 +1061,7 @@ library MoCExchangeLib {
     require(_exchangeableAmount != 0, "Exchangeable amount cannot be zero");
 
     Token storage token = _isBuy ? _self.baseToken : _self.secondaryToken;
-    uint256 toTransfer = priceOfMarketOrders(_exchangeableAmount, _multiplyFactor).add(_reservedCommission);
+    uint256 toTransfer = _exchangeableAmount.mul(priceOfMarketOrders(_multiplyFactor, _isBuy)).add(_reservedCommission);
     
     //TODO: check why it is reverting with subraction in SafeMath
     require(token.token.transferFrom(_sender, address(this), toTransfer), "Token transfer failed");
@@ -1069,13 +1070,13 @@ library MoCExchangeLib {
     uint64 expiresInTick = _self.tickState.number + _lifespan;
     
     if (goesToPendingQueue) {
-      insertMarketOrderAsPending(token.orderbook, _id, _sender, _exchangeableAmount, _reservedCommission, _multiplyFactor, expiresInTick);
+      insertMarketOrderAsPending(token.orderbook, _id, _sender, _exchangeableAmount, _reservedCommission, _multiplyFactor, expiresInTick, _isBuy);
       emit NewOrderAddedToPendingQueue(_id, 0);
     } else {
       if (_previousOrderIdHint == INSERT_FIRST) {
-        insertMarketOrder(token.orderbook, _id, _sender, _exchangeableAmount, _reservedCommission, _multiplyFactor, expiresInTick);
+        insertMarketOrder(token.orderbook, _id, _exchangeableAmount, _reservedCommission, _multiplyFactor, expiresInTick, _isBuy);
       } else {
-        insertMarketOrder(token.orderbook, _id, _sender, _exchangeableAmount, _reservedCommission,  _multiplyFactor, expiresInTick, _previousOrderIdHint);
+        insertMarketOrder(token.orderbook, _id, _exchangeableAmount, _reservedCommission,  _multiplyFactor, expiresInTick, _isBuy, _previousOrderIdHint);
       }
       emitNewOrderEvent(_id, _self, _sender, _exchangeableAmount, _reservedCommission, _multiplyFactor, expiresInTick, _isBuy, true);
     }
@@ -1095,14 +1096,18 @@ library MoCExchangeLib {
 
   /**
     @notice Computes the prices of a market order
-    @param _exchangeableAmount quantity of tokens
-    @param _multiplyFactor factor
+    @param _multiplyFactor multiplyFactor
+    @param _isBuy true if it is a buy order, false otherwise.
     @return price
    */
-  function priceOfMarketOrders(uint256 _exchangeableAmount, uint256 _multiplyFactor) public pure returns (uint256) {
+  function priceOfMarketOrders(uint256 _multiplyFactor, bool _isBuy) public pure returns (uint256) {
     //TODO: get price from last tick or oracle
-    uint256 HARDCODE_PRICE = 1;
-    return _exchangeableAmount.mul(_multiplyFactor).mul(HARDCODE_PRICE).div(RATE_PRECISION);
+    uint256 HARDCODED_BUY_PRICE = 1;
+    uint256 HARDCODED_SELL_PRICE = 2;
+    if (_isBuy){
+      return _multiplyFactor.mul(HARDCODED_BUY_PRICE).div(RATE_PRECISION);
+    }
+    return _multiplyFactor.mul(HARDCODED_SELL_PRICE).div(RATE_PRECISION);
   }
 
   /**

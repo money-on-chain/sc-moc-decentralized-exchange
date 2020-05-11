@@ -386,7 +386,7 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     bool _isBuy
   ) public whenNotPaused {
     MoCExchangeLib.Pair storage pair = getTokenPair(_baseToken, _secondaryToken);
-    uint256 totalPrice = MoCExchangeLib.priceOfMarketOrders(_exchangeableAmout, _multiplyFactor);
+    uint256 totalPrice = MoCExchangeLib.priceOfMarketOrders(_multiplyFactor, _isBuy);
     uint256 initialFee = commissionManager.calculateInitialFee(totalPrice);
     pair.doInsertMarketOrder(
       nextId(),
