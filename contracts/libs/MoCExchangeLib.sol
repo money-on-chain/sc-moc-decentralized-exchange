@@ -889,11 +889,40 @@ library MoCExchangeLib {
     @return next valid Order, id = 0 if no valid order found
    */
   function getNextValidOrder(Data storage _orderbook, uint64 _tickNumber, uint256 _orderId) public view returns (Order storage) {
-    Order storage next = _orderId == 0 ? first(_orderbook) : getNext(_orderbook, _orderId);
+    Order storage next = _orderId == 0 ? getFirstOrder(_orderbook) : getNext(_orderbook, _orderId);
     if (next.id == 0 || !isExpired(next, _tickNumber)) return next;
     else return getNextValidOrder(_orderbook, _tickNumber, next.id);
   }
 
+    /**
+    @notice returns the first valid order
+    @dev gets the first valid order (LimitOrder or MarketOrder)
+    @param _orderbook where the _orderId is from
+    @return next valid Order, id = 0 if no valid order found
+   */
+  function getFirstOrder(Data storage _orderbook) public view returns (Order storage) {
+    Order storage firstLimitOrder = first(_orderbook);
+    Order storage firstMarketOrder = firstMarketOrder(_orderbook);
+    //Both are empty. Return first LO empty order
+    if (firstLimitOrder.id == 0 && firstMarketOrder.id == 0){
+      return firstLimitOrder;
+    }
+    //There is only a Limit Order
+    else if (firstLimitOrder.id != 0 && firstMarketOrder.id == 0){
+      return firstLimitOrder;
+    }
+    //There is only a Market Order
+    else if (firstLimitOrder.id == 0 && firstMarketOrder.id != 0){
+      return firstMarketOrder;
+    }
+    //There is a Limit and a Market order. We use priceGoesBefore
+    else {
+      if (priceGoesBefore(_orderbook, firstLimitOrder.price, firstMarketOrder.price)){
+        return firstLimitOrder;
+      }
+      return firstMarketOrder;
+    }
+  }
   /**
     @notice Returns the order following an order which id is _id in a given orderbook/pendingQueue container(self)
     @param self Container of the orderbook
