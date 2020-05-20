@@ -20,7 +20,9 @@
 
 # Introduction
 
-This set of smart contracts implements a system where the users are able to exchange their ERC20 tokens present in the deployed network. In this exchange the orders can be inserted anytime but the actual exchanges happen at almost regular intervals, until that moment the funds are in custody of the system.
+This set of smart contracts implements a system where the users are able to exchange their ERC20 tokens. The orders can be inserted anytime but the actual exchanges happen at almost regular intervals, until that moment the funds are in custody of the system.
+
+You can learn [how to integrate your apps to the platform here](integration-to-TEX.md).
 
 # Main Concepts
 
