@@ -23,7 +23,7 @@
 
 TEX is decentralized token exchange for the trading of [ERC-20 tokens](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md) tokens on the RSK Blockchain and is based on **[Orderbooks (OB)](#orderbook)** and periodic **ticks**. 
 
-The users insert **orders** in the orderbook between **ticks** and every regular interval of time the match process is executed and to close the operations. The founds are in custody of the system until the match process finishes.
+The users insert **orders** in the orderbook between **ticks** and every regular interval of time the match process is executed and to close the operations. The funds are in custody of the system until the match process finishes.
 
 ## Tokens Pair
 
@@ -43,7 +43,7 @@ Limit Orders (LO from now on) are defined by an **amount** and the **price** to 
 
 
 ### Price
-The price is always expresed in how much minimum units of **base token** is being paid/charged for a minimum unit of the **secondary token**. 
+The price is always expressed in how much minimum units of **base token** is being paid/charged for a minimum unit of the **secondary token**. 
 
 The price may not be the actual price in which the order matches but it is rather a limit. 
 - In case of **Buy LO** the price is an upper limit of how much the user will be paying.
@@ -79,8 +79,6 @@ Using unsigned int256 as the norm for all values, sets an upper limit to ~76 dec
 - A bitcoin-collateralized stable-coin, Dollar On Chain, (DoC)
 - A passive income hodler-targeted token, BitPro (BPRO)
 - A leveraged Bitcoin investment instrument (RIFX series).
-
-[TODO] HABLAR DE RIF Y PONERR LAS ADDRESSES
 
 You can find more info on the RIF token and decentralized economies [here](https://www.rifos.org/).
 
@@ -132,7 +130,7 @@ This amount already includes the **commission charged** so the amount to be exch
 
 #### The price parameter
 
-The price is always expresed in how much minimum units of **base token** is being paid for a minimum unit of the **secondary token**. The price is an upper limit of how much the user will be paying.
+The price is always expressed in how much minimum units of **base token** is being paid for a minimum unit of the **secondary token**. The price is an upper limit of how much the user will be paying.
 
 #### The lifespan parameter
 
@@ -159,13 +157,13 @@ To know if this is the case you can ask to **MoCDecentralizedExchange** if it's 
 
 #### You sent too low amount:
 
-It reverts if the amount is not valid given a maximum in common base token currency and the error message will be "amount is not enough". [TODO: COMENTAR DE DONDE SE SACA ESTE MINIMO]
+It reverts if the amount is not valid given a maximum in common base token currency and the error message will be "amount is not enough".
 
 If the transaction reverts, all your funds will be returned (except the fee paid to the network). 
 
 #### You sent too high lifespan:
 
-If the lifespan is not valid given a maximum value then it reverts and sends the error message will be "Lifespan too high". [TODO: COMENTAR DE DONDE SE SACA ESTE LIFESPAN]
+If the lifespan is not valid given a maximum value then it reverts and sends the error message will be "Lifespan too high".
 
 If the transaction reverts, all your funds will be returned (except the fee paid to the network). 
 
@@ -174,6 +172,9 @@ If the transaction reverts, all your funds will be returned (except the fee paid
 If the price is zero, it reverts and sends the error message will be "Price cannot be zero".
 
 If the transaction reverts, all your funds will be returned (except the fee paid to the network). 
+
+#### Pair token does not exist
+The token pair must exist in TEX platform. If a pair of base and secondary token does not exist, the transaction reverts with the message: "Token pair does not exist".
 
 #### Pair token is disabled:
 
@@ -291,7 +292,7 @@ contract YourInsertOrder {
 }
 ```
 
-And that is it, the only thing left to do is to add in the [truffle migrations](https://www.trufflesuite.com/docs/truffle/getting-started/running-migrations) scripts the address to MoC and BPro when deploying YourMintingBproContract and you are done.
+And that is it, the only thing left to do is to add in the [truffle migrations](https://www.trufflesuite.com/docs/truffle/getting-started/running-migrations) scripts the address to MoC and BPro when deploying YourInsertOrder and you are done.
 ​​
 ## Inserting a Sell Order
 
@@ -335,7 +336,7 @@ This amount already includes the **commission charged** so the amount to be exch
 
 #### The price parameter
 
-The price is always expresed in how much minimum units of **base token** is being paid for a minimum unit of the **secondary token**. The price is an lower limit of how much will be charging.
+The price is always expressed in how much minimum units of **base token** is being paid for a minimum unit of the **secondary token**. The price is an lower limit of how much will be charging.
 
 #### The lifespan parameter
 
@@ -362,13 +363,13 @@ To know if this is the case you can ask to **MoCDecentralizedExchange** if it's 
 
 #### You sent too low amount:
 
-It reverts if the amount is not valid given a maximum in common base token currency and the error message will be "amount is not enough". [TODO: COMENTAR DE DONDE SE SACA ESTE MINIMO]
+It reverts if the amount is not valid given a maximum in common base token currency and the error message will be "amount is not enough".
 
 If the transaction reverts, all your funds will be returned (except the fee paid to the network). 
 
 #### You sent too high lifespan:
 
-If the lifespan is not valid given a maximum value then it reverts and sends the error message will be "Lifespan too high". [TODO: COMENTAR DE DONDE SE SACA ESTE LIFESPAN]
+If the lifespan is not valid given a maximum value then it reverts and sends the error message will be "Lifespan too high".
 
 If the transaction reverts, all your funds will be returned (except the fee paid to the network). 
 
@@ -377,6 +378,9 @@ If the transaction reverts, all your funds will be returned (except the fee paid
 If the price is zero, it reverts and sends the error message will be "Price cannot be zero".
 
 If the transaction reverts, all your funds will be returned (except the fee paid to the network). 
+
+#### Pair token does not exist
+The token pair must exist in TEX platform. If a pair of base and secondary token does not exist, the transaction reverts with the message: "Token pair does not exist".
 
 #### Pair token is disabled:
 
@@ -494,10 +498,196 @@ contract YourInsertOrder {
 }
 ```
 
-And that is it, the only thing left to do is to add in the [truffle migrations](https://www.trufflesuite.com/docs/truffle/getting-started/running-migrations) scripts the address to MoC and BPro when deploying YourMintingBproContract and you are done.
-
 # Canceling an Order
-[TODO] WRITE
+
+In this tutorial the functions that is of interest to us are two:
+```js
+function cancelBuyOrder(
+  address _baseToken,
+  address _secondaryToken, 
+  uint256 _orderId, 
+  uint256 _previousOrderIdHint) public
+```
+```js
+function cancelSellOrder(
+  address _baseToken, 
+  address _secondaryToken, 
+  uint256 _orderId, 
+  uint256 _previousOrderIdHint) public
+```
+### Parameters of the operation
+
+#### The baseToken parameter
+Is the address of the contract used to implement the ERC-20 base token. You can find more about 
+the current supported tokens [here](#current-tokens).
+
+#### The secondaryToken parameter
+
+Is the address of the contract used to implement the ERC-20 secondary token. You can find more about the current supported tokens [here](#current-tokens). 
+
+The token pair must exist in the TEX platform because it defines the precisions to use in _price_ and _amout_ parameter.
+
+#### The orderId parameter
+Order id to cancel. It is an positive integer value.
+
+#### The previousOrderIdHint parameter
+
+It is previous order ID in the orderbook, used as on optimization to search for. It is a positive integer value.
+
+#### Gas limit and gas price
+
+This two values are a parameter of the transaction, this is not used in the contract and it is usually managed by your wallet(you should read about them if you are developing and you don't know exactly what are they) but you should take them into account when trying to send all of your funds to mint some BitPros.
+
+### Possible failures
+
+This operation may fail if one of the following scenarios occurs:
+
+#### The TEX contract is paused:
+
+If the system suffers some type of attack, the contract can be paused so that operations cannot be done and the risk of the users losing their funds with the operation can be minimized. You can get more information about stoppables contracts [here](https://github.com/money-on-chain/Areopagus-Governance/blob/develop/contracts/Stopper/Stoppable.sol)
+In that state, the contract doesn't allow minting any type of token.
+
+To know if this is the case you can ask to **MoCDecentralizedExchange** if it's **paused()**.
+
+#### The Tick is Running:
+
+The system runs a new tick, that is, it processes the buy and sell orders at regular intervals of time. Orders cannot be canceled while this process is running. If you try to do it then the transaction will reverts and the error message will be "Tick is running".
+
+To know if this is the case you can ask to **MoCDecentralizedExchange** calling the following function that returns **true** if tick is running or **false** otherwise.
+
+```js
+function tickIsRunning(address _baseToken, address _secondaryToken) public view returns (bool)
+```
+#### Pair token does not exist
+The token pair must exist in TEX platform. If a pair of base and secondary token does not exist, the transaction reverts with the message: "Token pair does not exist".
+
+#### Pair token is disabled:
+
+The token pair can be enabled or disabled. If it is disabled, the transaction reverts with the message: "Pair has been disabled".
+
+#### Order not found:
+
+If the orderId does not exist in TEX, the transaction reverts with the message: "Order not found".
+
+#### Not authorized to cancel orders.
+
+Only the owner, the user who created the order, can cancel an order. If another user try to cancel then the transaction reverts with the message: "Not order owner".
+
+#### Not enough gas:
+
+If the gas limit sent is not enough to run all the code needed to execute the transaction, the transaction will revert(again, returning all your funds except the fee paid to the network). This may return an "out of gas" error or simply a "revert" error because of the usage of the proxy pattern.
+
+### How-to
+
+In the following sections we will give some code on how this can be done through a Smart Contract or directly, with a console or with an app.
+​
+#### Smart Contract​
+​
+To create a new Smart Contract that uses the TEX platform, you can use any language and IDE you want. In this tutorial, we will show you how to do it using [Solidity language](https://solidity.readthedocs.io/en/v0.5.8/), [Truffle Framework](https://www.trufflesuite.com/) and [NPM](https://www.npmjs.com/).
+Truffle framework offers some template projects that you can use to develop applications that use smart contracts. You can get more information [here](https://www.trufflesuite.com/boxes).
+Assuming you already have your project up and running (if you don't, please follow [this link](https://github.com/money-on-chain/sc-moc-decentralized-exchange/blob/develop/README.md)) the only extra thing you need to do is to install our repo as a dependency in your NPM project. In order you need to do this you just need to run the following command.
+​
+
+```
+npm install --save -E git+https://github.com/money-on-chain/sc-moc-decentralized-exchange.git
+```
+
+​Having done that lets you use our contract as a dependency to your contract. For this let's suppose you are doing some kind of contract that when executing a certain task charges a fixed commission.
+​
+You just have to import the contract **MoCDecentralizedExchange** contract
+​
+
+```js
+import "decentralized-exchange-sc/contracts/MoCDecentralizedExchange.sol";
+```
+
+Receive the address in the constructor in order to be able to interact with it later
+
+```js
+constructor (MoCDecentralizedExchange _texContract, rest of your params...) {
+//....rest of your constructor....
+}
+​
+```
+
+​You must know the addresses of the tokens that you want to use
+
+```js
+address constant private docAddress = 0xE0f5206BBD039e7b0592d8918820024e2a7437b9;
+address constant private rifAddress = 0x19F64674D8A5B4E652319F5e239eFd3bc969A1fE;
+​```
+
+```js
+function yourCancelBuyOrder(uint256 _orderId, uint256 _previousOrderIdHint) public {
+  yourCancelLogic(_orderId, _previousOrderIdHint);
+  tex.cancelBuyOrder(docAddress, rifAddress, _orderId, _previousOrderIdHint);
+}
+```
+
+​You can send it immediately to you so you can start using it right away. In order to do this you should add a few more lines similar to the ones before, only that you will have to use the bpro token.
+​
+This will leave you with a contract similar to the following
+​​
+```js
+pragma solidity 0.5.8;
+
+import "openzeppelin-eth/contracts/token/ERC20/IERC20.sol";
+import "openzeppelin-eth/contracts/math/SafeMath.sol";
+import "openzeppelin-eth/contracts/math/Math.sol";
+import "decentralized-exchange-sc/contracts/MoCDecentralizedExchange.sol";
+
+contract YourCancelOrder {
+    using SafeMath for uint256;
+    MoCDecentralizedExchange public tex;
+    address public baseTokenAddress;
+    address public secondaryTokenAddress;
+    address public commissionAddress;
+    uint256 public sellOperations = 0;
+    uint256 public totalAmountOfSellWithoutCommissions = 0;
+    uint256 public canceledOrders = 0;
+
+    constructor(
+        MoCDecentralizedExchange _tex, 
+        address _base,
+        address _secondary,
+        address _commissionAddress
+        ) public {
+        tex = _tex;
+        baseTokenAddress = _base;
+        secondaryTokenAddress = _secondary;
+        commissionAddress = _commissionAddress;
+    }    
+
+    function yourInsertSellOrderFirst(uint256 _amount, uint256 _price, uint64 _lifespan) public {     
+        IERC20 base = IERC20(secondaryTokenAddress);
+        //Calc and transfer your commissions.
+        uint256 commissions = calcCommissions(_amount);
+        bool success = base.transfer(commissionAddress, commissions);
+        require(success, "Commission transfer failed");
+        
+        //Insert the new buy order at start
+        tex.insertSellOrder(
+            baseTokenAddress,
+            secondaryTokenAddress,
+            _amount.sub(commissions),
+            _price,
+            _lifespan);      
+
+        //Saves information to platform  
+        totalAmountOfSellWithoutCommissions.add(_amount);
+        sellOperations.add(1);
+    }
+
+    function yourCancelBuyOrder(uint256 _orderId, uint256 _previousOrderIdHint) public {
+      canceledOrders.add(1);
+      tex.cancelBuyOrder(baseTokenAddress, secondaryTokenAddress, _orderId, _previousOrderIdHint);
+    }
+
+    function calcCommissions(uint256 _amount) public view returns (uint256) {
+        return _amount.div(100);
+    }
+}
+```
 
 # From outside the blockchain
 
@@ -608,7 +798,7 @@ You can use the technology that suits you best for your project to integrate wit
 
 ## Official TEX ABIS
 
-In the TEX repository you can find the [official ABIs of the platform](PONER LINK A LA PLATAFORMA). You can use them to build your own decentralized applications to invoke the functions of smart contracts.
+In the TEX repository you can compile the [official project of the platform](https://github.com/money-on-chain/sc-moc-decentralized-exchange). You can use them to build your own decentralized applications to invoke the functions of smart contracts.
 
 We can also compile the contracts to generate the ABIS that will be saved in the _./build/contracts_
 dir. You can do this with the following commands:
@@ -645,7 +835,7 @@ In the following example we will show you how to find events that are emitted by
 
 
 ### Code example: Events
-[TODO] PONER CODIGO FUENTE DE EXCHANGE Y NO DE MOC.
+[TODO] Write test to use TEX.
 
 ```js
 const Web3 = require('web3');
@@ -672,9 +862,6 @@ const getWeb3 = network => {
 
 const web3 = getWeb3('rskTestnet');
 
-//Contract address on testnet
-const mocExchangeAddress = '<contract-address>';
-
 const execute = async () => {
   web3.eth.defaultGas = 2000000;
 
@@ -684,19 +871,6 @@ const execute = async () => {
    * @param {String} contractAddress
    */
   const getContract = async (abi, contractAddress) => new web3.eth.Contract(abi, contractAddress);
-
-  // Loading MoCExchange contract to get the events emitted by this
-  const mocExchange = await getContract(MocExchange.abi, mocExchangeAddress);
-  if (!mocExchange) {
-    throw Error('Can not find MoCExchange contract.');
-  }
-
-  // In this example we are getting BPro Mint events from MoCExchange contract
-  // in the interval of blocks passed by parameter
-  const getEvents = () =>
-    Promise.resolve(mocExchange.getPastEvents('RiskProMint', { fromBlock: 1000, toBlock: 1010 }))
-      .then(events => console.log(events))
-      .catch(err => console.log('Error getting past events ', err));
 
   await getEvents();
 };
@@ -715,15 +889,11 @@ See [getPastEvents](https://web3js.readthedocs.io/en/v1.2.0/web3-eth-contract.ht
 In the following example we will show how to insert an order in **testnet** with **truffle**.
 
 You can find code examples into _/examples_ dir.
-[TODO]: PONER SCRIPTS DE EXCHANGE
+[TODO]: Write test to use TEX
 
 ```js
 const BigNumber = require('bignumber.js');
 const Web3 = require('web3');
-//You must compile the smart contracts or use the official ABIs of the //repository
-const MocAbi = require('../../build/contracts/MoC.json');
-const MoCInrateAbi = require('../../build/contracts/MoCInrate.json');
-const MoCStateAbi = require('../../build/contracts/MoCState.json');
 const truffleConfig = require('../../truffle');
 
 /**
@@ -752,11 +922,6 @@ const getWeb3 = network => {
 const web3 = getWeb3('rskTestnet');
 const gasPrice = getGasPrice('rskTestnet');
 
-//Contract addresses on testnet
-const mocContractAddress = '<contract-address>';
-const mocInrateAddress = '<contract-address>';
-const mocStateAddress = '<contract-address>';
-
 const execute = async () => {
   web3.eth.defaultGas = 2000000;
 
@@ -772,60 +937,6 @@ const execute = async () => {
    * @param {BigNumber} number
    */
   const toContract = number => new BigNumber(number).toFixed(0);
-
-  // Loading moc contract
-  const moc = await getContract(MocAbi.abi, mocContractAddress);
-  if (!moc) {
-    throw Error('Can not find MoC contract.');
-  }
-
-  // Loading mocInrate contract. It is necessary to compute commissions
-  const mocInrate = await getContract(MoCInrateAbi.abi, mocInrateAddress);
-  if (!mocInrate) {
-    throw Error('Can not find MoC Inrate contract.');
-  }
-
-  // Loading mocState contract. It is necessary to compute max BPRO available to mint
-  const mocState = await getContract(MoCStateAbi.abi, mocStateAddress);
-  if (!mocState) {
-    throw Error('Can not find MoCState contract.');
-  }
-
-  const mintBpro = async btcAmount => {
-    web3.eth.getAccounts().then(console.log);
-    const [from] = await web3.eth.getAccounts();
-    const weiAmount = web3.utils.toWei(btcAmount, 'ether');
-    // Computes commision value
-    const commissionValue = new BigNumber(
-      await mocInrate.methods.calcCommissionValue(weiAmount).call()
-    );
-    // Computes totalBtcAmount to call mintBpro
-    const totalBtcAmount = toContract(commissionValue.plus(weiAmount));
-    console.log(`Calling Bpro minting with account: ${from} and amount: ${weiAmount}.`);
-    moc.methods
-      .mintBPro(weiAmount)
-      .send({ from, value: totalBtcAmount, gasPrice }, function(error, transactionHash) {
-        if (error) console.log(error);
-        if (transactionHash) console.log('txHash: '.concat(transactionHash));
-      })
-      .on('transactionHash', function(hash) {
-        console.log('TxHash: '.concat(hash));
-      })
-      .on('receipt', function(receipt) {
-        console.log(receipt);
-      })
-      .on('error', console.error);
-  };
-
-  // Gets max BPRO available to mint
-  const maxBproAvailable = await mocState.methods.maxMintBProAvalaible().call();
-  const bproPriceInRBTC = await mocState.methods.bproTecPrice().call();
-  console.log('=== Max Available BPRO: '.concat(maxBproAvailable.toString()));
-  console.log('=== BPRO in RBTC: '.concat(bproPriceInRBTC.toString()));
-  const btcAmount = '0.00001';
-
-  // Call mint
-  await mintBpro(btcAmount);
 };
 
 execute()
@@ -862,15 +973,12 @@ npm install --save truffle-hdwallet-provider
 
 Now we create a new script called **insertOrders.js** with the following code:
 
-[TODO] PONER SCRIPT PARA EXCHANGE
+[TODO] Write test to use TEX
 ```js
 const HDWalletProvider = require('truffle-hdwallet-provider');
 const BigNumber = require('bignumber.js');
 const Web3 = require('web3');
 //You must compile the smart contracts or use the official ABIs of the //repository
-const MocAbi = require('./contracts/moc/MoC.json');
-const MoCInrateAbi = require('./contracts/moc/MoCInrate.json');
-const MoCStateAbi = require('./contracts/moc/MoCState.json');
 
 //Config params to TestNet
 const endpoint = 'https://public-node.testnet.rsk.co';
@@ -880,9 +988,6 @@ const provider = new HDWalletProvider(mnemonic, endpoint);
 const web3 = new Web3(provider);
 
 //Contract addresses on testnet
-const mocContractAddress = '<contract-address>';
-const mocInrateAddress = '<contract-address>';
-const mocStateAddress = '<contract-address>';
 const gasPrice = 60000000;
 
 const execute = async () => {
@@ -899,56 +1004,9 @@ const execute = async () => {
    */
   const toContract = number => new BigNumber(number).toFixed(0);
 
-  // Loading moc contract
-  const moc = await getContract(MocAbi.abi, mocContractAddress);
-  if (!moc) {
-    throw Error('Can not find MoC contract.');
-  }
-
-  // Loading mocInrate contract. It is necessary to compute commissions
-  const mocInrate = await getContract(MoCInrateAbi.abi, mocInrateAddress);
-  if (!mocInrate) {
-    throw Error('Can not find MoC Inrate contract.');
-  }
-
-  // Loading mocState contract. It is necessary to compute max BPRO available to mint
-  const mocState = await getContract(MoCStateAbi.abi, mocStateAddress);
-  if (!mocState) {
-    throw Error('Can not find MoCState contract.');
-  }
-
-  const mintBpro = async btcAmount => {
-    web3.eth.getAccounts().then(console.log);
-    const from = '0x088f4B1313D161D83B4D8A5EB90905C263ce0DbD';
-    const weiAmount = web3.utils.toWei(btcAmount, 'ether');
-    // Computes commision value
-    const commissionValue = new BigNumber(
-      await mocInrate.methods.calcCommissionValue(weiAmount).call()
-    );
-    // Computes totalBtcAmount to call mintBpro
-    const totalBtcAmount = toContract(commissionValue.plus(weiAmount));
-    console.log(`Calling Bpro minting with account: ${from} and amount: ${weiAmount}.`);
-    const tx = moc.methods
-      .mintBPro(weiAmount)
-      .send({ from, value: totalBtcAmount, gasPrice }, function(error, transactionHash) {
-        if (error) console.log(error);
-        if (transactionHash) console.log('txHash: '.concat(transactionHash));
-      });
-
-    return tx;
-  };
-
   function logEnd() {
     console.log('End Example');
   }
-
-  // Gets max BPRO available to mint
-  const maxBproAvailable = await mocState.methods.maxMintBProAvalaible().call();
-  console.log('Max Available BPRO: '.concat(maxBproAvailable.toString()));
-  const btcAmount = '0.00005';
-
-  // Call mint
-  await mintBpro(btcAmount, logEnd);
 };
 
 execute()
@@ -979,16 +1037,13 @@ Let's add the necessary dependencies to run the project.
 ```
 npm install --save web3
 ```
-[TODO] PONER SCRIPT PARA EXCHANGE. 
+[TODO] Write test to use TEX 
 
 **Example**
 ```js
 const Web3 = require('web3');
 //You must compile the smart contracts or use the official ABIs of the //repository
 const MocAbi = require('../../build/contracts/MoC.json');
-const MoCInrateAbi = require('../../build/contracts/MoCInrate.json');
-const MoCStateAbi = require('../../build/contracts/MoCState.json');
-const BProTokenAbi = require('../../build/contracts/BProToken.json');
 const truffleConfig = require('../../truffle');
 
 /**
