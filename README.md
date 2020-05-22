@@ -55,7 +55,7 @@ The order can be executed partially too, i.e. an order can be matched with N ord
 
 An orderbook is a data structure where the orders are saved. There exists two orderbook for each pair, one for sell limit orders and the other for buy limit orders. Both have to be ordered by price at all times to minimize the gas paid in a tick. In particular, the buy orderbook has to be ordered with a descending price and the sell orderbook has to be ordered with an increasing price so the most competitive orders are at the start of it.
 
-There two orderbook also saves market orders. One of them for sell orders and the other for buy market orders. Both have to be ordered by **multiplyFactor** at all times to minimize the gas paid in a tick. The buy orderbook has to be ordered with a descending multiplyFactor and the sell orderbook has to be ordered with an increasing multiplyFactor so the most competitive orders are at the start of it.
+The two orderbooks also save market orders. One of them for sell orders and the other for buy market orders. Both have to be ordered by **multiplyFactor** at all times to minimize the gas paid in a tick. The buy orderbook has to be ordered with a descending multiplyFactor and the sell orderbook has to be ordered with an increasing multiplyFactor so the most competitive orders are at the start of it.
 
 ## Emergent price
 
