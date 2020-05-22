@@ -42,13 +42,13 @@ The order can be executed partially too, i.e. an order can be matched with N ord
 
 ## Market Orders
 
-Market Orders (MO from now on) are a type of orders defined by an exchangeable amount of tokens and the multiply factor to be used to compute the final price of the order. 
+Market Orders (MO from now on) are a type of orders defined by an **exchangeable amount** of tokens and the **multiply factor** to be used to compute the final price of the order. 
 The multiply factor allows determining the competitiveness of market orders and is used to calculate the price of the token: 
 ```
-Order Token Price = Last Tick Token Price * Multiply Factor
+Order Token Price = Market Price * Multiply Factor
 ```
-The last tick token price is always expresed in how much units of base currency is being paid/charged for a minimum unit of the secondary token. 
-In the other hand, the exchangeable amount is always the amount to be locked by the user , i.e. if the user is buying the exchangeable amount of the base token and if the user is selling the locking amount of the secondary token. 
+The market price is always expresed in how much units of base currency is being paid/charged for a minimum unit of the secondary token. 
+In the other hand, the exchangeable amount is the amount to be locked by the user minus fee , i.e. if the user is buying the exchangeable amount of the base token and if the user is selling the locking amount of the secondary token. 
 The order can be executed partially too, i.e. an order can be matched with N orders in M different ticks. The orders can be matched with limit and market orders.
 
 ## Orderbook
