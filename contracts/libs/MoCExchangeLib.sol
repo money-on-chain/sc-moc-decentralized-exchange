@@ -52,6 +52,7 @@ library MoCExchangeLib {
     @param price Target price of the order[base/secondary]
     @param expiresInTick Number of tick in which the order can no longer be matched
     @param isBuy The order is a buy order
+    @param orderType The order's type; LIMIT_ORDER or MARKET_ORDER
    */
   event NewOrderInserted(
     uint256 indexed id,
@@ -63,7 +64,7 @@ library MoCExchangeLib {
     uint256 price,
     uint64 expiresInTick,
     bool isBuy,
-    bool isMarketOrder
+    MoCExchangeLib.OrderType orderType
   );
 
   /**
@@ -1054,7 +1055,7 @@ library MoCExchangeLib {
       } else {
         insertOrder(token.orderbook, _id, _sender, _exchangeableAmount, _reservedCommission, _price, expiresInTick, _previousOrderIdHint);
       }
-      emitNewOrderEvent(_id, _self, _sender, _exchangeableAmount, _reservedCommission, _price, expiresInTick, _isBuy, false);
+      emitNewOrderEvent(_id, _self, _sender, _exchangeableAmount, _reservedCommission, _price, expiresInTick, _isBuy, OrderType.LIMIT_ORDER);
     }
   }
 
@@ -1107,7 +1108,7 @@ library MoCExchangeLib {
       } else {
         insertMarketOrder(token.orderbook, _id, _exchangeableAmount, _reservedCommission,  _multiplyFactor, expiresInTick, _isBuy, _previousOrderIdHint);
       }
-      emitNewOrderEvent(_id, _self, _sender, _exchangeableAmount, _reservedCommission, _multiplyFactor, expiresInTick, _isBuy, true);
+      emitNewOrderEvent(_id, _self, _sender, _exchangeableAmount, _reservedCommission, _multiplyFactor, expiresInTick, _isBuy, OrderType.MARKET_ORDER);
     }
   }  
 
@@ -1180,7 +1181,7 @@ library MoCExchangeLib {
     uint256 _price,
     uint64 _expiresInTick,
     bool _isBuy,
-    bool _isMarketOrder
+    OrderType _orderType
   ) private {
     emit NewOrderInserted(
       _orderId,
@@ -1192,7 +1193,7 @@ library MoCExchangeLib {
       _price,
       _expiresInTick,
       _isBuy,
-      _isMarketOrder
+      _orderType
     );
   }
 
@@ -1806,7 +1807,7 @@ If zero, will start from ordebook top.
       orderToMove.price,
       orderToMove.expiresInTick,
       isBuy,
-      false
+      OrderType.LIMIT_ORDER // TODO This is correct for now; but we might have to change it soon
     );
 
     positionOrder(_token.orderbook, orderToMove.id, previousOrderId);

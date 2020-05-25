@@ -80,7 +80,7 @@ describe('Tests related to the insertion of a market order', function() {
       expectEvent.inLogs(insertionBuyReceipt.logs, 'NewOrderInserted', {
         reservedCommission: expectedReservedCommission,
         exchangeableAmount: expectedExchangeableAmount,
-        isMarketOrder: true
+        orderType: testHelper.orderTypes.MARKET_ORDER
       });
     });
     it('AND the buy orderbook length is updated accordingly', async function() {
@@ -157,7 +157,7 @@ describe('Tests related to the insertion of a market order', function() {
       expectEvent.inLogs(insertionBuyReceipt.logs, 'NewOrderInserted', {
         reservedCommission: expectedReservedCommission,
         exchangeableAmount: expectedExchangeableAmount,
-        isMarketOrder: true
+        orderType: testHelper.orderTypes.MARKET_ORDER
       });
     });
     it('AND the orderbook length is updated accordingly', async function() {
@@ -387,14 +387,7 @@ describe('Tests related to the insertion of a market order', function() {
         for (i = 0; i < 10; i++) {
           // intentionally sequential
           // eslint-disable-next-line
-          await dex.insertMarketOrder(
-            pair[0],
-            pair[1],
-            wadify(10),
-            pricefy(1.4),
-            lifespan,
-            false,
-            {
+          await dex.insertMarketOrder(pair[0], pair[1], wadify(10), pricefy(1.4), lifespan, false, {
             from: accounts[DEFAULT_ACCOUNT_INDEX]
           });
         }

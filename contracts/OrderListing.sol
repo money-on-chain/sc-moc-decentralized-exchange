@@ -21,7 +21,7 @@ contract EventfulOrderListing {
     uint256 price,
     uint64 expiresInTick,
     bool isBuy,
-    bool isMarketOrder
+    MoCExchangeLib.OrderType orderType
   );
 
   /**
