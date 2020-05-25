@@ -19,6 +19,7 @@ contract TokenPairListing is ConfigurableTick, EventfulTokenPairListing {
   using MoCExchangeLib for MoCExchangeLib.Data;
   using TickState for TickState.Data;
   using MoCExchangeLib for MoCExchangeLib.Pair;
+  using MoCExchangeLib for MoCExchangeLib.OrderType;
   using SafeMath for uint256;
 
   // tokenPairAddresses stores the addresses of every listed pair
@@ -80,7 +81,11 @@ Emits an event
 @param _secondaryToken Address of the secondary token of the pair
 @param _smoothingFactor wad from 0 to 1 that represents the smoothing factor for EMA calculation
 */
-  function setTokenPairSmoothingFactor(address _baseToken, address _secondaryToken, uint256 _smoothingFactor) public onlyAuthorizedChanger {
+  function setTokenPairSmoothingFactor(
+    address _baseToken,
+    address _secondaryToken,
+    uint256 _smoothingFactor
+  ) public onlyAuthorizedChanger {
     MoCExchangeLib.Pair storage pair = getTokenPair(_baseToken, _secondaryToken);
     require(_smoothingFactor <= PRECISION_SMOOTHING_FACTOR, "Smoothing factor should be in relation to 1");
     pair.smoothingFactor = _smoothingFactor;
@@ -90,11 +95,15 @@ Emits an event
 @dev Sets the EMA Price for a specific token pair
 @param _baseToken Address of the base token of the pair
 @param _secondaryToken Address of the secondary token of the pair
-@param _EMAPrice The new EMA price for the token pair
+@param _emaPrice The new EMA price for the token pair
 */
-  function setTokenPairEMAPrice(address _baseToken, address _secondaryToken, uint256 _EMAPrice) public onlyAuthorizedChanger {
+  function setTokenPairEmaPrice(
+    address _baseToken,
+    address _secondaryToken,
+    uint256 _emaPrice
+  ) public onlyAuthorizedChanger {
     MoCExchangeLib.Pair storage pair = getTokenPair(_baseToken, _secondaryToken);
-    pair.EMAPrice = _EMAPrice;
+    pair.emaPrice = _emaPrice;
   }
 
   /**
@@ -106,17 +115,18 @@ or its inverse must not be listed already
 @param _priceComparisonPrecision Precision to be used in the pair price
 @param _initialPrice Price used initially until a new tick with matching orders is run
 */
-  function addTokenPair(address _baseToken, address _secondaryToken, uint256 _priceComparisonPrecision, uint256 _initialPrice)
-    public
-    onlyAuthorizedChanger()
-    isNewPairValid(_baseToken, _secondaryToken)
-  {
+  function addTokenPair(
+    address _baseToken,
+    address _secondaryToken,
+    uint256 _priceComparisonPrecision,
+    uint256 _initialPrice
+  ) public onlyAuthorizedChanger() isNewPairValid(_baseToken, _secondaryToken) {
     require(_initialPrice > 0, "initialPrice no zero");
     bytes32 pairIndex = hashAddresses(_baseToken, _secondaryToken);
     tokenPairAddresses.push([_baseToken, _secondaryToken]);
     tokenPairs[pairIndex] = MoCExchangeLib.Pair(
-      MoCExchangeLib.Token(MoCExchangeLib.Data(0, 0, 0, 0, 0, true), IERC20(_baseToken)),
-      MoCExchangeLib.Token(MoCExchangeLib.Data(0, 0, 0, 0, 0, false), IERC20(_secondaryToken)),
+      MoCExchangeLib.Token(MoCExchangeLib.Data(0, 0, 0, 0, 0, 0, 0, 0, 0, true), IERC20(_baseToken)),
+      MoCExchangeLib.Token(MoCExchangeLib.Data(0, 0, 0, 0, 0, 0, 0, 0, 0, false), IERC20(_secondaryToken)),
       // initialize TickState with the given Tick number and an nextTickBlock of blocksForTick after the current one
       TickState.Data(SafeMath.add(block.number, tickConfig.minBlocksForTick), 0, 0, 1),
       MoCExchangeLib.TickPaginationMemory(
@@ -124,8 +134,8 @@ or its inverse must not be listed already
         0,
         new uint256[](0),
         0,
-        MoCExchangeLib.Order(0, 0, 0, 0, 0, address(0), 0),
-        MoCExchangeLib.Order(0, 0, 0, 0, 0, address(0), 0)
+        MoCExchangeLib.Order(MoCExchangeLib.OrderType.LIMIT_ORDER, 0, 0, 0, 0, 0, 0, address(0), 0),
+        MoCExchangeLib.Order(MoCExchangeLib.OrderType.LIMIT_ORDER, 0, 0, 0, 0, 0, 0, address(0), 0)
       ),
       MoCExchangeLib.TickStage.RECEIVING_ORDERS,
       _priceComparisonPrecision,
@@ -147,7 +157,11 @@ or its inverse must not be listed already
   function getNextTick(address _baseToken, address _secondaryToken)
     public
     view
-    returns (uint64 tickNumber, uint256 nextTickBlock, uint256 lastTickBlock)
+    returns (
+      uint64 tickNumber,
+      uint256 nextTickBlock,
+      uint256 lastTickBlock
+    )
   {
     MoCExchangeLib.Pair storage pair = tokenPair(_baseToken, _secondaryToken);
     return (pair.tickState.number, pair.tickState.nextTickBlock, pair.tickState.lastTickBlock);
@@ -185,7 +199,11 @@ and it affects negatively other pairs that depend on this
 @param _secondaryToken Address of the secondary token of the pair
 @param _price New price to set[base/secondary]
 */
-  function setLastClosingPrice(address _baseToken, address _secondaryToken, uint256 _price) public onlyAuthorizedChanger {
+  function setLastClosingPrice(
+    address _baseToken,
+    address _secondaryToken,
+    uint256 _price
+  ) public onlyAuthorizedChanger {
     require(_price > 0, "The given initial price should be greater than 0");
     MoCExchangeLib.Pair storage pair = getTokenPair(_baseToken, _secondaryToken);
     pair.lastClosingPrice = _price;
@@ -210,7 +228,7 @@ and it affects negatively other pairs that depend on this
       uint256 lastTickBlock,
       uint256 lastClosingPrice,
       bool disabled,
-      uint256 EMAPrice,
+      uint256 emaPrice,
       uint256 smoothingFactor
     )
   {

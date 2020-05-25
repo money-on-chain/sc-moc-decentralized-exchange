@@ -5,7 +5,13 @@ import "../MoCDecentralizedExchange.sol";
 
 // This contract is a fake for testing porpouse, it is not mend to be deployed for use.
 contract MoCDexFake is MoCDecentralizedExchange {
-  function editOrder(address _baseToken, address _secondaryToken, uint256 _orderId, bool isBuy, uint64 _newExpiresInTick) external {
+  function editOrder(
+    address _baseToken,
+    address _secondaryToken,
+    uint256 _orderId,
+    bool isBuy,
+    uint64 _newExpiresInTick
+  ) external {
     MoCExchangeLib.Pair storage pair = getTokenPair(_baseToken, _secondaryToken);
 
     MoCExchangeLib.Order storage order = isBuy ? pair.baseToken.orderbook.get(_orderId) : pair.secondaryToken.orderbook.get(_orderId);
@@ -13,18 +19,42 @@ contract MoCDexFake is MoCDecentralizedExchange {
     order.expiresInTick = _newExpiresInTick;
   }
 
-  function getSellOrderAtIndex(address _baseToken, address _secondaryToken, uint256 _index)
+  function getSellOrderAtIndex(
+    address _baseToken,
+    address _secondaryToken,
+    uint256 _index
+  )
     external
     view
-    returns (uint256 id, address owner, uint256 exchangeableAmount, uint256 reservedCommission, uint256 price, uint256 next)
+    returns (
+      uint256 id,
+      address owner,
+      uint256 exchangeableAmount,
+      uint256 multiplyFactor,
+      uint256 reservedCommission,
+      uint256 price,
+      uint256 next
+    )
   {
     return iterateOrders(tokenPair(_baseToken, _secondaryToken).secondaryToken.orderbook, _index);
   }
 
-  function getBuyOrderAtIndex(address _baseToken, address _secondaryToken, uint256 _index)
+  function getBuyOrderAtIndex(
+    address _baseToken,
+    address _secondaryToken,
+    uint256 _index
+  )
     external
     view
-    returns (uint256 id, address owner, uint256 exchangeableAmount, uint256 reservedCommission, uint256 price, uint256 next)
+    returns (
+      uint256 id,
+      address owner,
+      uint256 exchangeableAmount,
+      uint256 multiplyFactor,
+      uint256 reservedCommission,
+      uint256 price,
+      uint256 next
+    )
   {
     return iterateOrders(tokenPair(_baseToken, _secondaryToken).baseToken.orderbook, _index);
   }
@@ -57,13 +87,35 @@ contract MoCDexFake is MoCDecentralizedExchange {
   function iterateOrders(MoCExchangeLib.Data storage orderbook, uint256 _index)
     internal
     view
-    returns (uint256, address, uint256, uint256, uint256, uint256)
+    returns (
+      uint256,
+      address,
+      uint256,
+      uint256,
+      uint256,
+      uint256,
+      uint256
+    )
   {
     MoCExchangeLib.Order memory current = orderbook.first();
     for (uint256 i = 0; i < _index && current.id != 0; i++) {
       current = orderbook.get(current.next);
     }
+    if (current.id == 0) {
+      current = orderbook.firstMarketOrder();
+      for (uint256 i = 0; i < _index && current.id != 0; i++) {
+        current = orderbook.get(current.next);
+      }
+    }
     require(current.id != 0, "invalid index");
-    return (current.id, current.owner, current.exchangeableAmount, current.reservedCommission, current.price, current.next);
+    return (
+      current.id,
+      current.owner,
+      current.exchangeableAmount,
+      current.multiplyFactor,
+      current.reservedCommission,
+      current.price,
+      current.next
+    );
   }
 }

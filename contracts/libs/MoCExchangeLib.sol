@@ -15,12 +15,18 @@ import {TickState} from "./TickState.sol";
 library MoCExchangeLib {
   using TickState for TickState.Data;
   using SafeMath for uint256;
-
+  uint256 constant RATE_PRECISION = uint256(10**18);
   /**
     @notice Posible types of a match depending on which order is filled
     @dev At least one order has to be filled in any match in our exchange
    */
   enum MatchType {BUYER_FILL, SELLER_FILL, DOUBLE_FILL}
+
+  /**
+    @notice Posible types of a match depending on which order is filled
+    @dev At least one order has to be filled in any match in our exchange
+   */
+  enum OrderType {LIMIT_ORDER, MARKET_ORDER}
 
   /**
     @notice Posible states of a tick. RECEIVING_ORDERS can be seen as the
@@ -46,6 +52,7 @@ library MoCExchangeLib {
     @param price Target price of the order[base/secondary]
     @param expiresInTick Number of tick in which the order can no longer be matched
     @param isBuy The order is a buy order
+    @param orderType The order's type; LIMIT_ORDER or MARKET_ORDER
    */
   event NewOrderInserted(
     uint256 indexed id,
@@ -56,8 +63,17 @@ library MoCExchangeLib {
     uint256 reservedCommission,
     uint256 price,
     uint64 expiresInTick,
-    bool isBuy
+    bool isBuy,
+    MoCExchangeLib.OrderType orderType
   );
+
+  /**
+    @notice All the charged commission for a given token was withdrawn
+    @param token The address of the withdrawn tokens
+    @param commissionBeneficiary Receiver of the tokens
+    @param withdrawnAmount Amount that was withdrawn
+   */
+  event CommissionWithdrawn(address token, address commissionBeneficiary, uint256 withdrawnAmount);
 
   /**
     @notice A new order has been inserted in the pending queue. It is waiting to be moved to the orderbook
@@ -146,7 +162,7 @@ library MoCExchangeLib {
     uint256 priceComparisonPrecision;
     uint256 lastClosingPrice;
     bool disabled;
-    uint256 EMAPrice;
+    uint256 emaPrice;
     uint256 smoothingFactor;
   }
 
@@ -172,22 +188,29 @@ library MoCExchangeLib {
   struct Data {
     mapping(uint256 => Order) orders;
     uint256 firstId;
+    uint256 firstMarketOrderId;
     uint256 length;
     uint256 firstPendingToPopId;
     uint256 lastPendingToPopId;
+    uint256 firstPendingMarketOrderToPopId;
+    uint256 lastPendingMarketOrderToPopId;
     uint256 amountOfPendingOrders;
+    uint256 amountOfPendingMarketOrders;
     bool orderDescending;
   }
 
   /**
     @notice Struct representing a single order
-    @dev The next attribute is a reference to the next order in the structure this order is in
+    @dev The next attribute is a reference to the next order in the structure this order.
+    There are two types: MarketOrder (with multiplyFactor and volumen) and LimitOrder
   */
   struct Order {
+    OrderType orderType;
     uint256 id;
     uint256 exchangeableAmount;
     uint256 reservedCommission;
     uint256 price;
+    uint256 multiplyFactor;
     uint256 next;
     address owner;
     uint64 expiresInTick;
@@ -226,6 +249,53 @@ library MoCExchangeLib {
   }
 
   /**
+    @notice Inserts a market order in an orderbook without a hint
+    @dev The type of the order is given implicitly by the data structure where it is saved
+    @param self The data structure in where the order will be inserted
+    @param _orderId Id of the order to be inserted
+    @param _exchangeableAmount Quantity of tokens to addd
+    @param _reservedCommission Commission reserved to be charged later
+    @param _multiplyFactor Target price of the order[base/secondary]
+    @param _expiresInTick Number of tick in which the order can no longer be matched
+    @param _isBuy True if it is a buy market order
+  */
+  function insertMarketOrder(
+    Data storage self,
+    uint256 _orderId,
+    uint256 _exchangeableAmount,
+    uint256 _reservedCommission,
+    uint256 _multiplyFactor,
+    uint64 _expiresInTick,
+    bool _isBuy
+  ) public {
+    insertMarketOrder(
+      self,
+      _orderId,
+      _exchangeableAmount,
+      _reservedCommission,
+      _multiplyFactor,
+      _expiresInTick,
+      _isBuy,
+      findPreviousMarketOrderToMultiplyFactor(self, _multiplyFactor)
+    );
+  }
+
+  /**
+    @notice Withdraws all the already charged(because of a matching, a cancellation or an expiration)
+    commissions of a given token
+    @param token Address of the token to withdraw the commissions from
+  */
+  function withdrawCommissions(address token, CommissionManager _commissionManager) public {
+    uint256 amountToWithdraw = _commissionManager.exchangeCommissions(token);
+    _commissionManager.clearExchangeCommissions(token);
+    address commissionBeneficiary = _commissionManager.beneficiaryAddress();
+    bool success = IERC20(token).transfer(commissionBeneficiary, amountToWithdraw);
+    require(success, "Transfer failed");
+    emit CommissionWithdrawn(token, commissionBeneficiary, amountToWithdraw);
+  }
+
+
+  /**
     @notice Inserts an order in an orderbook with a hint
     @dev The type of the order is given implicitly by the data structure where it is saved
     @param self The data structure in where the order will be inserted
@@ -253,6 +323,32 @@ library MoCExchangeLib {
   }
 
   /**
+    @notice Inserts an order in an orderbook with a hint
+    @dev The type of the order is given implicitly by the data structure where it is saved
+    @param self The data structure in where the order will be inserted
+    @param _orderId Id of the order to be inserted
+    @param _exchangeableAmount Amount that was left to be exchanged
+    @param _reservedCommission Commission reserved to be charged later
+    @param _expiresInTick Number of tick in which the order can no longer be matched
+    @param  _intendedPreviousOrderId Hint id of the order to be before the new order in the orderbook
+  */
+  function insertMarketOrder(
+    Data storage self,
+    uint256 _orderId,
+    uint256 _exchangeableAmount,
+    uint256 _reservedCommission,
+    uint256 _multiplyFactor,
+    uint64 _expiresInTick,
+    bool _isBuy,
+    uint256 _intendedPreviousOrderId
+  ) public {
+    uint256 price = priceOfMarketOrders(_multiplyFactor, _isBuy);
+    validatePreviousMarketOrder(self, _multiplyFactor, _intendedPreviousOrderId);
+    createMarketOrder(self, _orderId, msg.sender, _exchangeableAmount, _reservedCommission, _multiplyFactor, price, _expiresInTick);
+    positionMarketOrder(self, _orderId, _intendedPreviousOrderId);
+  }
+
+  /**
     @notice Inserts an order in a pending queue
     @dev The type of the order is given implicitly by the data structure where it is saved
     @param self The data structure in where the order will be inserted
@@ -272,8 +368,105 @@ library MoCExchangeLib {
     uint256 _price,
     uint64 _expiresInTick
   ) public {
-    self.orders[_orderId] = Order(_orderId, _exchangeableAmount, _reservedCommission, _price, 0, _sender, _expiresInTick);
+    self.orders[_orderId] = Order(
+      OrderType.LIMIT_ORDER,
+      _orderId,
+      _exchangeableAmount,
+      _reservedCommission,
+      _price,
+      0,
+      0,
+      _sender,
+      _expiresInTick
+    );
     positionOrderAsPending(self, _orderId);
+  }
+
+  /**
+  @notice Hook that gets triggered when the tick of a given pair finishes.
+  @dev Marks the state of the tick as finished(it is receiving orders again),
+  sets the nextTick configs and cleans the pageMemory
+  @param _pair The group of tokens
+  @param _tickConfig The tick configuration
+  for the execution of a tick of a given pair
+  */
+  function onTickFinish(Pair storage _pair, TickState.Config storage _tickConfig) public {
+    assert(_pair.tickStage == TickStage.MOVING_PENDING_ORDERS);
+    _pair.tickStage = TickStage.RECEIVING_ORDERS;
+    _pair.tickState.nextTick(
+      address(_pair.baseToken.token),
+      address(_pair.secondaryToken.token),
+      _tickConfig,
+      _pair.pageMemory.emergentPrice,
+      _pair.pageMemory.matchesAmount
+    );
+
+    // make sure nothing from this page is reused in the next
+    delete (_pair.pageMemory);
+  }
+
+  /**
+    @notice returns the corresponding user amount. Emits the CancelOrder event
+    @param _pair Token Pair involved in the canceled Order
+    @param _orderId Order id to cancel
+    @param _previousOrderIdHint previous order in the orderbook, used as on optimization to search for.
+    @param _isBuy true if it's a buy order, meaning the funds should be from base Token
+  */
+  function doCancelOrder(
+    Pair storage _pair,
+    uint256 _orderId,
+    uint256 _previousOrderIdHint,
+    bool _isBuy
+    )
+    public returns (uint256, uint256)
+  {
+    Token storage token = _isBuy ? _pair.baseToken : _pair.secondaryToken;
+    Order storage toRemove = get(token.orderbook, _orderId);
+    require(toRemove.id != 0, "Order not found");
+    // Copy order needed values before deleting it
+    (uint256 exchangeableAmount, uint256 reservedCommission, address owner) = (
+      toRemove.exchangeableAmount,
+      toRemove.reservedCommission,
+      toRemove.owner
+    );
+    removeOrder(token.orderbook, toRemove, _previousOrderIdHint);
+    require(owner == msg.sender, "Not order owner");
+    return (exchangeableAmount, reservedCommission);
+  }
+
+  /**
+    @notice Inserts a market order in a pending queue
+    @dev The type of the order is given implicitly by the data structure where it is saved
+    @param self The data structure in where the order will be inserted
+    @param _orderId Id of the order to be inserted
+    @param _sender Owner of the new order
+    @param _exchangeableAmount The quantity of tokens that was left to be exchanged
+    @param _reservedCommission Commission reserved to be charged later
+    @param _multiplyFactor Multiply factor to compute the the price of a market order
+    @param _expiresInTick Number of tick in which the order can no longer be matched
+    @param _isBuy True if it is a buy market other, false otherwise
+  */
+  function insertMarketOrderAsPending(
+    Data storage self,
+    uint256 _orderId,
+    address _sender,
+    uint256 _exchangeableAmount,
+    uint256 _reservedCommission,
+    uint256 _multiplyFactor,
+    uint64 _expiresInTick,
+    bool _isBuy
+  ) public {
+    self.orders[_orderId] = Order(
+      OrderType.MARKET_ORDER,
+      _orderId, _exchangeableAmount,
+      _reservedCommission,
+      priceOfMarketOrders(_multiplyFactor, _isBuy),
+      _multiplyFactor,
+      0,
+      _sender,
+      _expiresInTick
+    );
+    positionMarketOrderAsPending(self, _orderId);
   }
 
   /**
@@ -291,6 +484,21 @@ library MoCExchangeLib {
     }
   }
 
+    /**
+    @notice Checks that the order should be in the place where it is trying to be inserted, reverts otherwise
+    @param _multiplyFactor Target multiplyFactor of the new order
+    @param _intendedPreviousOrderId Id of the order which is intended to be the order before the new one being inserted,
+    if 0 it is asumed to be put at the start
+   */
+  function validatePreviousMarketOrder(Data storage self, uint256 _multiplyFactor, uint256 _intendedPreviousOrderId) public view {
+    if (_intendedPreviousOrderId == 0) {
+      // order is intended to be the first in the Data
+      validateIntendedFirstMarketOrderInTheData(self, _multiplyFactor);
+    } else {
+      validateMarketOrderIntendedPreviousOrder(self, _intendedPreviousOrderId, _multiplyFactor);
+    }
+  }
+
   /**
     @notice Checks that the order should be in the first place of the orderbook where it is trying to be inserted
     @param _price Target price of the new order
@@ -300,6 +508,18 @@ library MoCExchangeLib {
       // there is one or more orders in the Data, so the price should be the most competitive
       Order storage firstOrder = first(self);
       require(priceGoesBefore(self, _price, firstOrder.price), "Price doesnt belong to start");
+    }
+  }
+
+  /**
+    @notice Checks that the market order should be in the first place of the orderbook where it is trying to be inserted
+    @param _multiplyFactor Target multiplyFactor of the new order
+  */
+  function validateIntendedFirstMarketOrderInTheData(Data storage self, uint256 _multiplyFactor) private view {
+    if (self.length != 0) {
+      // there is one or more orders in the Data, so the price should be the most competitive
+      Order storage firstOrder = firstMarketOrder(self);
+      require(multiplyFactorGoesBefore(self, _multiplyFactor, firstOrder.multiplyFactor), "Multiply factor doesnt belong to start");
     }
   }
 
@@ -318,6 +538,23 @@ library MoCExchangeLib {
     // the price goes before the next order, if there is a next order
     require(nextOrder.id == 0 || priceGoesBefore(self, _price, nextOrder.price), "Order should go after");
   }
+
+  /**
+  @notice Checks that the market order should be in the place where it is trying to be inserted, reverts otherwise
+  @param _multiplyFactor Target multiplyOrder of the new order
+  @param _intendedPreviousOrderId Id of the order which is intended to be the order before the new one being inserted
+  */
+  function validateMarketOrderIntendedPreviousOrder(Data storage self, uint256 _intendedPreviousOrderId, uint256 _multiplyFactor) private view {
+    Order storage previousOrder = get(self, _intendedPreviousOrderId);
+    // the order for the _intendedPreviousOrderId provided exist
+    require(previousOrder.id != 0, "PreviousOrder doesnt exist");
+    // the price goes after the intended previous order
+    require(!multiplyFactorGoesBefore(self, _multiplyFactor, previousOrder.multiplyFactor), "Market Order should go before");
+    Order storage nextOrder = get(self, previousOrder.next);
+    // the price goes before the next order, if there is a next order
+    require(nextOrder.id == 0 || multiplyFactorGoesBefore(self, _multiplyFactor, nextOrder.multiplyFactor), "Market Order should go after");
+  }
+
 
   /**
     @notice drops first element and returs the new top
@@ -348,7 +585,17 @@ library MoCExchangeLib {
     @param _order Order to be checked
    */
   function isFirstOfOrderbook(Data storage self, Order storage _order) internal view returns (bool) {
-    return self.firstId == _order.id;
+    return (_order.orderType == OrderType.LIMIT_ORDER && self.firstId == _order.id);
+  }
+
+
+  /**
+    @notice Checks if the market order is the first of the orderbook where it is saved
+    @param self Orderbook where the _order is supposed to be stored(we dont actually check if it is stored there)
+    @param _order Order to be checked
+   */
+  function isFirstOfMarketOrderbook(Data storage self, Order storage _order) internal view returns (bool) {
+    return (_order.orderType == OrderType.MARKET_ORDER && self.firstMarketOrderId == _order.id);
   }
 
   /**
@@ -399,7 +646,50 @@ library MoCExchangeLib {
     uint64 _expiresInTick
   ) private {
     // Next order is a position attribute so it should be set in another place
-    self.orders[_orderId] = Order(_orderId, _exchangeableAmount, _reservedCommission, _price, 0, _sender, _expiresInTick);
+    self.orders[_orderId] = Order(
+      OrderType.LIMIT_ORDER,
+      _orderId,
+      _exchangeableAmount,
+      _reservedCommission,
+      _price,
+      0,
+      0,
+      _sender,
+      _expiresInTick
+    );
+  }
+
+  /**
+    @notice Creates a new market order to be positioned later in the orderbook or a pendingQueue
+    @param self Container of the data structure in where the market order will be positioned later
+    @param _orderId Id of the order to be inserted
+    @param _sender Owner of the new order
+    @param _exchangeableAmount Quantity of tokens to exchange
+    @param _reservedCommission Commission reserved to be charged later
+    @param _multiplyFactor The factor to manage the final price of the market order
+    @param _expiresInTick Number of tick in which the order can no longer be matched
+  */
+  function createMarketOrder(
+    Data storage self,
+    uint256 _orderId,
+    address _sender,
+    uint256 _exchangeableAmount,
+    uint256 _reservedCommission,
+    uint256 _multiplyFactor,
+    uint256 _price,
+    uint64 _expiresInTick
+  ) private {
+    // Next order is a position attribute so it should be set in another place
+    self.orders[_orderId] = Order(
+      OrderType.MARKET_ORDER,
+      _orderId,
+      _exchangeableAmount,
+      _reservedCommission,
+      _price,
+      _multiplyFactor,
+      0,
+      _sender,
+      _expiresInTick);
   }
 
   /**
@@ -422,6 +712,25 @@ library MoCExchangeLib {
   }
 
   /**
+    @notice Positions an order in the provided orderbook
+    @param self Container of the orderbook
+    @param _orderId Id of the order to be positioned
+    @param _previousOrderId Id of the order that should be immediately before the newly positioned order, 0 if should go at the start
+   */
+  function positionMarketOrder(Data storage self, uint256 _orderId, uint256 _previousOrderId) private {
+    Order storage order = get(self, _orderId);
+    self.length = self.length.add(1);
+    if (_previousOrderId != 0) {
+      Order storage previousOrder = get(self, _previousOrderId);
+      order.next = previousOrder.next;
+      previousOrder.next = _orderId;
+    } else {
+      order.next = self.firstMarketOrderId;
+      self.firstMarketOrderId = _orderId;
+    }
+  }
+
+  /**
     @notice Positions an order in the provided pendingQueue
     @param self Container of the pendingQueue
     @param _orderId Id of the order to be positioned as pending
@@ -429,12 +738,30 @@ library MoCExchangeLib {
   function positionOrderAsPending(Data storage self, uint256 _orderId) private {
     if (self.amountOfPendingOrders != 0) {
       Order storage previousLastOrder = self.orders[self.lastPendingToPopId];
+      require(previousLastOrder.orderType == OrderType.LIMIT_ORDER, "It isn't a limit order");
       previousLastOrder.next = _orderId;
     } else {
       self.firstPendingToPopId = _orderId;
     }
     self.lastPendingToPopId = _orderId;
     self.amountOfPendingOrders = self.amountOfPendingOrders.add(1);
+  }
+
+  /**
+    @notice Positions a market order in the provided pendingQueue
+    @param self Container of the pendingQueue
+    @param _orderId Id of the market order to be positioned as pending
+   */
+  function positionMarketOrderAsPending(Data storage self, uint256 _orderId) private {
+    if (self.amountOfPendingMarketOrders != 0) {
+      Order storage previousLastOrder = self.orders[self.lastPendingMarketOrderToPopId];
+      require(previousLastOrder.orderType == OrderType.MARKET_ORDER, "It isn't a market order");
+      previousLastOrder.next = _orderId;
+    } else {
+      self.firstPendingMarketOrderToPopId = _orderId;
+    }
+    self.lastPendingMarketOrderToPopId = _orderId;
+    self.amountOfPendingMarketOrders = self.amountOfPendingMarketOrders.add(1);
   }
 
   /**
@@ -448,6 +775,7 @@ library MoCExchangeLib {
     }
 
     Order storage pivotOrder = first(self);
+
     bool newPriceGoesFirst = priceGoesBefore(self, _price, pivotOrder.price);
     if (newPriceGoesFirst) {
       return 0;
@@ -462,6 +790,38 @@ library MoCExchangeLib {
         if (pivotOrder.next != 0) {
           nextOrder = get(self, pivotOrder.next);
           newPriceGoesFirst = priceGoesBefore(self, _price, nextOrder.price);
+        }
+      }
+    }
+    return pivotOrder.id;
+  }
+
+  /**
+    @notice Finds previous market order for a new order with a given price in a given orderbook
+    @param self Container of the orderbook
+    @param _price Price of the order to possition. It's equal to exchangableAmount * multiplyFactor
+   */
+  function findPreviousMarketOrderToMultiplyFactor(Data storage self, uint256 _price) public view returns (uint256) {
+    if (self.length == 0) {
+      return 0;
+    }
+
+    Order storage pivotOrder = firstMarketOrder(self);
+
+    bool newMultiplyFactorGoesBefore = multiplyFactorGoesBefore(self, _price, pivotOrder.multiplyFactor);
+    if (newMultiplyFactorGoesBefore) {
+      return 0;
+    }
+    if (pivotOrder.next != 0) {
+      Order storage nextOrder = get(self, pivotOrder.next);
+      newMultiplyFactorGoesBefore = multiplyFactorGoesBefore(self, _price, nextOrder.multiplyFactor);
+
+      while (!newMultiplyFactorGoesBefore && pivotOrder.next != 0) {
+        pivotOrder = nextOrder;
+
+        if (pivotOrder.next != 0) {
+          nextOrder = get(self, pivotOrder.next);
+          newMultiplyFactorGoesBefore = multiplyFactorGoesBefore(self, _price, nextOrder.multiplyFactor);
         }
       }
     }
@@ -502,6 +862,17 @@ library MoCExchangeLib {
   }
 
   /**
+    @notice Returns true if an order with a _multiplyFactor should go before a prexistent order with _existingMultiplyFactor in an orderbook
+    @param _multiplyFactor New multiplyFactor to compare
+    @param _existingMultiplyFactor Existing order's multiplyFactor to compare
+  */
+  function multiplyFactorGoesBefore(Data storage self, uint256 _multiplyFactor, uint256 _existingMultiplyFactor) private view returns (bool) {
+    return (
+      self.orderDescending && (_multiplyFactor > _existingMultiplyFactor)) || (!self.orderDescending && (_multiplyFactor < _existingMultiplyFactor)
+    );
+  }
+
+  /**
     @notice Returns an order by its _id in a given orderbook/pendingQueue container(self)
     @param self Container of the orderbook/pendingQueue
     @param _id Id of the order to get
@@ -512,18 +883,47 @@ library MoCExchangeLib {
 
   /**
     @notice returns the next valid Order for the given _orderbook
-    @dev gets the net Order, if not valid, recursivelly calls itself until finding the first valid or reaching the end
+    @dev gets the next Order, if not valid, recursivelly calls itself until finding the first valid or reaching the end
     @param _orderbook where the _orderId is from
     @param _tickNumber for current tick
     @param _orderId id of the order from with obtain the next one, zero if beginging
     @return next valid Order, id = 0 if no valid order found
    */
   function getNextValidOrder(Data storage _orderbook, uint64 _tickNumber, uint256 _orderId) public view returns (Order storage) {
-    Order storage next = _orderId == 0 ? first(_orderbook) : getNext(_orderbook, _orderId);
+    Order storage next = _orderId == 0 ? getFirstOrder(_orderbook) : getNext(_orderbook, _orderId);
     if (next.id == 0 || !isExpired(next, _tickNumber)) return next;
     else return getNextValidOrder(_orderbook, _tickNumber, next.id);
   }
 
+    /**
+    @notice returns the first valid order
+    @dev gets the first valid order (LimitOrder or MarketOrder)
+    @param _orderbook where the _orderId is from
+    @return next valid Order, id = 0 if no valid order found
+   */
+  function getFirstOrder(Data storage _orderbook) public view returns (Order storage) {
+    Order storage firstLimitOrder = first(_orderbook);
+    Order storage firstMarketOrder = firstMarketOrder(_orderbook);
+    //Both are empty. Return first LO empty order
+    if (firstLimitOrder.id == 0 && firstMarketOrder.id == 0){
+      return firstLimitOrder;
+    }
+    //There is only a Limit Order
+    else if (firstLimitOrder.id != 0 && firstMarketOrder.id == 0){
+      return firstLimitOrder;
+    }
+    //There is only a Market Order
+    else if (firstLimitOrder.id == 0 && firstMarketOrder.id != 0){
+      return firstMarketOrder;
+    }
+    //There is a Limit and a Market order. We use priceGoesBefore
+    else {
+      if (priceGoesBefore(_orderbook, firstLimitOrder.price, firstMarketOrder.price)){
+        return firstLimitOrder;
+      }
+      return firstMarketOrder;
+    }
+  }
   /**
     @notice Returns the order following an order which id is _id in a given orderbook/pendingQueue container(self)
     @param self Container of the orderbook
@@ -542,12 +942,29 @@ library MoCExchangeLib {
   }
 
   /**
+    @notice Returns the first of market order of an orderbook
+    @param self Container of the orderbook
+   */
+  function firstMarketOrder(Data storage self) internal view returns (Order storage) {
+    return self.orders[self.firstMarketOrderId];
+  }
+
+  /**
     @notice Returns the first order to be popped from the pendingQueue
     @param self Container of the pendingQueue
    */
   function firstPending(Data storage self) internal view returns (Order storage) {
     return self.orders[self.firstPendingToPopId];
   }
+
+  /**
+    @notice Returns the first market order to be popped from the pendingQueue
+    @param self Container of the pendingQueue
+   */
+  function firstPendingMarketOrder(Data storage self) internal view returns (Order storage) {
+    return self.orders[self.firstPendingMarketOrderToPopId];
+  }
+
 
   /**
     @notice Returns true if the given order is expired
@@ -569,7 +986,7 @@ library MoCExchangeLib {
     @return lastTickBlock Block in which the last tick started to run
     @return lastClosingPrice Emergent price of the last tick
     @return disabled True if the pair is disabled(it can not be inserted any orders); false otherwise
-    @return EMAPrice The last calculated EMAPrice of the last tick
+    @return emaPrice The last calculated emaPrice of the last tick
     @return smoothingFactor The current smoothing factor
    */
   function getStatus(Pair storage _self)
@@ -581,7 +998,7 @@ library MoCExchangeLib {
       uint256 lastTickBlock,
       uint256 lastClosingPrice,
       bool disabled,
-      uint256 EMAPrice,
+      uint256 emaPrice,
       uint256 smoothingFactor
     )
   {
@@ -590,7 +1007,7 @@ library MoCExchangeLib {
     lastTickBlock = _self.tickState.lastTickBlock;
     lastClosingPrice = _self.lastClosingPrice;
     disabled = _self.disabled;
-    EMAPrice = _self.EMAPrice;
+    emaPrice = _self.emaPrice;
     smoothingFactor = _self.smoothingFactor;
   }
 
@@ -638,7 +1055,60 @@ library MoCExchangeLib {
       } else {
         insertOrder(token.orderbook, _id, _sender, _exchangeableAmount, _reservedCommission, _price, expiresInTick, _previousOrderIdHint);
       }
-      emitNewOrderEvent(_id, _self, _sender, _exchangeableAmount, _reservedCommission, _price, expiresInTick, _isBuy);
+      emitNewOrderEvent(_id, _self, _sender, _exchangeableAmount, _reservedCommission, _price, expiresInTick, _isBuy, OrderType.LIMIT_ORDER);
+    }
+  }
+
+  /**
+    @notice inserts a new Market Order. Emits the NewOrderInserted event
+    @dev the _exchangeableAmount is the quantity of tokens,
+    note that the address will need to have allowance and the necesary balance.
+    @param _self Pair (Base & Secondary Token) to insert Order for
+    @param _id Id of the new order
+    @param _exchangeableAmount The quantity of tokens to insert, baseToken when buy, secondary when sell
+    @param _reservedCommission Commission reserved to allow to charge it later(at expiration/)
+    @param _multiplyFactor The multiplier factor to calculate the market order price.
+    @param _lifespan the amount of ticks that the order is going to ve available to match.
+    @param _previousOrderIdHint previous order in the orderbook, used as on optimization to search for.
+    @param _sender address of the account executing the insertion
+    @param _isBuy true if it's a buy order, meaning the funds should be from base Token
+  */
+  function doInsertMarketOrder(
+    Pair storage _self,
+    uint256 _id,
+    uint256 _exchangeableAmount,
+    uint256 _reservedCommission,
+    uint256 _multiplyFactor,
+    uint64 _lifespan,
+    uint256 _previousOrderIdHint,
+    address _sender,
+    bool _isBuy
+  ) public returns (uint256) {
+    require(!_self.disabled, "Pair has been disabled");
+    //It is not a modifier because of stack to deep
+    require(_multiplyFactor != 0, "MultiplyFactor cannot be zero");
+    //It is not a modifier because of stack to deep
+    require(_exchangeableAmount != 0, "Exchangeable amount cannot be zero");
+
+    Token storage token = _isBuy ? _self.baseToken : _self.secondaryToken;
+    uint256 toTransfer = _exchangeableAmount.mul(priceOfMarketOrders(_multiplyFactor, _isBuy)).add(_reservedCommission);
+
+    //TODO: check why it is reverting with subraction in SafeMath
+    require(token.token.transferFrom(_sender, address(this), toTransfer), "Token transfer failed");
+
+    bool goesToPendingQueue = _self.tickStage != TickStage.RECEIVING_ORDERS;
+    uint64 expiresInTick = _self.tickState.number + _lifespan;
+
+    if (goesToPendingQueue) {
+      insertMarketOrderAsPending(token.orderbook, _id, _sender, _exchangeableAmount, _reservedCommission, _multiplyFactor, expiresInTick, _isBuy);
+      emit NewOrderAddedToPendingQueue(_id, 0);
+    } else {
+      if (_previousOrderIdHint == INSERT_FIRST) {
+        insertMarketOrder(token.orderbook, _id, _exchangeableAmount, _reservedCommission, _multiplyFactor, expiresInTick, _isBuy);
+      } else {
+        insertMarketOrder(token.orderbook, _id, _exchangeableAmount, _reservedCommission,  _multiplyFactor, expiresInTick, _isBuy, _previousOrderIdHint);
+      }
+      emitNewOrderEvent(_id, _self, _sender, _exchangeableAmount, _reservedCommission, _multiplyFactor, expiresInTick, _isBuy, OrderType.MARKET_ORDER);
     }
   }
 
@@ -651,6 +1121,23 @@ library MoCExchangeLib {
    */
   function convertToBase(uint256 _secondary, uint256 _price, uint256 _priceComparisonPrecision) internal pure returns (uint256) {
     return _secondary.mul(_price).div(_priceComparisonPrecision);
+  }
+
+
+  /**
+    @notice Computes the prices of a market order
+    @param _multiplyFactor multiplyFactor
+    @param _isBuy true if it is a buy order, false otherwise.
+    @return price
+   */
+  function priceOfMarketOrders(uint256 _multiplyFactor, bool _isBuy) public pure returns (uint256) {
+    //TODO: get price from last tick or oracle
+    uint256 HARDCODED_BUY_PRICE = 1;
+    uint256 HARDCODED_SELL_PRICE = 2;
+    if (_isBuy){
+      return _multiplyFactor.mul(HARDCODED_BUY_PRICE).div(RATE_PRECISION);
+    }
+    return _multiplyFactor.mul(HARDCODED_SELL_PRICE).div(RATE_PRECISION);
   }
 
   /**
@@ -693,7 +1180,8 @@ library MoCExchangeLib {
     uint256 _reservedCommission,
     uint256 _price,
     uint64 _expiresInTick,
-    bool _isBuy
+    bool _isBuy,
+    OrderType _orderType
   ) private {
     emit NewOrderInserted(
       _orderId,
@@ -704,7 +1192,8 @@ library MoCExchangeLib {
       _reservedCommission,
       _price,
       _expiresInTick,
-      _isBuy
+      _isBuy,
+      _orderType
     );
   }
 
@@ -958,6 +1447,57 @@ library MoCExchangeLib {
   }
 
   /**
+@notice Process expired Orders for the given orderbook, returning funds to the owner while applying commission
+@dev iterates _steps times over the orderbook starting from _orderId and process any encountered expired order
+@param _pair Pair of tokens
+@param _commissionManager CommisionManager from MocDecentralizedExchange
+@param _isBuy true if buy order, needed to identify the orderbook
+@param _orderId Order id to start expiring process. If zero, will start from ordebook top.
+@param _previousOrderIdHint previous order id hint in the orderbook to _orderId, used as on optimization to search for.
+If zero, will start from ordebook top.
+@param _steps Number of iterations to look for expired orders to process. Use one, if just looking to process _orderId only
+*/
+  function processExpired(
+    Pair storage _pair,
+    CommissionManager _commissionManager,
+    bool _isBuy,
+    uint256 _orderId,
+    uint256 _previousOrderIdHint,
+    uint256 _steps
+  ) public {
+    MoCExchangeLib.Token storage token = _isBuy ? _pair.baseToken : _pair.secondaryToken;
+    MoCExchangeLib.Order storage toEvaluate = _orderId == 0 ? first(token.orderbook) : get(token.orderbook, _orderId);
+    uint256 nextOrderId = toEvaluate.next;
+    uint256 previousOrderId = _previousOrderIdHint;
+    uint256 currStep = 0;
+    bool hasProcess = false;
+    while (currStep < _steps && toEvaluate.id != 0) {
+      currStep++;
+      if (isExpired(toEvaluate, _pair.tickState.number)) {
+        // Event if process expiring could return fail as transaction fails, the behaviour is the same,
+        // order needs to be removed and the process must continue.
+        processExpiredOrder(
+          _commissionManager,
+          token,
+          toEvaluate.id,
+          toEvaluate.exchangeableAmount,
+          toEvaluate.reservedCommission,
+          toEvaluate.owner
+        );
+        nextOrderId = toEvaluate.next;
+        // TODO: Given this is a loop, we could track the actual prev instead of just the id
+        removeOrder(token.orderbook, toEvaluate, previousOrderId);
+        hasProcess = true;
+      } else {
+        previousOrderId = toEvaluate.id;
+        nextOrderId = toEvaluate.next;
+      }
+      toEvaluate = get(token.orderbook, nextOrderId);
+    }
+    require(hasProcess, "No expired order found");
+  }
+
+  /**
     @notice returns funds to the owner, paying commission in the process and emits ExpiredOrderProcessed event
     @param _commissionManager commission manager.
     @param _token order Token data
@@ -987,6 +1527,21 @@ library MoCExchangeLib {
     if (!transferResult) returnedAmount = 0;
     emit ExpiredOrderProcessed(_orderId, _owner, returnedAmount, commission, returnedCommission);
     return transferResult;
+  }
+
+  /**
+  @notice Hook called when the simulation of the matching of orders finish; marks as so the tick stage
+  Has one discarded param; kept to have a fixed signature
+  @param _pair the pair to finish simulation
+  */
+  function onSimulationFinish(Pair storage _pair) public {
+    uint256 factorPrecision = 10**18; // FIXME how do i access this constant from another file?
+    assert(_pair.tickStage == MoCExchangeLib.TickStage.RUNNING_SIMULATION);
+    if (_pair.pageMemory.matchesAmount > 0) {
+      _pair.pageMemory.emergentPrice = Math.average(_pair.pageMemory.lastBuyMatch.price, _pair.pageMemory.lastSellMatch.price);
+      _pair.lastClosingPrice = _pair.pageMemory.emergentPrice;
+      _pair.emaPrice = calculateNewEMA(_pair.emaPrice, _pair.lastClosingPrice, _pair.smoothingFactor, factorPrecision);
+    }
   }
 
   /**
@@ -1179,6 +1734,38 @@ library MoCExchangeLib {
   }
 
   /**
+    @notice Moves an order from the pending queue to the orderbook
+    Has two discarded param; kept to have a fixed signature
+    @dev First it tries to move everything in the buy queue and then goes to the selling queue
+    Nevertheless always checks the buy order, no mather if we finished it already in case there is
+    a new buy order while we process the sell order.
+    It is important that this is the absolute LAST task of the ticks group
+    @param _pair The pair of tokens
+    @return True if there are still pending orders to move; false otherwise
+  */
+  function movePendingOrdersStepFunction(Pair storage _pair) public {
+    assert(_pair.tickStage == MoCExchangeLib.TickStage.MOVING_PENDING_ORDERS);
+    // Cannot return shouldKeepGoing based on movedBuyOrder to avoid DOS attacks where someone
+    // inserts new pending orders as soon as we finished inserting the other orders
+    bool movedBuyOrder = movePendingOrderFrom(
+      _pair.baseToken,
+      _pair.pageMemory,
+      address(_pair.baseToken.token),
+      address(_pair.secondaryToken.token),
+      true
+    );
+    if (!movedBuyOrder) {
+      movePendingOrderFrom(
+        _pair.secondaryToken,
+        _pair.pageMemory,
+        address(_pair.baseToken.token),
+        address(_pair.secondaryToken.token),
+        false
+      );
+    }
+  }
+
+  /**
     @notice Moves an order from the pending queue to the corresponding orderbook
     @param _token Struct that containts the orderbook and pendingQueue data structures
     @param pageMemory Page memory of this tick, has auxiliar info to make it run. Hints are useful in this fn
@@ -1194,6 +1781,7 @@ library MoCExchangeLib {
     address secondaryTokenAddress,
     bool isBuy
   ) public returns (bool doneWork) {
+    //TODO: adapt to MarketOrders
     if (_token.orderbook.amountOfPendingOrders == 0) return false;
     // pop from queue
     Order storage orderToMove = firstPending(_token.orderbook);
@@ -1218,7 +1806,8 @@ library MoCExchangeLib {
       orderToMove.reservedCommission,
       orderToMove.price,
       orderToMove.expiresInTick,
-      isBuy
+      isBuy,
+      OrderType.LIMIT_ORDER // TODO This is correct for now; but we might have to change it soon
     );
 
     positionOrder(_token.orderbook, orderToMove.id, previousOrderId);

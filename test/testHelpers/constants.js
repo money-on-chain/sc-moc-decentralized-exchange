@@ -31,5 +31,9 @@ module.exports = {
     RUNNING_MATCHING: 2,
     MOVING_PENDING_ORDERS: 3
   },
-  MAX_PENDING_TXS: 20
+  MAX_PENDING_TXS: 20,
+  orderTypes: {
+    LIMIT_ORDER: new BN(0),
+    MARKET_ORDER: new BN(1)
+  }
 };

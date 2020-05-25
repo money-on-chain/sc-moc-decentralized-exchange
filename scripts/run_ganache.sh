@@ -17,7 +17,7 @@ cleanup() {
 }
 
 ganache_running() {
-  nc -z localhost "$GANACHE_PORT"  
+  nc -z localhost "$GANACHE_PORT"
 }
 
 start_ganache() {

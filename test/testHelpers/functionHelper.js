@@ -74,9 +74,10 @@ const orderArrayToObj = order => ({
   id: order[0],
   owner: order[1],
   exchangeableAmount: order[2],
-  reservedCommission: order[3],
-  price: order[4],
-  next: order[5]
+  multiplyFactor: order[3],
+  reservedCommission: order[4],
+  price: order[5],
+  next: order[6]
 });
 
 const getSellOrderAtIndex = dex => async (baseAddress, secondaryAddress, index) => {

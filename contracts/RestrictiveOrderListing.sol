@@ -13,7 +13,11 @@ contract RestrictiveOrderListing is OrderListing {
     @param _amount Amount to be checked
     @param _baseToken Address of the base token in the pair being exchanged
    */
-  modifier isValidAmount(address _tokenAddess, uint256 _amount, address _baseToken) {
+  modifier isValidAmount(
+    address _tokenAddess,
+    uint256 _amount,
+    address _baseToken
+  ) {
     uint256 convertedAmount = convertTokenToCommonBase(_tokenAddess, _amount, _baseToken);
     require(convertedAmount >= minOrderAmount, "Amount too low");
     _;
@@ -36,6 +40,23 @@ contract RestrictiveOrderListing is OrderListing {
     require(_price != 0, "Price cannot be zero");
     _;
   }
+
+  /* TODO: UNUSED MODIFIER BECAUSE OF CONTRACT SIZE LIMIT
+  @notice Checks if the _pri a minimum; reverts if not
+  @param _multiplyFactor MultiplyFactor to be checked
+  modifier isValidMultiplyFactor(uint256 _multiplyFactor) {
+    require(_multiplyFactor != 0, "MultiplyFactor cannot be zero");
+    _;
+  }
+
+
+  @notice Checks if the _pri a minimum; reverts if not
+  @param _exchangeableAmout Exchangeable amount to be checked
+
+  modifier isValidExchangeableAmount(uint256 _exchangeableAmout) {
+    require(_exchangeableAmout != 0, "Exchangeable amount cannot be zero");
+    _;
+  } */
 
   /**
     @notice Sets the minimum order amount in commonBaseToken currency; only callable through governance
@@ -114,6 +135,34 @@ contract RestrictiveOrderListing is OrderListing {
     uint256 _previousOrderIdHint
   ) public isValidAmount(_baseToken, _amount, _baseToken) isValidLifespan(_lifespan) isValidPrice(_price) {
     OrderListing.insertBuyOrderAfter(_baseToken, _secondaryToken, _amount, _price, _lifespan, _previousOrderIdHint);
+  }
+
+  /**
+    @notice Inserts a market order in the buy orderbook of a given pair with a hint;
+    the pair should not be disabled; the contract should not be paused. Takes the funds
+    with a transferFrom
+    @param _baseToken the base token of the pair
+    @param _secondaryToken the secondary token of the pair
+    @param _amount The quantity of tokens sent
+    @param _multiplyFactor Maximum price to be paid [base/secondary]
+    @param _previousOrderIdHint Order that comes immediately before the new order;
+    @param _lifespan After _lifespan ticks the order will be expired and no longer matched, must be lower or equal than the maximum
+    @param _isBuy true if it is a buy market order
+    0 is considered as no hint and the smart contract must iterate
+    INSERT_FIRST is considered a hint to be put at the start
+  */
+  function insertMarketOrderAfter(
+    address _baseToken,
+    address _secondaryToken,
+    uint256 _amount,
+    uint256 _multiplyFactor,
+    uint256 _previousOrderIdHint,
+    uint64 _lifespan,
+    bool _isBuy
+  ) public isValidLifespan(_lifespan) {
+    //TODO: ADD Modifiers. It can not be used because contract limit
+    //public  isValidLifespan(_lifespan) isValidExchangeableAmount(_exchangeableAmout) isValidMultiplyFactor(_multiplyFactor) {
+    OrderListing.insertMarketOrderAfter(_baseToken, _secondaryToken, _amount, _multiplyFactor, _previousOrderIdHint, _lifespan, _isBuy);
   }
 
   /**

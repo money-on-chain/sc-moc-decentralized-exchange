@@ -15,7 +15,7 @@ const CancelationPenaltyRateChanger = artifacts.require('CancelationPenaltyRateC
 const ExpirationPenaltyRateChanger = artifacts.require('ExpirationPenaltyRateChanger');
 const TokenPairDisabler = artifacts.require('TokenPairDisabler');
 const TokenPairEnabler = artifacts.require('TokenPairEnabler');
-const EMAPriceChanger = artifacts.require('EMAPriceChanger');
+const EmaPriceChanger = artifacts.require('EmaPriceChanger');
 const SmoothingFactorChanger = artifacts.require('SmoothingFactorChanger');
 
 let testHelper;
@@ -252,17 +252,17 @@ describe('Governed functions tests', function() {
 
   testGoverned({
     action: 'setting ema price',
-    functionName: 'setTokenPairEMAPrice',
+    functionName: 'setTokenPairEmaPrice',
     getParams: () => [base.address, secondary.address, testHelper.wadify(3)],
     then: () =>
-      it('THEN the token pair shold have a different EMAPrice', async function() {
+      it('THEN the token pair shuold have a different EmaPrice', async function() {
         const tokenPairStatus = await dex.getTokenPairStatus(base.address, secondary.address);
         // eslint-disable-next-line no-unused-expressions
-        testHelper.assertBigWad(tokenPairStatus.EMAPrice, 3, 'EMA Price');
+        testHelper.assertBigWad(tokenPairStatus.emaPrice, 3, 'EMA Price');
       }),
     getContract: () => dex,
     getChanger: () =>
-      EMAPriceChanger.new(dex.address, base.address, secondary.address, testHelper.wadify(3))
+      EmaPriceChanger.new(dex.address, base.address, secondary.address, testHelper.wadify(3))
   });
 
   testGoverned({
@@ -270,7 +270,7 @@ describe('Governed functions tests', function() {
     functionName: 'setTokenPairSmoothingFactor',
     getParams: () => [base.address, secondary.address, testHelper.wadify(0.72)],
     then: () =>
-      it('THEN the token pair shold have a different smoothing factor', async function() {
+      it('THEN the token pair should have a different smoothing factor', async function() {
         const tokenPairStatus = await dex.getTokenPairStatus(base.address, secondary.address);
         // eslint-disable-next-line no-unused-expressions
         testHelper.assertBigWad(tokenPairStatus.smoothingFactor, 0.72, 'Smoothing factor');
