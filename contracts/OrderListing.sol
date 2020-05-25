@@ -52,7 +52,7 @@ contract EventfulOrderListing {
 contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenerator, Stoppable, ReentrancyGuard {
   // intentionally using the biggest possible uint256
   // so it doesn't conflict with valid ids
-  uint256 constant public INSERT_FIRST = ~uint256(0);
+  uint256 private constant INSERT_FIRST = ~uint256(0);
 
   CommissionManager public commissionManager;
 
@@ -102,7 +102,13 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     @param _price Maximum price to be paid [base/secondary]
     @param _lifespan After _lifespan ticks the order will be expired and no longer matched, must be lower or equal than the maximum
    */
-  function insertBuyOrder(address _baseToken, address _secondaryToken, uint256 _amount, uint256 _price, uint64 _lifespan) public {
+  function insertBuyOrder(
+    address _baseToken,
+    address _secondaryToken,
+    uint256 _amount,
+    uint256 _price,
+    uint64 _lifespan
+  ) public {
     insertBuyOrderAfter(_baseToken, _secondaryToken, _amount, _price, _lifespan, INSERT_FIRST);
   }
 
@@ -117,7 +123,13 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     @param _price Minimum price to charge [base/secondary]
     @param _lifespan After _lifespan ticks the order will be expired and no longer matched, must be lower or equal than the maximum
    */
-  function insertSellOrder(address _baseToken, address _secondaryToken, uint256 _amount, uint256 _price, uint64 _lifespan) public {
+  function insertSellOrder(
+    address _baseToken,
+    address _secondaryToken,
+    uint256 _amount,
+    uint256 _price,
+    uint64 _lifespan
+  ) public {
     insertSellOrderAfter(_baseToken, _secondaryToken, _amount, _price, _lifespan, INSERT_FIRST);
   }
 
@@ -178,7 +190,12 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     @param _orderId Order id to cancel
     @param _previousOrderIdHint previous order in the orderbook, used as on optimization to search for.
   */
-  function cancelBuyOrder(address _baseToken, address _secondaryToken, uint256 _orderId, uint256 _previousOrderIdHint) public whenNotPaused {
+  function cancelBuyOrder(
+    address _baseToken,
+    address _secondaryToken,
+    uint256 _orderId,
+    uint256 _previousOrderIdHint
+  ) public whenNotPaused {
     doCancelOrder(getTokenPair(_baseToken, _secondaryToken), _orderId, _previousOrderIdHint, true);
   }
 
@@ -190,7 +207,12 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     @param _orderId Order id to cancel
     @param _previousOrderIdHint previous order in the orderbook, used as on optimization to search for.
   */
-  function cancelSellOrder(address _baseToken, address _secondaryToken, uint256 _orderId, uint256 _previousOrderIdHint) public whenNotPaused {
+  function cancelSellOrder(
+    address _baseToken,
+    address _secondaryToken,
+    uint256 _orderId,
+    uint256 _previousOrderIdHint
+  ) public whenNotPaused {
     doCancelOrder(getTokenPair(_baseToken, _secondaryToken), _orderId, _previousOrderIdHint, false);
   }
 
@@ -210,12 +232,15 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     @param _previousOrderIdHint previous order in the orderbook, used as on optimization to search for.
     @param _isBuy true if it's a buy order, meaning the funds should be from base Token
   */
-  function doCancelOrder(MoCExchangeLib.Pair storage _pair, uint256 _orderId, uint256 _previousOrderIdHint, bool _isBuy)
-    internal
-  {
+  function doCancelOrder(
+    MoCExchangeLib.Pair storage _pair,
+    uint256 _orderId,
+    uint256 _previousOrderIdHint,
+    bool _isBuy
+  ) internal {
     MoCExchangeLib.Token storage token = _isBuy ? _pair.baseToken : _pair.secondaryToken;
     (uint256 exchangeableAmount, uint256 reservedCommission) = MoCExchangeLib.doCancelOrder(_pair, _orderId, _previousOrderIdHint, _isBuy);
-    
+
     (bool transferResult, uint256 returnedAmount, uint256 commission, uint256 returnedCommission) = MoCExchangeLib.refundOrder(
       commissionManager,
       token.token,
@@ -293,17 +318,7 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     uint256 _previousOrderIdHint
   ) private {
     uint256 initialFee = commissionManager.calculateInitialFee(_amount);
-    _pair.doInsertOrder(
-      nextId(),
-      _amount.sub(initialFee),
-      initialFee,
-      _price,
-      _lifespan,
-      _previousOrderIdHint,
-      msg.sender,
-      address(this),
-      true
-    );  
+    _pair.doInsertOrder(nextId(), _amount.sub(initialFee), initialFee, _price, _lifespan, _previousOrderIdHint, msg.sender, address(this), true);
   }
 
   /**
@@ -345,7 +360,7 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     with a transferFrom
     @param _baseToken the base token of the pair
     @param _secondaryToken the secondary token of the pair
-    @param _exchangeableAmout The quantity of tokens to put in the orderbook
+    @param _amount The quantity of tokens sent
     @param _multiplyFactor Maximum price to be paid [base/secondary]
     @param _lifespan After _lifespan ticks the order will be expired and no longer matched, must be lower or equal than the maximum
     @param _isBuy true if it is a buy market order
@@ -354,12 +369,12 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
   function insertMarketOrder(
     address _baseToken,
     address _secondaryToken,
-    uint256 _exchangeableAmout,
+    uint256 _amount,
     uint256 _multiplyFactor,
     uint64 _lifespan,
     bool _isBuy
   ) public whenNotPaused {
-    insertMarketOrderAfter(_baseToken, _secondaryToken, _exchangeableAmout, _multiplyFactor, INSERT_FIRST, _lifespan, _isBuy);
+    insertMarketOrderAfter(_baseToken, _secondaryToken, _amount, _multiplyFactor, INSERT_FIRST, _lifespan, _isBuy);
   }
 
   /**
@@ -368,7 +383,7 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     with a transferFrom
     @param _baseToken the base token of the pair
     @param _secondaryToken the secondary token of the pair
-    @param _exchangeableAmout The quantity of tokens to put in the orderbook
+    @param _amount The quantity of tokens sent
     @param _multiplyFactor Maximum price to be paid [base/secondary]
     @param _previousOrderIdHint Order that comes immediately before the new order;
     @param _lifespan After _lifespan ticks the order will be expired and no longer matched, must be lower or equal than the maximum
@@ -379,25 +394,15 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
   function insertMarketOrderAfter(
     address _baseToken,
     address _secondaryToken,
-    uint256 _exchangeableAmout,
+    uint256 _amount,
     uint256 _multiplyFactor,
     uint256 _previousOrderIdHint,
     uint64 _lifespan,
     bool _isBuy
   ) public whenNotPaused {
     MoCExchangeLib.Pair storage pair = getTokenPair(_baseToken, _secondaryToken);
-    uint256 totalPrice = MoCExchangeLib.priceOfMarketOrders(_multiplyFactor, _isBuy);
-    uint256 initialFee = commissionManager.calculateInitialFee(totalPrice);
-    pair.doInsertMarketOrder(
-      nextId(),
-      _exchangeableAmout,
-      initialFee,
-      _multiplyFactor,
-      _lifespan,
-      _previousOrderIdHint,
-      msg.sender,
-      _isBuy
-    );  
+    uint256 initialFee = commissionManager.calculateInitialFee(_amount);
+    pair.doInsertMarketOrder(nextId(), _amount, initialFee, _multiplyFactor, _lifespan, _previousOrderIdHint, msg.sender, _isBuy);
   }
 
   // Leave a gap betweeen inherited contracts variables in order to be

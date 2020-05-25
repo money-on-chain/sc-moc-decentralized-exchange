@@ -13,7 +13,6 @@ describe('specific market order insertion tests', function() {
   let testHelper;
   let from;
   let pair;
-  let INSERT_FIRST;
   const lifespan = 5;
   const initContractsAndAllowance = accounts => async () => {
     testHelper = testHelperBuilder();
@@ -37,7 +36,6 @@ describe('specific market order insertion tests', function() {
     dex = await testHelper.decorateGetOrderAtIndex(dex);
     pair = [base.address, secondary.address];
     from = accounts[DEFAULT_ACCOUNT_INDEX];
-    INSERT_FIRST = await dex.INSERT_FIRST.call();
   };
 
   contract('insertion of 1 buy order in order 0 in an empty orderbook', function(accounts) {
@@ -130,18 +128,9 @@ describe('specific market order insertion tests', function() {
     describe('GIVEN an empty orderbook', function() {
       describe('WHEN inserting a market order first in the orderbook', function() {
         before(function() {
-          return dex.insertMarketOrderAfter(
-            pair[0],
-            pair[1],
-            wadify(2),
-            pricefy(1.1),
-            INSERT_FIRST,
-            lifespan,
-            true,
-            {
-              from
-            }
-          );
+          return dex.insertMarketOrder(pair[0], pair[1], wadify(2), pricefy(1.1), lifespan, true, {
+            from
+          });
         });
         it('THEN it end up ordered', async function() {
           const order = await dex.getBuyOrderAtIndex(...pair, 0);
@@ -156,30 +145,12 @@ describe('specific market order insertion tests', function() {
     describe('GIVEN 2 buy market orders', function() {
       before(async function() {
         await initContractsAndAllowance(accounts)();
-        await dex.insertMarketOrderAfter(
-          pair[0],
-          pair[1],
-          wadify(5),
-          pricefy(0.8),
-          INSERT_FIRST,
-          lifespan,
-          true,
-          {
-            from
-          }
-        );
-        await dex.insertMarketOrderAfter(
-          pair[0],
-          pair[1],
-          wadify(4),
-          pricefy(0.9),
-          INSERT_FIRST,
-          lifespan,
-          true,
-          {
-            from
-          }
-        );
+        await dex.insertMarketOrder(pair[0], pair[1], wadify(5), pricefy(0.8), lifespan, true, {
+          from
+        });
+        await dex.insertMarketOrder(pair[0], pair[1], wadify(4), pricefy(0.9), lifespan, true, {
+          from
+        });
       });
       it('THEN the first market order should be of 5 tokens', async function() {
         const order = await dex.getBuyOrderAtIndex(...pair, 0);
@@ -193,18 +164,9 @@ describe('specific market order insertion tests', function() {
       });
       describe('WHEN inserting a buy market order first in the orderbook', function() {
         before(async function() {
-          await dex.insertMarketOrderAfter(
-            pair[0],
-            pair[1],
-            wadify(3),
-            pricefy(0.95),
-            INSERT_FIRST,
-            lifespan,
-            true,
-            {
-              from
-            }
-          );
+          await dex.insertMarketOrder(pair[0], pair[1], wadify(3), pricefy(0.95), lifespan, true, {
+            from
+          });
         });
         it('THEN it end up ordered', async function() {
           const order = await dex.getBuyOrderAtIndex(...pair, 0);
@@ -274,18 +236,9 @@ describe('specific market order insertion tests', function() {
     describe('GIVEN 1 sell market order', function() {
       before(async function() {
         await initContractsAndAllowance(accounts)();
-        await dex.insertMarketOrderAfter(
-          pair[0],
-          pair[1],
-          wadify(2),
-          pricefy(1.2),
-          INSERT_FIRST,
-          lifespan,
-          false,
-          {
-            from
-          }
-        );
+        await dex.insertMarketOrder(pair[0], pair[1], wadify(2), pricefy(1.2), lifespan, false, {
+          from
+        });
       });
 
       describe('WHEN inserting order with the same multiply factor as the existing one in the orderbook', function() {
