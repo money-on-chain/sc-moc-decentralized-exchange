@@ -73,7 +73,7 @@ library MoCExchangeLib {
     @param commissionBeneficiary Receiver of the tokens
     @param withdrawnAmount Amount that was withdrawn
    */
-  event CommissionWithdrawn(address token, address commissionBeneficiary, uint256 withdrawnAmount);  
+  event CommissionWithdrawn(address token, address commissionBeneficiary, uint256 withdrawnAmount);
 
   /**
     @notice A new order has been inserted in the pending queue. It is waiting to be moved to the orderbook
@@ -162,7 +162,7 @@ library MoCExchangeLib {
     uint256 priceComparisonPrecision;
     uint256 lastClosingPrice;
     bool disabled;
-    uint256 EMAPrice;
+    uint256 emaPrice;
     uint256 smoothingFactor;
   }
 
@@ -201,8 +201,8 @@ library MoCExchangeLib {
 
   /**
     @notice Struct representing a single order
-    @dev The next attribute is a reference to the next order in the structure this order. 
-    There are two types: MarketOrder (with multiplyFactor and volumen) and LimitOrder 
+    @dev The next attribute is a reference to the next order in the structure this order.
+    There are two types: MarketOrder (with multiplyFactor and volumen) and LimitOrder
   */
   struct Order {
     OrderType orderType;
@@ -265,7 +265,7 @@ library MoCExchangeLib {
     uint256 _exchangeableAmount,
     uint256 _reservedCommission,
     uint256 _multiplyFactor,
-    uint64 _expiresInTick, 
+    uint64 _expiresInTick,
     bool _isBuy
   ) public {
     insertMarketOrder(
@@ -294,7 +294,7 @@ library MoCExchangeLib {
     emit CommissionWithdrawn(token, commissionBeneficiary, amountToWithdraw);
   }
 
-  
+
   /**
     @notice Inserts an order in an orderbook with a hint
     @dev The type of the order is given implicitly by the data structure where it is saved
@@ -369,12 +369,12 @@ library MoCExchangeLib {
     uint64 _expiresInTick
   ) public {
     self.orders[_orderId] = Order(
-      OrderType.LIMIT_ORDER, 
-      _orderId, 
-      _exchangeableAmount, 
-      _reservedCommission, 
-      _price, 
-      0, 
+      OrderType.LIMIT_ORDER,
+      _orderId,
+      _exchangeableAmount,
+      _reservedCommission,
+      _price,
+      0,
       0,
       _sender,
       _expiresInTick
@@ -413,9 +413,9 @@ library MoCExchangeLib {
     @param _isBuy true if it's a buy order, meaning the funds should be from base Token
   */
   function doCancelOrder(
-    Pair storage _pair, 
-    uint256 _orderId, 
-    uint256 _previousOrderIdHint, 
+    Pair storage _pair,
+    uint256 _orderId,
+    uint256 _previousOrderIdHint,
     bool _isBuy
     )
     public returns (uint256, uint256)
@@ -684,13 +684,13 @@ library MoCExchangeLib {
       OrderType.MARKET_ORDER,
       _orderId,
       _exchangeableAmount,
-      _reservedCommission, 
-      _price, 
-      _multiplyFactor, 
-      0, 
-      _sender, 
+      _reservedCommission,
+      _price,
+      _multiplyFactor,
+      0,
+      _sender,
       _expiresInTick);
-  }  
+  }
 
   /**
     @notice Positions an order in the provided orderbook
@@ -728,7 +728,7 @@ library MoCExchangeLib {
       order.next = self.firstMarketOrderId;
       self.firstMarketOrderId = _orderId;
     }
-  }  
+  }
 
   /**
     @notice Positions an order in the provided pendingQueue
@@ -986,7 +986,7 @@ library MoCExchangeLib {
     @return lastTickBlock Block in which the last tick started to run
     @return lastClosingPrice Emergent price of the last tick
     @return disabled True if the pair is disabled(it can not be inserted any orders); false otherwise
-    @return EMAPrice The last calculated EMAPrice of the last tick
+    @return emaPrice The last calculated emaPrice of the last tick
     @return smoothingFactor The current smoothing factor
    */
   function getStatus(Pair storage _self)
@@ -998,7 +998,7 @@ library MoCExchangeLib {
       uint256 lastTickBlock,
       uint256 lastClosingPrice,
       bool disabled,
-      uint256 EMAPrice,
+      uint256 emaPrice,
       uint256 smoothingFactor
     )
   {
@@ -1007,7 +1007,7 @@ library MoCExchangeLib {
     lastTickBlock = _self.tickState.lastTickBlock;
     lastClosingPrice = _self.lastClosingPrice;
     disabled = _self.disabled;
-    EMAPrice = _self.EMAPrice;
+    emaPrice = _self.emaPrice;
     smoothingFactor = _self.smoothingFactor;
   }
 
@@ -1092,13 +1092,13 @@ library MoCExchangeLib {
 
     Token storage token = _isBuy ? _self.baseToken : _self.secondaryToken;
     uint256 toTransfer = _exchangeableAmount.mul(priceOfMarketOrders(_multiplyFactor, _isBuy)).add(_reservedCommission);
-    
+
     //TODO: check why it is reverting with subraction in SafeMath
     require(token.token.transferFrom(_sender, address(this), toTransfer), "Token transfer failed");
-    
+
     bool goesToPendingQueue = _self.tickStage != TickStage.RECEIVING_ORDERS;
     uint64 expiresInTick = _self.tickState.number + _lifespan;
-    
+
     if (goesToPendingQueue) {
       insertMarketOrderAsPending(token.orderbook, _id, _sender, _exchangeableAmount, _reservedCommission, _multiplyFactor, expiresInTick, _isBuy);
       emit NewOrderAddedToPendingQueue(_id, 0);
@@ -1110,7 +1110,7 @@ library MoCExchangeLib {
       }
       emitNewOrderEvent(_id, _self, _sender, _exchangeableAmount, _reservedCommission, _multiplyFactor, expiresInTick, _isBuy, OrderType.MARKET_ORDER);
     }
-  }  
+  }
 
   /**
     @notice Converts an amount in secondary token currency to base token currency
@@ -1540,7 +1540,7 @@ If zero, will start from ordebook top.
     if (_pair.pageMemory.matchesAmount > 0) {
       _pair.pageMemory.emergentPrice = Math.average(_pair.pageMemory.lastBuyMatch.price, _pair.pageMemory.lastSellMatch.price);
       _pair.lastClosingPrice = _pair.pageMemory.emergentPrice;
-      _pair.EMAPrice = calculateNewEMA(_pair.EMAPrice, _pair.lastClosingPrice, _pair.smoothingFactor, factorPrecision);
+      _pair.emaPrice = calculateNewEMA(_pair.emaPrice, _pair.lastClosingPrice, _pair.smoothingFactor, factorPrecision);
     }
   }
 

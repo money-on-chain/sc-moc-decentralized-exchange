@@ -49,10 +49,10 @@ contract RestrictiveOrderListing is OrderListing {
     _;
   }
 
-  
+
   @notice Checks if the _pri a minimum; reverts if not
   @param _exchangeableAmout Exchangeable amount to be checked
-  
+
   modifier isValidExchangeableAmount(uint256 _exchangeableAmout) {
     require(_exchangeableAmout != 0, "Exchangeable amount cannot be zero");
     _;
@@ -147,7 +147,7 @@ contract RestrictiveOrderListing is OrderListing {
     @param _multiplyFactor Maximum price to be paid [base/secondary]
     @param _previousOrderIdHint Order that comes immediately before the new order;
     @param _lifespan After _lifespan ticks the order will be expired and no longer matched, must be lower or equal than the maximum
-    @param _isBuy true if it is a buy market order    
+    @param _isBuy true if it is a buy market order
     0 is considered as no hint and the smart contract must iterate
     INSERT_FIRST is considered a hint to be put at the start
   */

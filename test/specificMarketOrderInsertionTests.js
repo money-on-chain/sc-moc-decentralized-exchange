@@ -283,7 +283,6 @@ describe('specific market order insertion tests', function() {
             from
           }
         );
-        console.log('primero');
         await dex.insertMarketOrderAfter(
           pair[0],
           pair[1],
@@ -296,7 +295,6 @@ describe('specific market order insertion tests', function() {
             from
           }
         );
-        console.log('segundo');
       });
       it('THEN the first sell order shoul be with 5 Exchangeable Amount', async function() {
         const order = await dex.getSellOrderAtIndex(...pair, 0);

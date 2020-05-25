@@ -65,7 +65,7 @@ describe('Token pair EMA Price tests', function() {
   describe('RULE: When the pair has not runned any tick', function() {
     it('THEN the EmaPrice should be the same as the initial price', async function() {
       const tokenPairStatus = await dex.getTokenPairStatus(base.address, secondary.address);
-      testHelper.assertBig(tokenPairStatus.EMAPrice, tokenPairStatus.lastClosingPrice, 'EMAPrice');
+      testHelper.assertBig(tokenPairStatus.emaPrice, tokenPairStatus.lastClosingPrice, 'EmaPrice');
     });
   });
 
@@ -80,7 +80,7 @@ describe('Token pair EMA Price tests', function() {
 
         it('THEN the emaPrice should stay the same', async function() {
           const tokenPairStatus = await dex.getTokenPairStatus(base.address, secondary.address);
-          testHelper.assertBigWad(tokenPairStatus.EMAPrice, 1, 'EMAPrice');
+          testHelper.assertBigWad(tokenPairStatus.emaPrice, 1, 'EmaPrice');
         });
       }
     );
@@ -94,7 +94,7 @@ describe('Token pair EMA Price tests', function() {
 
         it('THEN the emaPrice should change and be different than the previous one (it was 1)', async function() {
           const tokenPairStatus = await dex.getTokenPairStatus(base.address, secondary.address);
-          testHelper.assertBigWad(tokenPairStatus.EMAPrice, 1.01653, 'EMAPrice');
+          testHelper.assertBigWad(tokenPairStatus.emaPrice, 1.01653, 'EmaPrice');
         });
       }
     );
