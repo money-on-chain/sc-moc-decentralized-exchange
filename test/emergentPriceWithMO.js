@@ -50,40 +50,19 @@ const setContracts = async function(accounts) {
   dex = await testHelper.decorateGetOrderAtIndex(dex);
 };
 
-describe('multiple tokens tests', function() {
-  contract('The emerget price answers zeros in case the pair does not exist', function(accounts) {
-    before(function() {
-      return setContracts(accounts);
-    });
-    describe('GIVEN are no pairs in the exchange contract', function() {
-      describe('WHEN calling getEmergentPrice', function() {
-        let result;
-        before(async function() {
-          result = await dex.getEmergentPrice(doc.address, secondary.address);
-        });
-        it('THEN the emergent price is zero, just as expected', async function() {
-          const { emergentPrice, lastBuyMatchId, lastBuyMatchAmount, lastSellMatchId } = result;
-          testHelper.assertBig(emergentPrice, 0, 'Emergent price');
-          testHelper.assertBig(lastBuyMatchId, 0, 'Last Buy Match Id');
-          testHelper.assertBig(lastBuyMatchAmount, 0, 'Last Buy Match Amount');
-          testHelper.assertBig(lastSellMatchId, 0, 'Last Sell Match Id');
-        });
-      });
-    });
-  });
-
+describe.only('multiple tokens tests', function() {
   contract('The matching should be independent for two token pairs', function(accounts) {
     const [, buyer, seller] = accounts;
     before('GIVEN the user has balance and allowance on all the tokens', async function() {
       await setContracts(accounts);
       const userData = {
         '1': {
-          baseAllowance: 10,
-          baseBalance: 10
+          baseAllowance: 1000,
+          baseBalance: 1000
         },
         '2': {
-          secondaryBalance: 10,
-          secondaryAllowance: 10
+          secondaryBalance: 1000,
+          secondaryAllowance: 1000
         }
       };
       await Promise.all([
@@ -103,7 +82,7 @@ describe('multiple tokens tests', function() {
         })
       ]);
     });
-    describe('AND there are orders in two token pairs', function() {
+    describe('AND there are limit orders in two token pairs', function() {
       before(async function() {
         await dex.addTokenPair(
           doc.address,
@@ -176,35 +155,24 @@ describe('multiple tokens tests', function() {
       });
     });
   });
+
   contract('The matching should be independent for two token pairs using LO and MO', function(
     accounts
-    ) {
+  ) {
     const [, buyer, seller] = accounts;
     before('GIVEN the user has balance and allowance on all the tokens', async function() {
       await setContracts(accounts);
-      const userData = {
-        '1': {
-          baseAllowance: 10,
-          baseBalance: 10
-        },
-        '2': {
-          secondaryBalance: 10,
-          secondaryAllowance: 10
-        }
-      };
       await Promise.all([
         testHelper.setBalancesAndAllowances({
           dex,
           base: doc,
           secondary,
-          userData,
           accounts
         }),
         testHelper.setBalancesAndAllowances({
           dex,
           base: doc,
           secondary: otherSecondary,
-          userData,
           accounts
         })
       ]);
@@ -219,22 +187,29 @@ describe('multiple tokens tests', function() {
           governor
         );
         await dex.insertMarketOrder(
-              doc.address, 
-              secondary.address,
-              wadify(1),
-              pricefy(1),
-              10,
-              true,
-              {
-                from: buyer
-              }
-            );           
-        await dex.insertBuyOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
-          from: buyer
-        });       
-        await dex.insertSellOrder(doc.address, secondary.address, wadify(2), pricefy(1), 5, {
-          from: seller
-        });     
+          doc.address,
+          secondary.address,
+          wadify(1),
+          pricefy(0.9),
+          10,
+          true,
+          {
+            from: buyer
+          }
+        );
+        console.log('Buy 1');
+        await dex.insertMarketOrder(
+          doc.address,
+          secondary.address,
+          wadify(1),
+          pricefy(0.9),
+          10,
+          false,
+          {
+            from: buyer
+          }
+        );
+        console.log('Sell 1');
         await dex.addTokenPair(
           doc.address,
           otherSecondary.address,
@@ -242,23 +217,30 @@ describe('multiple tokens tests', function() {
           DEFAULT_PRICE_PRECISION.toString(),
           governor
         );
-        await dex.insertBuyOrder(doc.address, otherSecondary.address, wadify(2), pricefy(2), 5, {
-          from: buyer
-        });
         await dex.insertMarketOrder(
-              doc.address, 
-              otherSecondary.address,
-              wadify(1),
-              pricefy(2),
-              10,
-              true,
-              {
-                from: buyer
-              }
-            );           
-        await dex.insertSellOrder(doc.address, otherSecondary.address, wadify(2), pricefy(2), 5, {
-          from: seller
-        });
+          doc.address,
+          otherSecondary.address,
+          wadify(1),
+          pricefy(2),
+          10,
+          true,
+          {
+            from: buyer
+          }
+        );        
+        console.log('Buy 2');
+        await dex.insertMarketOrder(
+          doc.address,
+          otherSecondary.address,
+          wadify(1),
+          pricefy(2),
+          10,
+          false,
+          {
+            from: buyer
+          }
+        );
+        console.log('Sell 2');
       });
       describe('Emergent price is generated independently for two token pairs', function() {
         it('WHEN calling getEmergentPrice, THEN the emergent prices are independent', async function() {

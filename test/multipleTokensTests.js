@@ -50,7 +50,7 @@ const setContracts = async function(accounts) {
   dex = await testHelper.decorateGetOrderAtIndex(dex);
 };
 
-describe.only('multiple tokens tests', function() {
+describe('multiple tokens tests', function() {
   contract('The emerget price answers zeros in case the pair does not exist', function(accounts) {
     before(function() {
       return setContracts(accounts);
@@ -245,7 +245,9 @@ describe.only('multiple tokens tests', function() {
     });
   });
 
-  contract('The matching should be independent for two token pairs using LO and MO', function(accounts) {
+  contract('The matching should be independent for two token pairs using LO and MO', function(
+    accounts
+  ) {
     const [, buyer, seller] = accounts;
     before('GIVEN the user has balance and allowance on all the tokens', async function() {
       await setContracts(accounts);
@@ -286,22 +288,22 @@ describe.only('multiple tokens tests', function() {
           governor
         );
         await dex.insertMarketOrder(
-              doc.address, 
-              secondary.address,
-              wadify(1),
-              pricefy(1),
-              10,
-              true,
-              {
-                from: buyer
-              }
-            );           
+          doc.address,
+          secondary.address,
+          wadify(1),
+          pricefy(1),
+          10,
+          true,
+          {
+            from: buyer
+          }
+        );
         await dex.insertBuyOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
           from: buyer
-        });       
+        });
         await dex.insertSellOrder(doc.address, secondary.address, wadify(2), pricefy(1), 5, {
           from: seller
-        });     
+        });
         await dex.addTokenPair(
           doc.address,
           otherSecondary.address,
@@ -313,16 +315,16 @@ describe.only('multiple tokens tests', function() {
           from: buyer
         });
         await dex.insertMarketOrder(
-              doc.address, 
-              otherSecondary.address,
-              wadify(1),
-              pricefy(2),
-              10,
-              true,
-              {
-                from: buyer
-              }
-            );           
+          doc.address,
+          otherSecondary.address,
+          wadify(1),
+          pricefy(2),
+          10,
+          true,
+          {
+            from: buyer
+          }
+        );
         await dex.insertSellOrder(doc.address, otherSecondary.address, wadify(2), pricefy(2), 5, {
           from: seller
         });
