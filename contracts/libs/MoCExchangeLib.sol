@@ -891,8 +891,8 @@ library MoCExchangeLib {
     @return next valid Order, id = 0 if no valid order found
    */
   function getNextValidOrder(Data storage _orderbook, uint64 _tickNumber, uint256 _orderId) public view returns (Order storage) {
-    Order storage nextLO = getNextValidLimitOrder(_orderbook, _tickNumber, _orderId);
     Order storage nextMO = getNextValidMarketOrder(_orderbook, _tickNumber, _orderId);
+    Order storage nextLO = getNextValidLimitOrder(_orderbook, _tickNumber, _orderId);
     return mostCompetitiveOrder(_orderbook, nextLO, nextMO);
   }
 
@@ -920,6 +920,7 @@ library MoCExchangeLib {
    */
   function getNextValidMarketOrder(Data storage _orderbook, uint64 _tickNumber, uint256 _orderId) public view returns (Order storage) {
     Order storage next = _orderId == 0 ? firstMarketOrder(_orderbook) : getNext(_orderbook, _orderId);
+    
     if (next.id == 0 || !isExpired(next, _tickNumber)) return next;
     else return getNextValidMarketOrder(_orderbook, _tickNumber, next.id);
   }
@@ -1131,7 +1132,8 @@ library MoCExchangeLib {
     require(_exchangeableAmount != 0, "Exchangeable amount cannot be zero");
 
     Token storage token = _isBuy ? _self.baseToken : _self.secondaryToken;
-    uint256 toTransfer = _exchangeableAmount.mul(priceOfMarketOrders(_multiplyFactor, _isBuy)).add(_reservedCommission);
+
+    uint256 toTransfer = _exchangeableAmount.add(_reservedCommission);
 
     //TODO: check why it is reverting with subraction in SafeMath
     require(token.token.transferFrom(_sender, address(this), toTransfer), "Token transfer failed");
@@ -1172,8 +1174,8 @@ library MoCExchangeLib {
    */
   function priceOfMarketOrders(uint256 _multiplyFactor, bool _isBuy) public pure returns (uint256) {
     //TODO: get price from last tick or oracle
-    uint256 HARDCODED_BUY_PRICE = 1;
-    uint256 HARDCODED_SELL_PRICE = 2;
+    uint256 HARDCODED_BUY_PRICE = 1500000000000000000;
+    uint256 HARDCODED_SELL_PRICE = 1400000000000000000;
     if (_isBuy){
       return _multiplyFactor.mul(HARDCODED_BUY_PRICE).div(RATE_PRECISION);
     }
@@ -1253,7 +1255,6 @@ library MoCExchangeLib {
     Order memory sell = getNextValidOrder(_self.secondaryToken.orderbook, _self.tickState.number, 0);
     Order memory lastBuyMatch;
     Order memory lastSellMatch;
-
     while (shouldMatchMemory(buy, sell)) {
       lastBuyMatch = buy;
       lastSellMatch = sell;
@@ -1279,10 +1280,10 @@ library MoCExchangeLib {
         require(false, "wow this is a bad implementation");
       }
     }
+
     if (lastBuyMatch.id == 0) return (0, 0, 0, 0);
 
     emergentPrice = Math.average(getOrderPrice(lastBuyMatch, true), getOrderPrice(lastSellMatch, false));
-
     return (emergentPrice, lastBuyMatch.id, lastBuyMatch.exchangeableAmount, lastSellMatch.id);
   }
 
@@ -1680,7 +1681,7 @@ If zero, will start from ordebook top.
       buy.exchangeableAmount = buy.exchangeableAmount.sub(buyerExpectedSend);
       _self.pageMemory.matchesAmount = _self.pageMemory.matchesAmount.add(1);
     } else {
-      assert(false);
+      require(false, "simulation wow this is a bad implementation");
     }
 
     if (shouldMatchStorage(buy, sell)) {
