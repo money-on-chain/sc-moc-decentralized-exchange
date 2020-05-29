@@ -196,16 +196,16 @@ describe('volume tests and gas cost report generation, using a 1% commission rat
         totalOrders: 10
       },
       {
+        description: '12 sells against 1 buy',
+        totalOrders: 12
+      },
+      {
         description: '15 sells against 1 buy',
         totalOrders: 15
       },
       {
-        description: '20 sells against 1 buy',
-        totalOrders: 20
-      },
-      {
-        description: '21 sells against 1 buy',
-        totalOrders: 21
+        description: '18 sells against 1 buy',
+        totalOrders: 18
       }
     ].forEach(({ description, totalOrders }) => {
       contract(description, function(accounts) {

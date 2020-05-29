@@ -1683,7 +1683,6 @@ If zero, will start from ordebook top.
     } else {
       require(false, "simulation wow this is a bad implementation");
     }
-
     if (shouldMatchStorage(buy, sell)) {
       // this assignments copy:
       // https://solidity.readthedocs.io/en/v0.5.11/types.html#reference-types
