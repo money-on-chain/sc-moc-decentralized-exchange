@@ -1353,7 +1353,7 @@ library MoCExchangeLib {
     @param _order The order with price
     @param _isBuy True if it is a buy order, false otherwise
   */
-  function getOrderPrice(Order memory _order, bool _isBuy) private view returns (uint256) {
+  function getOrderPrice(Order memory _order, bool _isBuy) private pure returns (uint256) {
     return (_order.orderType == OrderType.LIMIT_ORDER) ? _order.price : priceOfMarketOrders(_order.multiplyFactor, _isBuy);
   }
   /**

@@ -5,7 +5,10 @@ import "./OrderListing.sol";
 
 contract RestrictiveOrderListing is OrderListing {
   uint256 public minOrderAmount;
+  uint256 public maxMultiplyFactor;
+  uint256 public minMultiplyFactor;
   uint64 public maxOrderLifespan;
+
 
   /**
     @notice Checks if the amount is valid given a maximum in commonBaseToken currency; reverts if not
@@ -41,15 +44,18 @@ contract RestrictiveOrderListing is OrderListing {
     _;
   }
 
-  /* TODO: UNUSED MODIFIER BECAUSE OF CONTRACT SIZE LIMIT
+  /**
   @notice Checks if the _pri a minimum; reverts if not
-  @param _multiplyFactor MultiplyFactor to be checked
+  @param _multiplyFactor MultiplyFactor to be checked 
+  */
   modifier isValidMultiplyFactor(uint256 _multiplyFactor) {
     require(_multiplyFactor != 0, "MultiplyFactor cannot be zero");
+    require(_multiplyFactor >= minMultiplyFactor, "MultiplyFactor is too low");
+    require(_multiplyFactor <= maxMultiplyFactor, "MultiplyFactor is too high");
     _;
   }
 
-
+  /* TODO: UNUSED MODIFIER BECAUSE OF CONTRACT SIZE LIMIT
   @notice Checks if the _pri a minimum; reverts if not
   @param _exchangeableAmout Exchangeable amount to be checked
 
@@ -73,6 +79,23 @@ contract RestrictiveOrderListing is OrderListing {
 
   function setMaxOrderLifespan(uint64 _maxOrderLifespan) public onlyAuthorizedChanger {
     maxOrderLifespan = _maxOrderLifespan;
+  }
+
+  /**
+    @notice Sets the minimun multiplyFactor for a market order; only callable through governance
+    @param _minMultiplyFactor New minimun
+   */
+
+  function setMinMultiplyFactor(uint256 _minMultiplyFactor) public onlyAuthorizedChanger {
+    minMultiplyFactor = _minMultiplyFactor;
+  }
+
+  /**
+    @notice Sets the maximun multiplyFactor for a market order; only callable through governance
+    @param _maxMultiplyFactor New maximun
+   */
+  function setMaxMultiplyFactor(uint256 _maxMultiplyFactor) public onlyAuthorizedChanger {
+    maxMultiplyFactor = _maxMultiplyFactor;
   }
 
   /**
@@ -138,6 +161,28 @@ contract RestrictiveOrderListing is OrderListing {
   }
 
   /**
+    @notice Inserts a market order at start in the buy orderbook of a given pair with a hint;
+    the pair should not be disabled; the contract should not be paused. Takes the funds
+    with a transferFrom
+    @param _baseToken the base token of the pair
+    @param _secondaryToken the secondary token of the pair
+    @param _amount The quantity of tokens sent
+    @param _multiplyFactor Maximum price to be paid [base/secondary]
+    @param _lifespan After _lifespan ticks the order will be expired and no longer matched, must be lower or equal than the maximum
+    @param _isBuy true if it is a buy market order
+    0 is considered as no hint and the smart contract must iterate
+  */
+  function insertMarketOrder(
+    address _baseToken,
+    address _secondaryToken,
+    uint256 _amount,
+    uint256 _multiplyFactor,
+    uint64 _lifespan,
+    bool _isBuy
+  ) public isValidLifespan(_lifespan) isValidMultiplyFactor(_multiplyFactor) {
+    OrderListing.insertMarketOrder(_baseToken, _secondaryToken, _amount, _multiplyFactor, _lifespan, _isBuy);
+  }
+  /**
     @notice Inserts a market order in the buy orderbook of a given pair with a hint;
     the pair should not be disabled; the contract should not be paused. Takes the funds
     with a transferFrom
@@ -159,9 +204,9 @@ contract RestrictiveOrderListing is OrderListing {
     uint256 _previousOrderIdHint,
     uint64 _lifespan,
     bool _isBuy
-  ) public isValidLifespan(_lifespan) {
+  ) public isValidLifespan(_lifespan) isValidMultiplyFactor(_multiplyFactor){
     //TODO: ADD Modifiers. It can not be used because contract limit
-    //public  isValidLifespan(_lifespan) isValidExchangeableAmount(_exchangeableAmout) isValidMultiplyFactor(_multiplyFactor) {
+    //public  isValidExchangeableAmount(_exchangeableAmout) {
     OrderListing.insertMarketOrderAfter(_baseToken, _secondaryToken, _amount, _multiplyFactor, _previousOrderIdHint, _lifespan, _isBuy);
   }
 
