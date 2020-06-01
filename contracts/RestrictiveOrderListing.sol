@@ -47,13 +47,14 @@ contract RestrictiveOrderListing is OrderListing {
   /**
   @notice Checks if the _pri a minimum; reverts if not
   @param _multiplyFactor MultiplyFactor to be checked 
-  */
+  
   modifier isValidMultiplyFactor(uint256 _multiplyFactor) {
     require(_multiplyFactor != 0, "MultiplyFactor cannot be zero");
     require(_multiplyFactor >= minMultiplyFactor, "MultiplyFactor is too low");
     require(_multiplyFactor <= maxMultiplyFactor, "MultiplyFactor is too high");
     _;
   }
+  */
 
   /* TODO: UNUSED MODIFIER BECAUSE OF CONTRACT SIZE LIMIT
   @notice Checks if the _pri a minimum; reverts if not
@@ -76,7 +77,6 @@ contract RestrictiveOrderListing is OrderListing {
     @notice Sets the maximum lifespan for an order; only callable through governance
     @param _maxOrderLifespan New maximum
    */
-
   function setMaxOrderLifespan(uint64 _maxOrderLifespan) public onlyAuthorizedChanger {
     maxOrderLifespan = _maxOrderLifespan;
   }
@@ -85,7 +85,6 @@ contract RestrictiveOrderListing is OrderListing {
     @notice Sets the minimun multiplyFactor for a market order; only callable through governance
     @param _minMultiplyFactor New minimun
    */
-
   function setMinMultiplyFactor(uint256 _minMultiplyFactor) public onlyAuthorizedChanger {
     minMultiplyFactor = _minMultiplyFactor;
   }
@@ -179,7 +178,10 @@ contract RestrictiveOrderListing is OrderListing {
     uint256 _multiplyFactor,
     uint64 _lifespan,
     bool _isBuy
-  ) public isValidLifespan(_lifespan) isValidMultiplyFactor(_multiplyFactor) {
+  ) public isValidLifespan(_lifespan) {
+    require(_multiplyFactor != 0, "MultiplyFactor cannot be zero");
+    require(_multiplyFactor >= minMultiplyFactor, "MultiplyFactor is too low");
+    require(_multiplyFactor <= maxMultiplyFactor, "MultiplyFactor is too high");
     OrderListing.insertMarketOrder(_baseToken, _secondaryToken, _amount, _multiplyFactor, _lifespan, _isBuy);
   }
   /**
@@ -204,7 +206,10 @@ contract RestrictiveOrderListing is OrderListing {
     uint256 _previousOrderIdHint,
     uint64 _lifespan,
     bool _isBuy
-  ) public isValidLifespan(_lifespan) isValidMultiplyFactor(_multiplyFactor){
+  ) public isValidLifespan(_lifespan){
+    require(_multiplyFactor != 0, "MultiplyFactor cannot be zero");
+    require(_multiplyFactor >= minMultiplyFactor, "MultiplyFactor is too low");
+    require(_multiplyFactor <= maxMultiplyFactor, "MultiplyFactor is too high");
     //TODO: ADD Modifiers. It can not be used because contract limit
     //public  isValidExchangeableAmount(_exchangeableAmout) {
     OrderListing.insertMarketOrderAfter(_baseToken, _secondaryToken, _amount, _multiplyFactor, _previousOrderIdHint, _lifespan, _isBuy);

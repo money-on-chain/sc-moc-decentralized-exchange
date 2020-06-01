@@ -1127,8 +1127,6 @@ library MoCExchangeLib {
   ) public returns (uint256) {
     require(!_self.disabled, "Pair has been disabled");
     //It is not a modifier because of stack to deep
-    require(_multiplyFactor != 0, "MultiplyFactor cannot be zero");
-    //It is not a modifier because of stack to deep
     require(_exchangeableAmount != 0, "Exchangeable amount cannot be zero");
 
     Token storage token = _isBuy ? _self.baseToken : _self.secondaryToken;

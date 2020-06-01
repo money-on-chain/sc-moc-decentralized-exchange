@@ -354,14 +354,14 @@ associated pair with the groupId.
   }
 
   /**
-@notice Hook called when the simulation of the matching of orders starts; marks as so the tick stage
-Initializes the pageMemory with the first valid orders
-Has one discarded param; kept to have a fixed signature
-@dev The initialization of lastBuyMatch/lastSellMatch without checking if they should match can cause
-some inconsistency but it is covered by the matchesAmount attribute in the pageMemory
-@param _groupId Id that represent the group of tasks which should be done
-for the execution of a tick of a given pair
-*/
+  @notice Hook called when the simulation of the matching of orders starts; marks as so the tick stage
+  Initializes the pageMemory with the first valid orders
+  Has one discarded param; kept to have a fixed signature
+  @dev The initialization of lastBuyMatch/lastSellMatch without checking if they should match can cause
+  some inconsistency but it is covered by the matchesAmount attribute in the pageMemory
+  @param _groupId Id that represent the group of tasks which should be done
+  for the execution of a tick of a given pair
+  */
   function onSimulationStart(bytes32 _groupId, bytes32) private {
     MoCExchangeLib.Pair storage pair = getTokenPair(_groupId);
     assert(pair.tickStage == MoCExchangeLib.TickStage.RECEIVING_ORDERS);
