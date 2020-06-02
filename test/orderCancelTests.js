@@ -28,7 +28,7 @@ orderTracker.getByOrderId = function(id) {
   return this.find(it => it.id === id);
 };
 
-const insertOrder = ({ type, accounts, accountIndex, ...props }) =>
+const insertLimitOrder = ({ type, accounts, accountIndex, ...props }) =>
   function() {
     const insertFn = type === 'buy' ? 'insertBuyOrder' : 'insertSellOrder';
     const { amount, price, lifespan } = Object.assign(
@@ -158,7 +158,7 @@ describe('Order cancel tests', function() {
       getScenario({ type: 'sell', accounts, orderId: 2 })
     ].forEach(scenario => {
       describe(`GIVEN there is a single ${scenario.type} order`, function() {
-        before(insertOrder(scenario));
+        before(insertLimitOrder(scenario));
         describe('WHEN the owner cancels it', function() {
           before(cancelOrder(scenario));
           it(`THEN ${scenario.type} order-book is zero`, assertOrderBookLength(scenario));
@@ -179,7 +179,7 @@ describe('Order cancel tests', function() {
       const orderId = [1, 3, 5][index]; // first, middle, last
       const scenario = getScenario({ accounts, orderId, accountIndex: orderId });
       const insertFns = [1, 2, 3, 4, 5].map(accountIndex =>
-        insertOrder(Object.assign({}, scenario, { accountIndex }))
+        insertLimitOrder(Object.assign({}, scenario, { accountIndex }))
       );
       describe('GIVEN there is are many buy orders', function() {
         before(async function() {
@@ -210,7 +210,7 @@ describe('Order cancel tests', function() {
             assertUserReceives({ ...scenario, expectedBalance: 100 })
           );
           it('AND a new buy order can be placed', async function() {
-            await insertOrder({ type: 'buy', accounts, accountIndex: 6 })();
+            await insertLimitOrder({ type: 'buy', accounts, accountIndex: 6 })();
             await assertBalance({
               type: 'buy',
               account: accounts[6],
@@ -227,7 +227,7 @@ describe('Order cancel tests', function() {
     // eslint-disable-next-line mocha/no-sibling-hooks
     before(initContractsAndAllowance(accounts));
     describe('GIVEN there is an order', function() {
-      before(insertOrder(scenario));
+      before(insertLimitOrder(scenario));
       describe('WHEN none owner user cancels it', function() {
         it('THEN transaction reverts', function() {
           const unAuthorized = Object.assign({}, scenario, { accountIndex: 2 });
@@ -247,7 +247,7 @@ describe('Order cancel tests', function() {
       before(async function() {
         await initContractsAndAllowance(accounts)();
         const amount = wadify(0.1);
-        const doInsert = insertOrder(getScenario({ accounts, amount }));
+        const doInsert = insertLimitOrder(getScenario({ accounts, amount }));
         // Inserts many orders to inflate the order-book, no need for order as it uses same account
         return executeBatched([...Array(100)].map(() => doInsert));
       });

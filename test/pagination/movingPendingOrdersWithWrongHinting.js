@@ -61,11 +61,11 @@ describe('Depletion of the Pending Queue in the after match with wrong hints', f
       before(async function() {
         // 4 orders so the matching has at least 2 steps to run
         await Promise.all([
-          dex.insertBuyOrder({ from: buyer }),
-          dex.insertBuyOrder({ from: buyer }),
-          dex.insertSellOrder({ from: seller }),
-          dex.insertSellOrder({ from: seller }),
-          dex.insertSellOrder({ from: seller }) // Order ID 5
+          dex.insertBuyLimitOrder({ from: buyer }),
+          dex.insertBuyLimitOrder({ from: buyer }),
+          dex.insertSellLimitOrder({ from: seller }),
+          dex.insertSellLimitOrder({ from: seller }),
+          dex.insertSellLimitOrder({ from: seller }) // Order ID 5
         ]);
 
         // running the two steps of the simulation
@@ -87,7 +87,7 @@ describe('Depletion of the Pending Queue in the after match with wrong hints', f
     givenTheTickIsRunning(accounts, function() {
       describe('AND there is a sell order pending', function() {
         before(function() {
-          return dex.insertSellOrder({ from: seller, pending: true });
+          return dex.insertSellLimitOrder({ from: seller, pending: true });
         });
         describe('WHEN calling matchOrders with just the enough steps and a wrong hint(pointing to a non existent id)', function() {
           it('THEN the tx fails', function() {
@@ -113,7 +113,7 @@ describe('Depletion of the Pending Queue in the after match with wrong hints', f
       givenTheTickIsRunning(accounts, function() {
         describe('AND there is a sell order pending with the same price as the open one', function() {
           before(function() {
-            return dex.insertSellOrder({ from: seller, pending: true });
+            return dex.insertSellLimitOrder({ from: seller, pending: true });
           });
           describe('WHEN calling matchOrders with just the enough steps and the hint to put it at the start', function() {
             it('THEN the tx fails', function() {
@@ -135,7 +135,11 @@ describe('Depletion of the Pending Queue in the after match with wrong hints', f
       givenTheTickIsRunning(accounts, function() {
         describe('AND there is a sell order pending with a higher price', function() {
           before(function() {
-            return dex.insertSellOrder({ from: seller, pending: true, price: DEFAULT_PRICE * 2 });
+            return dex.insertSellLimitOrder({
+              from: seller,
+              pending: true,
+              price: DEFAULT_PRICE * 2
+            });
           });
           describe('WHEN calling matchOrders with just the enough steps and the hint to the new one at the start', function() {
             it('THEN the tx fails', function() {
@@ -159,8 +163,8 @@ describe('Depletion of the Pending Queue in the after match with wrong hints', f
         describe('AND there are two a sell order pending with the same price as the open one ', function() {
           before(function() {
             return Promise.all([
-              dex.insertSellOrder({ from: seller, pending: true }), // Order ID 6
-              dex.insertSellOrder({ from: seller, pending: true }) // Order ID 7
+              dex.insertSellLimitOrder({ from: seller, pending: true }), // Order ID 6
+              dex.insertSellLimitOrder({ from: seller, pending: true }) // Order ID 7
             ]);
           });
           describe('WHEN calling matchOrders with just the enough steps and the hint to put it in between', function() {
@@ -184,7 +188,11 @@ describe('Depletion of the Pending Queue in the after match with wrong hints', f
       givenTheTickIsRunning(accounts, function() {
         describe('AND there is a sell order pending with a lower price', function() {
           before(function() {
-            return dex.insertSellOrder({ from: seller, pending: true, price: DEFAULT_PRICE / 2 });
+            return dex.insertSellLimitOrder({
+              from: seller,
+              pending: true,
+              price: DEFAULT_PRICE / 2
+            });
           });
           describe('WHEN calling matchOrders with just the enough steps and the hint to put it least', function() {
             it('THEN the tx fails', function() {

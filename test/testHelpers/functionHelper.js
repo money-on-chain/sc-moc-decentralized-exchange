@@ -116,7 +116,7 @@ const decorateGetOrderAtIndex = dex =>
     getSellOrderAtIndex: getSellOrderAtIndex(dex)
   });
 
-const insertOrder = async ({
+const insertLimitOrder = async ({
   dex,
   defaultPair,
   type,
@@ -148,10 +148,10 @@ const insertOrder = async ({
 
 const decorateOrderInsertions = (dex, accounts, pair) =>
   Object.assign({}, dex, {
-    insertBuyOrder: props =>
-      insertOrder({ dex, defaultPair: pair, accounts, type: 'buy', ...props }),
-    insertSellOrder: props =>
-      insertOrder({ dex, defaultPair: pair, accounts, type: 'sell', ...props })
+    insertBuyLimitOrder: props =>
+      insertLimitOrder({ dex, defaultPair: pair, accounts, type: 'buy', ...props }),
+    insertSellLimitOrder: props =>
+      insertLimitOrder({ dex, defaultPair: pair, accounts, type: 'sell', ...props })
   });
 
 module.exports = {
