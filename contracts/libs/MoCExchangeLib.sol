@@ -190,6 +190,8 @@ library MoCExchangeLib {
     uint256 firstId;
     uint256 firstMarketOrderId;
     uint256 length;
+    uint256 marketOrderLength;
+    uint256 limitOrderLength;
     uint256 firstPendingToPopId;
     uint256 lastPendingToPopId;
     uint256 firstPendingMarketOrderToPopId;
@@ -504,7 +506,7 @@ library MoCExchangeLib {
     @param _price Target price of the new order
    */
   function validateIntendedFirstOrderInTheData(Data storage self, uint256 _price) private view {
-    if (self.length != 0) {
+    if (self.limitOrderLength != 0) {
       // there is one or more orders in the Data, so the price should be the most competitive
       Order storage firstOrder = first(self);
       require(priceGoesBefore(self, _price, firstOrder.price), "Price doesnt belong to start");
@@ -516,7 +518,7 @@ library MoCExchangeLib {
     @param _multiplyFactor Target multiplyFactor of the new order
   */
   function validateIntendedFirstMarketOrderInTheData(Data storage self, uint256 _multiplyFactor) private view {
-    if (self.length != 0) {
+    if (self.marketOrderLength != 0) {
       // there is one or more orders in the Data, so the price should be the most competitive
       Order storage firstOrder = firstMarketOrder(self);
       require(multiplyFactorGoesBefore(self, _multiplyFactor, firstOrder.multiplyFactor), "Multiply factor doesnt belong to start");
@@ -565,10 +567,16 @@ library MoCExchangeLib {
     Order storage nextOrder = get(self, get(self, self.firstId).next);
     // TODO: benchmark this operation as this 2 writes inside a loop could be optimiced.
     // Readability over perfirmance was prioratized in this stage.
+    bool isMarketOrder = self.orders[self.firstId].orderType == OrderType.MARKET_ORDER;
     delete (self.orders[self.firstId]);
     self.firstId = nextOrder.id;
-    self.length = self.length.sub(1);
+    decreaseQueuesLength(self, isMarketOrder);
     return nextOrder;
+  }
+
+  function decreaseQueuesLength(Data storage _self, bool _isMarketOrder) internal {
+    _self.length = _self.length.sub(1);
+    (_isMarketOrder) ? _self.marketOrderLength.sub(1) : _self.limitOrderLength.sub(1);
   }
 
   /**
@@ -622,8 +630,9 @@ library MoCExchangeLib {
       }
     }
     // In any case, the item should be deleted and the list resized
+    bool isMarketOrder = self.orders[_toRemove.id].orderType == OrderType.MARKET_ORDER;
     delete (self.orders[_toRemove.id]);
-    self.length = self.length.sub(1);
+    decreaseQueuesLength(self, isMarketOrder);
   }
 
   /**
@@ -701,6 +710,7 @@ library MoCExchangeLib {
   function positionOrder(Data storage self, uint256 _orderId, uint256 _previousOrderId) private {
     Order storage order = get(self, _orderId);
     self.length = self.length.add(1);
+    self.limitOrderLength = self.limitOrderLength.add(1);
     if (_previousOrderId != 0) {
       Order storage previousOrder = get(self, _previousOrderId);
       order.next = previousOrder.next;
@@ -720,6 +730,7 @@ library MoCExchangeLib {
   function positionMarketOrder(Data storage self, uint256 _orderId, uint256 _previousOrderId) private {
     Order storage order = get(self, _orderId);
     self.length = self.length.add(1);
+    self.marketOrderLength = self.marketOrderLength.add(1);
     if (_previousOrderId != 0) {
       Order storage previousOrder = get(self, _previousOrderId);
       order.next = previousOrder.next;
@@ -770,7 +781,7 @@ library MoCExchangeLib {
     @param _price Price of the order to possition
    */
   function findPreviousOrderToPrice(Data storage self, uint256 _price) public view returns (uint256) {
-    if (self.length == 0) {
+    if (self.limitOrderLength == 0) {
       return 0;
     }
 
@@ -802,7 +813,7 @@ library MoCExchangeLib {
     @param _price Price of the order to possition. It's equal to exchangableAmount * multiplyFactor
    */
   function findPreviousMarketOrderToMultiplyFactor(Data storage self, uint256 _price) public view returns (uint256) {
-    if (self.length == 0) {
+    if (self.marketOrderLength == 0) {
       return 0;
     }
 
@@ -1176,10 +1187,19 @@ library MoCExchangeLib {
     //TODO: get price from last tick or oracle
     uint256 HARDCODED_BUY_PRICE = 1500000000000000000;
     uint256 HARDCODED_SELL_PRICE = 1400000000000000000;
+    uint256 price = 0;
     if (_isBuy){
-      return _multiplyFactor.mul(HARDCODED_BUY_PRICE).div(RATE_PRECISION);
+      price = _multiplyFactor.mul(HARDCODED_BUY_PRICE).div(RATE_PRECISION);
     }
-    return _multiplyFactor.mul(HARDCODED_SELL_PRICE).div(RATE_PRECISION);
+    else {
+      price = _multiplyFactor.mul(HARDCODED_SELL_PRICE).div(RATE_PRECISION);
+    }
+    
+    if (price == 0){
+      return (_isBuy) ? HARDCODED_BUY_PRICE : HARDCODED_SELL_PRICE;
+    }
+
+    return price;
   }
 
   /**
@@ -1681,7 +1701,7 @@ If zero, will start from ordebook top.
       buy.exchangeableAmount = buy.exchangeableAmount.sub(buyerExpectedSend);
       _self.pageMemory.matchesAmount = _self.pageMemory.matchesAmount.add(1);
     } else {
-      require(false, "simulation wow this is a bad implementation");
+      assert(false);
     }
     if (shouldMatchStorage(buy, sell)) {
       // this assignments copy:
