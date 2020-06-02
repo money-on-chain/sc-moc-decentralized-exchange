@@ -70,8 +70,8 @@ describe('Commissions tests', function() {
     describe('GIVEN there are two buy and sell order that fully match', function() {
       before(async function() {
         await initContractsAndAllowance(accounts);
-        await dex.insertBuyOrder({ amount: 10, price: 10 }); // orderId: 1
-        await dex.insertSellOrder({ amount: 1, price: 10 }); // orderId: 2
+        await dex.insertBuyLimitOrder({ amount: 10, price: 10 }); // orderId: 1
+        await dex.insertSellLimitOrder({ amount: 1, price: 10 }); // orderId: 2
       });
       describe('WHEN instructed to match orders', function() {
         before(async function() {
@@ -112,8 +112,8 @@ describe('Commissions tests', function() {
     describe('GIVEN there is a buy order that match partially', function() {
       before(async function() {
         await initContractsAndAllowance(accounts);
-        await dex.insertBuyOrder({ amount: 17 }); // orderId: 1
-        await dex.insertSellOrder({ amount: 12 }); // orderId: 2
+        await dex.insertBuyLimitOrder({ amount: 17 }); // orderId: 1
+        await dex.insertSellLimitOrder({ amount: 12 }); // orderId: 2
       });
       describe('WHEN instructed to match orders', function() {
         before(async function() {
@@ -150,7 +150,7 @@ describe('Commissions tests', function() {
       });
       describe('AND WHEN instructed to match with a new order that fully matches the modified one', function() {
         before(async function() {
-          await dex.insertSellOrder({ amount: 5 }); // orderId: 3
+          await dex.insertSellLimitOrder({ amount: 5 }); // orderId: 3
           txReceipt = await dex.matchOrders(
             base.address,
             secondary.address,
@@ -198,10 +198,10 @@ describe('Commissions tests', function() {
           secondary: otherSecondary
         });
 
-        await dex.insertBuyOrder({ amount: 15, secondary: otherSecondary }); // orderId: 1
-        await dex.insertSellOrder({ amount: 15, secondary: otherSecondary }); // orderId: 2
-        await dex.insertBuyOrder({ amount: 20 }); // orderId: 3
-        await dex.insertSellOrder({ amount: 20 }); // orderId: 4
+        await dex.insertBuyLimitOrder({ amount: 15, secondary: otherSecondary }); // orderId: 1
+        await dex.insertSellLimitOrder({ amount: 15, secondary: otherSecondary }); // orderId: 2
+        await dex.insertBuyLimitOrder({ amount: 20 }); // orderId: 3
+        await dex.insertSellLimitOrder({ amount: 20 }); // orderId: 4
       });
       describe('WHEN instructed to match orders', function() {
         before(async function() {
@@ -264,8 +264,8 @@ describe('Commissions tests', function() {
     describe('GIVEN there are two buy and sell order that fully match with different prices', function() {
       before(async function() {
         await initContractsAndAllowance(accounts);
-        await dex.insertBuyOrder({ amount: 60, price: 20 }); // orderId: 1
-        await dex.insertSellOrder({ amount: 3, price: 10 }); // orderId: 2
+        await dex.insertBuyLimitOrder({ amount: 60, price: 20 }); // orderId: 1
+        await dex.insertSellLimitOrder({ amount: 3, price: 10 }); // orderId: 2
       });
       describe('WHEN instructed to match orders', function() {
         before(async function() {
@@ -309,7 +309,7 @@ describe('Commissions tests', function() {
       describe('GIVEN there is a buy order', function() {
         before(async function() {
           await initContractsAndAllowance(accounts);
-          await dex.insertBuyOrder({ amount: 17 }); // orderId: 1
+          await dex.insertBuyLimitOrder({ amount: 17 }); // orderId: 1
         });
         describe('WHEN the order is canceled', function() {
           before(async function() {
@@ -353,8 +353,8 @@ describe('Commissions tests', function() {
       describe('GIVEN there is a sell order that match partially', function() {
         before(async function() {
           await initContractsAndAllowance(accounts);
-          await dex.insertBuyOrder({ amount: 12 }); // orderId: 1
-          await dex.insertSellOrder({ amount: 17 }); // orderId: 2
+          await dex.insertBuyLimitOrder({ amount: 12 }); // orderId: 1
+          await dex.insertSellLimitOrder({ amount: 17 }); // orderId: 2
           await dex.matchOrders(
             base.address,
             secondary.address,

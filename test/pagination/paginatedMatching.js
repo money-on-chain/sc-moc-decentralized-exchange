@@ -119,8 +119,8 @@ describe('Matching can be run in several pages', function() {
         await Promise.all(
           [...new Array(15)].map(() =>
             Promise.all([
-              dex.insertBuyOrder({ from: buyer }),
-              dex.insertSellOrder({ from: seller })
+              dex.insertBuyLimitOrder({ from: buyer }),
+              dex.insertSellLimitOrder({ from: seller })
             ])
           )
         );
@@ -138,8 +138,8 @@ describe('Matching can be run in several pages', function() {
 
       describe('WHEN running a match with only two orders', function() {
         before(async function() {
-          await dex.insertBuyOrder({ from: buyer });
-          await dex.insertSellOrder({ from: seller });
+          await dex.insertBuyLimitOrder({ from: buyer });
+          await dex.insertSellLimitOrder({ from: seller });
           await testHelper.waitNBlocks(2);
           await dex.matchOrders(...pair, 25);
         });
@@ -157,10 +157,10 @@ describe('Matching can be run in several pages', function() {
     before(initContractsAndAllowance(accounts));
     describe('GIVEN there are 2 buy and 2 sell orders which match 1v1', function() {
       before(async function() {
-        await dex.insertBuyOrder({ from: buyer }); // id: 1
-        await dex.insertBuyOrder({ from: buyer }); // id: 2
-        await dex.insertSellOrder({ from: seller }); // id: 3
-        await dex.insertSellOrder({ from: seller }); // id: 4
+        await dex.insertBuyLimitOrder({ from: buyer }); // id: 1
+        await dex.insertBuyLimitOrder({ from: buyer }); // id: 2
+        await dex.insertSellLimitOrder({ from: seller }); // id: 3
+        await dex.insertSellLimitOrder({ from: seller }); // id: 4
       });
 
       it('AND the pair is not running a tick', function() {
@@ -308,10 +308,10 @@ describe('Matching can be run in several pages', function() {
       before(initContractsAndAllowance(accounts));
       describe('GIVEN there is a pair of orders that match and there are one buy and one sell orders which dont match due to price difference', function() {
         before(async function() {
-          await dex.insertBuyOrder({ from: buyer }); // id: 1
-          await dex.insertSellOrder({ from: seller }); // id: 2
-          await dex.insertBuyOrder({ from: buyer, price: DEFAULT_PRICE / 2 }); // id: 3
-          await dex.insertSellOrder({ from: seller, price: DEFAULT_PRICE * 2 }); // id: 4
+          await dex.insertBuyLimitOrder({ from: buyer }); // id: 1
+          await dex.insertSellLimitOrder({ from: seller }); // id: 2
+          await dex.insertBuyLimitOrder({ from: buyer, price: DEFAULT_PRICE / 2 }); // id: 3
+          await dex.insertSellLimitOrder({ from: seller, price: DEFAULT_PRICE * 2 }); // id: 4
         });
 
         it('AND the pair is not running a tick', function() {
@@ -450,11 +450,11 @@ describe('Matching can be run in several pages', function() {
       before(initContractsAndAllowance(accounts));
       describe('GIVEN there is a pair of orders that matches partially, and another buy order with a lower price', function() {
         before(async function() {
-          await dex.insertBuyOrder({ from: buyer }); // id: 1, matches completelly
+          await dex.insertBuyLimitOrder({ from: buyer }); // id: 1, matches completelly
           // id: 2 matches partially
-          await dex.insertSellOrder({ from: seller, amount: DEFAULT_AMOUNT * 2 });
+          await dex.insertSellLimitOrder({ from: seller, amount: DEFAULT_AMOUNT * 2 });
           // id: 3 doesnt match with partial order 2
-          await dex.insertBuyOrder({ from: buyer, price: DEFAULT_PRICE / 2 });
+          await dex.insertBuyLimitOrder({ from: buyer, price: DEFAULT_PRICE / 2 });
         });
 
         it('AND the pair is not running a tick', function() {
@@ -593,8 +593,8 @@ describe('Matching can be run in several pages', function() {
     before(initContractsAndAllowance(accounts));
     describe('GIVEN there are one buy and one sell orders which dont match due to price difference', function() {
       before(async function() {
-        await dex.insertBuyOrder({ from: buyer, price: 2 }); // id: 1
-        await dex.insertSellOrder({ from: seller, price: 10 }); // id: 2
+        await dex.insertBuyLimitOrder({ from: buyer, price: 2 }); // id: 1
+        await dex.insertSellLimitOrder({ from: seller, price: 10 }); // id: 2
       });
 
       it('AND the pair is not running a tick', function() {
@@ -725,8 +725,8 @@ describe('Matching can be run in several pages', function() {
           await Promise.all(
             [...new Array(8)].map(() =>
               Promise.all([
-                dex.insertBuyOrder({ from: buyer }),
-                dex.insertSellOrder({ from: seller })
+                dex.insertBuyLimitOrder({ from: buyer }),
+                dex.insertSellLimitOrder({ from: seller })
               ])
             )
           );
@@ -810,14 +810,14 @@ describe('Matching can be run in several pages', function() {
         before(async function() {
           await Promise.all(
             [...Array(totalOrdersPerType)].map(() =>
-              dex.insertBuyOrder({
+              dex.insertBuyLimitOrder({
                 from: buyer
               })
             )
           );
           await Promise.all(
             [...Array(totalOrdersPerType)].map(() =>
-              dex.insertSellOrder({
+              dex.insertSellLimitOrder({
                 from: seller
               })
             )
@@ -844,7 +844,7 @@ describe('Matching can be run in several pages', function() {
               await dex.matchOrders(...pair, 1);
               await Promise.all(
                 [...Array(pendingOrdersAmount)].map(() =>
-                  dex.insertBuyOrder({
+                  dex.insertBuyLimitOrder({
                     from: buyer,
                     pending: true
                   })
@@ -852,7 +852,7 @@ describe('Matching can be run in several pages', function() {
               );
               await Promise.all(
                 [...Array(pendingOrdersAmount)].map(() =>
-                  dex.insertSellOrder({
+                  dex.insertSellLimitOrder({
                     from: seller,
                     pending: true
                   })
