@@ -2,10 +2,11 @@
 
 1.  [Introduction to TEX](#introduction-to-tex)
     1.  [Tokens Pair](#tokens-pair)
-    1.  [Orderbook](#orderbook)    
+    1.  [Orderbook](#orderbook)
     1.  [Limit Orders](#limit-orders)
     1.  [The MoCDecentralizedExchange Contract](#the-mocdecentralizedexchange-contract)
-    1.  [Current tokens](#current-tokens)   
+    1.  [Current tokens](#current-tokens)
+1.  [Setting allowance](setting-allowance)
 1.  [Inserting an Order](#inserting-an-order)
     1.  [Inserting a Buy Order](#inserting-a-buy-order)
     1.  [Inserting a Sell Order](#inserting-a-sell-order)
@@ -21,38 +22,42 @@
 
 # Introduction to TEX
 
-TEX is decentralized token exchange for the trading of [ERC-20 tokens](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md) tokens on the RSK Blockchain and is based on **[Orderbooks (OB)](#orderbook)** and periodic **ticks**. 
+TEX is decentralized token exchange for the trading of [ERC-20 tokens](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md) tokens on the RSK Blockchain and is based on **[Orderbooks (OB)](#orderbook)** and periodic **ticks**.
 
 The users insert **orders** in the orderbook between **ticks** and every regular interval of time the match process is executed and to close the operations. The funds are in custody of the system until the match process finishes.
 
 ## Tokens Pair
 
-It is a pair of token where one is considered the **base token** and the other one is the **secondary token**. If an user wants to trade an X token for a Y token there must exist an X/Y token pair or a Y/X token pair. 
+It is a pair of token where one is considered the **base token** and the other one is the **secondary token**. If an user wants to trade an X token for a Y token there must exist an X/Y token pair or a Y/X token pair.
 
 The secondary token is seen as the **good** and the base token is seen as the medium of **payment**. A user can create two types of orders:
-- **Buy orders**: the sender is buying _secondary tokens_ in exchange for _base tokens_. 
+
+- **Buy orders**: the sender is buying _secondary tokens_ in exchange for _base tokens_.
 - **Sell order**: the sender is selling _secondary tokens_ in exchange for _base tokens_.
 
 ## Orderbook
 
-An orderbook is a data structure where the orders are saved. There are two orderbook for each tokens pair, one for **sell orders** and the other for **buy orders**. 
+An orderbook is a data structure where the orders are saved. There are two orderbook for each tokens pair, one for **sell orders** and the other for **buy orders**.
 
 ## Limit Orders
 
 Limit Orders (LO from now on) are defined by an **amount** and the **price** to be paid/charged.
 
-
 ### Price
-The price is always expressed in how much minimum units of **base token** is being paid/charged for a minimum unit of the **secondary token**. 
 
-The price may not be the actual price in which the order matches but it is rather a limit. 
+The price is always expressed in how much minimum units of **base token** is being paid/charged for a minimum unit of the **secondary token**.
+
+The price may not be the actual price in which the order matches but it is rather a limit.
+
 - In case of **Buy LO** the price is an upper limit of how much the user will be paying.
 - In **Sell LO** the user is selling the price is an lower limit of how much will be charging.
 
 ### Amount
-The amount is always the amount to be locked by the user , i.e. 
+
+The amount is always the amount to be locked by the user , i.e.
+
 - In case of **Buy LO** is the locking amount of the base token.
-- In case of **Sell LO** is the locking amount of the secondary token. 
+- In case of **Sell LO** is the locking amount of the secondary token.
 
 This amount already includes the **commission charged** so the amount to be exchanged will actually be less than the locked one.
 
@@ -67,7 +72,6 @@ To get some new tokens you should interact with the suite. The entry point is th
 
 For more information about TEX you can read [TEX architecture and smart contracts](https://github.com/money-on-chain/sc-moc-decentralized-exchange/blob/develop/README.md)
 
-
 ### TEX precisions
 
 The TEX system handles different types of currency _precision_ to operate with ERC-20 tokens and RBTC. The current RSK EVM version does not "support" decimal values and it means that in TEX every value that is mathematically a decimal, it's represented as an integer adjusted by a given value, the _precision_.
@@ -78,9 +82,106 @@ Using unsigned int256 as the norm for all values, sets an upper limit to ~76 dec
 
 - A bitcoin-collateralized stable-coin, Dollar On Chain, (DoC)
 - A passive income hodler-targeted token, BitPro (BPRO)
-- A leveraged Bitcoin investment instrument (RIFX series).
+- A token used in decentralized economies with RSK (RIFX series).
 
 You can find more info on the RIF token and decentralized economies [here](https://www.rifos.org/).
+
+# Setting allowance
+
+When using TEX to sell or buy ERC20 tokens, there is a previous transaction necessary to insert a new order in the orderbook. We need to **approve** the tokens on the platform. This is a security measure for token holders.
+
+The functions that interest us are the following:
+
+```js
+function approve(address _texContract, uint256 _allowedAmount) public returns (bool success)
+function allowance(address _owner, address _texContract) public view returns (uint256 remaining)
+```
+
+## Approve
+
+The approval transaction is used to grant permission for the smart contract to transfer a certain amount of the token, called allowance. The TEX smart contract will only be able to transfer the amount of token that a user approves.
+
+The **approve** transaction is part of the ERC-20 standard and you can find more information [here](https://eips.ethereum.org/EIPS/eip-20).
+
+You must call the approve function of every token that you use on the TEX platform.
+
+### Parameters of the operation
+
+#### The texContract parameter
+
+Is the address of the TEX Platform to withdraw the token from the account a lot of times, up to the **allowedAmount** value.
+
+#### The allowedAmount parameter
+
+Is the allowed amount. If this function is invoked again then it overwrites the current allowance with \_allowedAmount value
+
+### Possible failures
+
+#### TEX Contract address is 0
+
+It you send the address 0 in the \_texContract parameter it will revert with the message: "ERC20: approve to the zero address".
+
+#### Gas limit and gas price
+
+This two values are a parameter of the transaction, this is not used in the contract and it is usually managed by your wallet(you should read about them if you are developing and you don't know exactly what are they) but you should take them into account when trying to send all of your funds to aprove tokens.
+
+### How-to
+
+In the following sections we will give some code on how this can be done through a Smart Contract or directly, with a console or with an app.
+​
+
+#### Smart Contract​
+
+​To create a new Smart Contract that uses the TEX platform, you can use any language and IDE you want. In this tutorial, we will show you how to do it using [Solidity language](https://solidity.readthedocs.io/en/v0.5.8/), [Truffle Framework](https://www.trufflesuite.com/) and [NPM](https://www.npmjs.com/).
+Truffle framework offers some template projects that you can use to develop applications that use smart contracts. You can get more information [here](https://www.trufflesuite.com/boxes).
+Assuming you already have your project up and running (if you don't, please follow [this link](https://github.com/money-on-chain/sc-moc-decentralized-exchange/blob/develop/README.md)) the only extra thing you need to do is to install our repo as a dependency in your NPM project. In order you need to do this you just need to run the following command.
+​
+
+```
+npm install --save -E git+https://github.com/money-on-chain/sc-moc-decentralized-exchange.git
+```
+
+​Having done that lets you use our contract as a dependency to your contract. For this let's suppose you are doing some kind of contract that when executing a certain task charges a fixed commission.
+​
+You just have to import the contract **MoCDecentralizedExchange** contract and a ERC-20 interface. We recommend using [OpenZeppelin](https://openzeppelin.com/);
+​
+
+```js
+import 'decentralized-exchange-sc/contracts/MoCDecentralizedExchange.sol';
+import "openzeppelin-eth/contracts/token/ERC20/IERC20.sol";
+```
+
+Receive the address in the constructor in order to be able to interact with it later
+
+```js
+MoCDecentralizedExchange public tex;
+
+constructor (MoCDecentralizedExchange _texContract, ...rest of your params) {
+  tex = _texContract;
+  ...
+}
+​
+```
+Then you call approve to set allowance.
+
+
+```js
+function yourSetAllowance(address _tokenAddress, uint256 _amount) public {
+  IERC20 token = IERC20(_tokenAddress);
+  bool success = token.approve(address(tex), _amount);
+  require(success, "Approval not done");
+}
+```
+
+You can check the new allowance with the following function.
+
+```js
+function getAllowance(address _tokenAddress) public view returns (uint256) {
+  IERC20 token = IERC20(_tokenAddress);
+  return token.allowance(msg.sender, address(tex));
+}
+```
+​​​
 
 # Inserting an Order
 
@@ -88,17 +189,20 @@ In this tutorial we will show you how to insert a Buy and Sell Orders.
 
 TEX uses ERC-20 tokens this means that you need wallets like **Nifty** and **MetaMask** to handle them if you tell them to ([MetaMask tutorial on how to do it](https://metamask.zendesk.com/hc/en-us/articles/360015489031-How-to-View-Your-Tokens), Nifty is very similar to it so you should follow that link too if you are using the latter).
 ​​
+
 ## Inserting a Buy Order
 
 In this tutorial the functions that is of interest to us are two:
+
 ```js
-  function insertBuyOrder( 
-    address _baseToken, 
-    address _secondaryToken, 
-    uint256 _amount, 
-    uint256 _price, 
+  function insertBuyOrder(
+    address _baseToken,
+    address _secondaryToken,
+    uint256 _amount,
+    uint256 _price,
     uint64 _lifespan) public
 ```
+
 ```js
  function insertBuyOrderAfter(
     address _baseToken,
@@ -109,21 +213,24 @@ In this tutorial the functions that is of interest to us are two:
     uint256 _previousOrderIdHint
   ) public
 ```
+
 The difference is that **insertBuyOrderAfter** uses a hint to optimize the insertion. Each order has a unique ID.
 
 ### Parameters of the operation
 
 #### The baseToken parameter
-Is the address of the contract used to implement the ERC-20 base token. You can find more about 
+
+Is the address of the contract used to implement the ERC-20 base token. You can find more about
 the current supported tokens [here](#current-tokens).
 
 #### The secondaryToken parameter
 
-Is the address of the contract used to implement the ERC-20 secondary token. You can find more about the current supported tokens [here](#current-tokens). 
+Is the address of the contract used to implement the ERC-20 secondary token. You can find more about the current supported tokens [here](#current-tokens).
 
 The token pair must exist in the TEX platform because it defines the precisions to use in _price_ and _amout_ parameter.
 
 #### The amount parameter
+
 It is the locking amount of the base token (the medium of payment).
 
 This amount already includes the **commission charged** so the amount to be exchanged will actually be less than the locked one.
@@ -159,21 +266,22 @@ To know if this is the case you can ask to **MoCDecentralizedExchange** if it's 
 
 It reverts if the amount is not valid given a maximum in common base token currency and the error message will be "amount is not enough".
 
-If the transaction reverts, all your funds will be returned (except the fee paid to the network). 
+If the transaction reverts, all your funds will be returned (except the fee paid to the network).
 
 #### You sent too high lifespan:
 
 If the lifespan is not valid given a maximum value then it reverts and sends the error message will be "Lifespan too high".
 
-If the transaction reverts, all your funds will be returned (except the fee paid to the network). 
+If the transaction reverts, all your funds will be returned (except the fee paid to the network).
 
 #### Not valid price:
 
 If the price is zero, it reverts and sends the error message will be "Price cannot be zero".
 
-If the transaction reverts, all your funds will be returned (except the fee paid to the network). 
+If the transaction reverts, all your funds will be returned (except the fee paid to the network).
 
 #### Pair token does not exist
+
 The token pair must exist in TEX platform. If a pair of base and secondary token does not exist, the transaction reverts with the message: "Token pair does not exist".
 
 #### Pair token is disabled:
@@ -188,7 +296,9 @@ If the gas limit sent is not enough to run all the code needed to execute the tr
 
 In the following sections we will give some code on how this can be done through a Smart Contract or directly, with a console or with an app.
 ​
+
 #### Smart Contract​
+
 ​
 To create a new Smart Contract that uses the TEX platform, you can use any language and IDE you want. In this tutorial, we will show you how to do it using [Solidity language](https://solidity.readthedocs.io/en/v0.5.8/), [Truffle Framework](https://www.trufflesuite.com/) and [NPM](https://www.npmjs.com/).
 Truffle framework offers some template projects that you can use to develop applications that use smart contracts. You can get more information [here](https://www.trufflesuite.com/boxes).
@@ -199,13 +309,13 @@ Assuming you already have your project up and running (if you don't, please foll
 npm install --save -E git+https://github.com/money-on-chain/sc-moc-decentralized-exchange.git
 ```
 
-​Having done that lets you use our contract as a dependency to your contract. For this let's suppose you are doing some kind of contract that when executing a certain task charges a fixed commission.
+​Having done that lets you use our contract as a dependency to your contract. For this let's suppose you are doing some kind of contract that when executing a certain task charges a fixed commission to mantain your platform.
 ​
 You just have to import the contract **MoCDecentralizedExchange** contract
 ​
 
 ```js
-import "decentralized-exchange-sc/contracts/MoCDecentralizedExchange.sol";
+import 'decentralized-exchange-sc/contracts/MoCDecentralizedExchange.sol';
 ```
 
 Receive the address in the constructor in order to be able to interact with it later
@@ -219,24 +329,24 @@ constructor (MoCDecentralizedExchange _texContract, rest of your params...) {
 
 ​You must know the addresses of the tokens that you want to use
 
-```js
+````js
 address constant private docAddress = 0xE0f5206BBD039e7b0592d8918820024e2a7437b9;
 address constant private rifAddress = 0x19F64674D8A5B4E652319F5e239eFd3bc969A1fE;
 ​```
 
 ```js
-
 function yourInsertBuyOrder(uint256 _amount, uint256 _price, uint64 _lifespan) public {
   uint256 yourCommissions = calcYourCommission(_price);
   docAddress.transfer(yourCommisionAddress, yourCommissions);
   tex.insertBuyOrder(docAddress, rifAddress, _amount - yourCommissions, _price, _lifespan);
 }
-```
+````
 
 ​You can send it immediately to you so you can start using it right away. In order to do this you should add a few more lines similar to the ones before, only that you will have to use the bpro token.
 ​
 This will leave you with a contract similar to the following
 ​​
+
 ```js
 pragma solidity 0.5.8;
 
@@ -255,7 +365,7 @@ contract YourInsertOrder {
     uint256 public totalAmountOfBuyWithoutCommissions = 0;
 
     constructor(
-        MoCDecentralizedExchange _tex, 
+        MoCDecentralizedExchange _tex,
         address _base,
         address _secondary,
         address _commissionAddress
@@ -264,24 +374,36 @@ contract YourInsertOrder {
         baseTokenAddress = _base;
         secondaryTokenAddress = _secondary;
         commissionAddress = _commissionAddress;
-    }    
+    }
 
-    function yourInsertBuyOrderFirst(uint256 _amount, uint256 _price, uint64 _lifespan) public {     
+    /**
+      @notice Approves a token to use in TEX Platform.
+      @param _tokenAddress addrress of the ERC-20 token
+      @param _amount The amount to aprove
+    */
+    function setAllowance(address _tokenAddress, uint256 _amount) public {
+      IERC20 token = IERC20(_tokenAddress);
+      bool success = token.approve(address(tex), _amount);
+      require(success, "Approval not done");
+    }
+
+    function yourInsertBuyOrderFirst(uint256 _amount, uint256 _price, uint64 _lifespan) public {
         IERC20 base = IERC20(baseTokenAddress);
-        //Calc and transfer your commissions.
+        require(base.allowance(msg.sender, address(tex)) > 0, "Base token without allowance");
+        //Calc and trasfer the commission of your contract
         uint256 commissions = calcCommissions(_amount);
         bool success = base.transfer(commissionAddress, commissions);
         require(success, "Commission transfer failed");
-        
+
         //Insert the new buy order at start
         tex.insertBuyOrder(
             baseTokenAddress,
             secondaryTokenAddress,
             _amount.sub(commissions),
             _price,
-            _lifespan);      
+            _lifespan);
 
-        //Saves information to platform  
+        //Saves information to platform
         totalAmountOfBuyWithoutCommissions.add(_amount);
         buyOperations.add(1);
     }
@@ -292,19 +414,22 @@ contract YourInsertOrder {
 }
 ```
 
-And that is it, the only thing left to do is to add in the [truffle migrations](https://www.trufflesuite.com/docs/truffle/getting-started/running-migrations) scripts the address to MoC and BPro when deploying YourInsertOrder and you are done.
+And that is it, the only thing left to do is to add in the [truffle migrations](https://www.trufflesuite.com/docs/truffle/getting-started/running-migrations) scripts the address to TEX and the token when deploying YourInsertOrder and you are done.
 ​​
+
 ## Inserting a Sell Order
 
 In this tutorial the functions that is of interest to us are two:
+
 ```js
-  function insertSellOrder( 
-    address _baseToken, 
-    address _secondaryToken, 
-    uint256 _amount, 
-    uint256 _price, 
+  function insertSellOrder(
+    address _baseToken,
+    address _secondaryToken,
+    uint256 _amount,
+    uint256 _price,
     uint64 _lifespan) public
 ```
+
 ```js
  function insertSellOrderAfter(
     address _baseToken,
@@ -315,22 +440,25 @@ In this tutorial the functions that is of interest to us are two:
     uint256 _previousOrderIdHint
   ) public
 ```
+
 The difference is that **insertSellOrderAfter** uses a hint to optimize the insertion. Each order has a unique ID.
 
 ### Parameters of the operation
 
 #### The baseToken parameter
-Is the address of the contract used to implement the ERC-20 base token. You can find more about 
+
+Is the address of the contract used to implement the ERC-20 base token. You can find more about
 the current supported tokens [here](#current-tokens).
 
 #### The secondaryToken parameter
 
-Is the address of the contract used to implement the ERC-20 secondary token. You can find more about the current supported tokens [here](#current-tokens). 
+Is the address of the contract used to implement the ERC-20 secondary token. You can find more about the current supported tokens [here](#current-tokens).
 
 The token pair must exist in the TEX platform because it defines the precisions to use in _price_ and _amout_ parameter.
 
 #### The amount parameter
-The amount of the secondary token to be locked by the user. 
+
+The amount of the secondary token to be locked by the user.
 
 This amount already includes the **commission charged** so the amount to be exchanged will actually be less than the locked one.
 
@@ -365,21 +493,22 @@ To know if this is the case you can ask to **MoCDecentralizedExchange** if it's 
 
 It reverts if the amount is not valid given a maximum in common base token currency and the error message will be "amount is not enough".
 
-If the transaction reverts, all your funds will be returned (except the fee paid to the network). 
+If the transaction reverts, all your funds will be returned (except the fee paid to the network).
 
 #### You sent too high lifespan:
 
 If the lifespan is not valid given a maximum value then it reverts and sends the error message will be "Lifespan too high".
 
-If the transaction reverts, all your funds will be returned (except the fee paid to the network). 
+If the transaction reverts, all your funds will be returned (except the fee paid to the network).
 
 #### Not valid price:
 
 If the price is zero, it reverts and sends the error message will be "Price cannot be zero".
 
-If the transaction reverts, all your funds will be returned (except the fee paid to the network). 
+If the transaction reverts, all your funds will be returned (except the fee paid to the network).
 
 #### Pair token does not exist
+
 The token pair must exist in TEX platform. If a pair of base and secondary token does not exist, the transaction reverts with the message: "Token pair does not exist".
 
 #### Pair token is disabled:
@@ -394,7 +523,9 @@ If the gas limit sent is not enough to run all the code needed to execute the tr
 
 In the following sections we will give some code on how this can be done through a Smart Contract or directly, with a console or with an app.
 ​
+
 #### Smart Contract​
+
 ​
 To create a new Smart Contract that uses the TEX platform, you can use any language and IDE you want. In this tutorial, we will show you how to do it using [Solidity language](https://solidity.readthedocs.io/en/v0.5.8/), [Truffle Framework](https://www.trufflesuite.com/) and [NPM](https://www.npmjs.com/).
 Truffle framework offers some template projects that you can use to develop applications that use smart contracts. You can get more information [here](https://www.trufflesuite.com/boxes).
@@ -411,7 +542,7 @@ You just have to import the contract **MoCDecentralizedExchange** contract
 ​
 
 ```js
-import "decentralized-exchange-sc/contracts/MoCDecentralizedExchange.sol";
+import 'decentralized-exchange-sc/contracts/MoCDecentralizedExchange.sol';
 ```
 
 Receive the address in the constructor in order to be able to interact with it later
@@ -425,7 +556,7 @@ constructor (MoCDecentralizedExchange _texContract, rest of your params...) {
 
 ​You must know the addresses of the tokens that you want to use
 
-```js
+````js
 address constant private docAddress = 0xE0f5206BBD039e7b0592d8918820024e2a7437b9;
 address constant private rifAddress = 0x19F64674D8A5B4E652319F5e239eFd3bc969A1fE;
 ​```
@@ -437,12 +568,13 @@ function yourInsertBuyOrder(uint256 _amount, uint256 _price, uint64 _lifespan) p
   docAddress.transfer(yourCommisionAddress, yourCommissions);
   tex.insertSellOrder(docAddress, rifAddress, _amount - yourCommissions, _price, _lifespan);
 }
-```
+````
 
 ​You can send it immediately to you so you can start using it right away. In order to do this you should add a few more lines similar to the ones before, only that you will have to use the bpro token.
 ​
 This will leave you with a contract similar to the following
 ​​
+
 ```js
 pragma solidity 0.5.8;
 
@@ -461,7 +593,7 @@ contract YourInsertOrder {
     uint256 public totalAmountOfSellWithoutCommissions = 0;
 
     constructor(
-        MoCDecentralizedExchange _tex, 
+        MoCDecentralizedExchange _tex,
         address _base,
         address _secondary,
         address _commissionAddress
@@ -470,24 +602,36 @@ contract YourInsertOrder {
         baseTokenAddress = _base;
         secondaryTokenAddress = _secondary;
         commissionAddress = _commissionAddress;
-    }    
+    }
 
-    function yourInsertSellOrderFirst(uint256 _amount, uint256 _price, uint64 _lifespan) public {     
+    /**
+      @notice Approves a token to use in TEX Platform.
+      @param _tokenAddress addrress of the ERC-20 token
+      @param _amount The amount to aprove
+    */
+    function setAllowance(address _tokenAddress, uint256 _amount) public {
+      IERC20 token = IERC20(_tokenAddress);
+      bool success = token.approve(address(tex), _amount);
+      require(success, "Approval not done");
+    }
+
+    function yourInsertSellOrderFirst(uint256 _amount, uint256 _price, uint64 _lifespan) public {
         IERC20 base = IERC20(secondaryTokenAddress);
-        //Calc and transfer your commissions.
+        require(base.allowance(msg.sender, address(tex)) > 0, "2nd token without allowance");
+        //Calc and transfer the commision of your platforms.
         uint256 commissions = calcCommissions(_amount);
         bool success = base.transfer(commissionAddress, commissions);
         require(success, "Commission transfer failed");
-        
+
         //Insert the new buy order at start
         tex.insertSellOrder(
             baseTokenAddress,
             secondaryTokenAddress,
             _amount.sub(commissions),
             _price,
-            _lifespan);      
+            _lifespan);
 
-        //Saves information to platform  
+        //Saves information to platform
         totalAmountOfSellWithoutCommissions.add(_amount);
         sellOperations.add(1);
     }
@@ -501,33 +645,38 @@ contract YourInsertOrder {
 # Canceling an Order
 
 In this tutorial the functions that is of interest to us are two:
+
 ```js
 function cancelBuyOrder(
   address _baseToken,
-  address _secondaryToken, 
-  uint256 _orderId, 
+  address _secondaryToken,
+  uint256 _orderId,
   uint256 _previousOrderIdHint) public
 ```
+
 ```js
 function cancelSellOrder(
-  address _baseToken, 
-  address _secondaryToken, 
-  uint256 _orderId, 
+  address _baseToken,
+  address _secondaryToken,
+  uint256 _orderId,
   uint256 _previousOrderIdHint) public
 ```
+
 ### Parameters of the operation
 
 #### The baseToken parameter
-Is the address of the contract used to implement the ERC-20 base token. You can find more about 
+
+Is the address of the contract used to implement the ERC-20 base token. You can find more about
 the current supported tokens [here](#current-tokens).
 
 #### The secondaryToken parameter
 
-Is the address of the contract used to implement the ERC-20 secondary token. You can find more about the current supported tokens [here](#current-tokens). 
+Is the address of the contract used to implement the ERC-20 secondary token. You can find more about the current supported tokens [here](#current-tokens).
 
 The token pair must exist in the TEX platform because it defines the precisions to use in _price_ and _amout_ parameter.
 
 #### The orderId parameter
+
 Order id to cancel. It is an positive integer value.
 
 #### The previousOrderIdHint parameter
@@ -558,7 +707,9 @@ To know if this is the case you can ask to **MoCDecentralizedExchange** calling 
 ```js
 function tickIsRunning(address _baseToken, address _secondaryToken) public view returns (bool)
 ```
+
 #### Pair token does not exist
+
 The token pair must exist in TEX platform. If a pair of base and secondary token does not exist, the transaction reverts with the message: "Token pair does not exist".
 
 #### Pair token is disabled:
@@ -581,7 +732,9 @@ If the gas limit sent is not enough to run all the code needed to execute the tr
 
 In the following sections we will give some code on how this can be done through a Smart Contract or directly, with a console or with an app.
 ​
+
 #### Smart Contract​
+
 ​
 To create a new Smart Contract that uses the TEX platform, you can use any language and IDE you want. In this tutorial, we will show you how to do it using [Solidity language](https://solidity.readthedocs.io/en/v0.5.8/), [Truffle Framework](https://www.trufflesuite.com/) and [NPM](https://www.npmjs.com/).
 Truffle framework offers some template projects that you can use to develop applications that use smart contracts. You can get more information [here](https://www.trufflesuite.com/boxes).
@@ -598,7 +751,7 @@ You just have to import the contract **MoCDecentralizedExchange** contract
 ​
 
 ```js
-import "decentralized-exchange-sc/contracts/MoCDecentralizedExchange.sol";
+import 'decentralized-exchange-sc/contracts/MoCDecentralizedExchange.sol';
 ```
 
 Receive the address in the constructor in order to be able to interact with it later
@@ -612,7 +765,7 @@ constructor (MoCDecentralizedExchange _texContract, rest of your params...) {
 
 ​You must know the addresses of the tokens that you want to use
 
-```js
+````js
 address constant private docAddress = 0xE0f5206BBD039e7b0592d8918820024e2a7437b9;
 address constant private rifAddress = 0x19F64674D8A5B4E652319F5e239eFd3bc969A1fE;
 ​```
@@ -622,12 +775,13 @@ function yourCancelBuyOrder(uint256 _orderId, uint256 _previousOrderIdHint) publ
   yourCancelLogic(_orderId, _previousOrderIdHint);
   tex.cancelBuyOrder(docAddress, rifAddress, _orderId, _previousOrderIdHint);
 }
-```
+````
 
 ​You can send it immediately to you so you can start using it right away. In order to do this you should add a few more lines similar to the ones before, only that you will have to use the bpro token.
 ​
 This will leave you with a contract similar to the following
 ​​
+
 ```js
 pragma solidity 0.5.8;
 
@@ -647,7 +801,7 @@ contract YourCancelOrder {
     uint256 public canceledOrders = 0;
 
     constructor(
-        MoCDecentralizedExchange _tex, 
+        MoCDecentralizedExchange _tex,
         address _base,
         address _secondary,
         address _commissionAddress
@@ -656,24 +810,24 @@ contract YourCancelOrder {
         baseTokenAddress = _base;
         secondaryTokenAddress = _secondary;
         commissionAddress = _commissionAddress;
-    }    
+    }
 
-    function yourInsertSellOrderFirst(uint256 _amount, uint256 _price, uint64 _lifespan) public {     
+    function yourInsertSellOrderFirst(uint256 _amount, uint256 _price, uint64 _lifespan) public {
         IERC20 base = IERC20(secondaryTokenAddress);
-        //Calc and transfer your commissions.
+        //Calc and transfer the commision of your contract.
         uint256 commissions = calcCommissions(_amount);
         bool success = base.transfer(commissionAddress, commissions);
         require(success, "Commission transfer failed");
-        
+
         //Insert the new buy order at start
         tex.insertSellOrder(
             baseTokenAddress,
             secondaryTokenAddress,
             _amount.sub(commissions),
             _price,
-            _lifespan);      
+            _lifespan);
 
-        //Saves information to platform  
+        //Saves information to platform
         totalAmountOfSellWithoutCommissions.add(_amount);
         sellOperations.add(1);
     }
@@ -827,14 +981,15 @@ drwxrwxr-x 3 atixlabs atixlabs    4096 may 14 15:28 ..
 -rw-rw-r-- 1 atixlabs atixlabs   40327 may 14 15:28 BeneficiaryAddressChanger.json
 ...
 ```
+
 ## Events
 
 When a transaction is mined, smart contracts can emit events and write logs to the blockchain that the frontend can then process. Click [here](https://media.consensys.net/technical-introduction-to-events-and-logs-in-ethereum-a074d65dd61e) for more information about events.
 
 In the following example we will show you how to find events that are emitted by TEX smart contract in **RSK Testnet** blockchain with **truffle**.
 
-
 ### Code example: Events
+
 [TODO] Write test to use TEX.
 
 ```js
@@ -945,6 +1100,7 @@ execute()
     console.log('Error', err);
   });
 ```
+
 ## Example code inserting orders without truffle
 
 In the following example we will learn how to:
@@ -974,6 +1130,7 @@ npm install --save truffle-hdwallet-provider
 Now we create a new script called **insertOrders.js** with the following code:
 
 [TODO] Write test to use TEX
+
 ```js
 const HDWalletProvider = require('truffle-hdwallet-provider');
 const BigNumber = require('bignumber.js');
@@ -1037,9 +1194,11 @@ Let's add the necessary dependencies to run the project.
 ```
 npm install --save web3
 ```
-[TODO] Write test to use TEX 
+
+[TODO] Write test to use TEX
 
 **Example**
+
 ```js
 const Web3 = require('web3');
 //You must compile the smart contracts or use the official ABIs of the //repository

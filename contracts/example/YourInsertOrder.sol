@@ -13,10 +13,9 @@ contract YourInsertOrder {
     address public commissionAddress;
     uint256 public buyOperations = 0;
     uint256 public totalAmountOfBuyWithoutCommissions = 0;
-    uint256 public totalAmountOfSellOperations = 0;
 
     constructor(
-        MoCDecentralizedExchange _tex, 
+        MoCDecentralizedExchange _tex,
         address _base,
         address _secondary,
         address _commissionAddress
@@ -25,24 +24,36 @@ contract YourInsertOrder {
         baseTokenAddress = _base;
         secondaryTokenAddress = _secondary;
         commissionAddress = _commissionAddress;
-    }    
+    }
 
-    function yourInsertBuyOrderFirst(uint256 _amount, uint256 _price, uint64 _lifespan) public {     
+    /**
+      @notice Approves a token to use in TEX Platform.
+      @param _tokenAddress addrress of the ERC-20 token
+      @param _amount The amount to aprove
+    */
+    function setAllowance(address _tokenAddress, uint256 _amount) public {
+      IERC20 token = IERC20(_tokenAddress);
+      bool success = token.approve(address(tex), _amount);
+      require(success, "Approval not done");
+    }
+
+    function yourInsertBuyOrderFirst(uint256 _amount, uint256 _price, uint64 _lifespan) public {
         IERC20 base = IERC20(baseTokenAddress);
-        //Calc and transfer your commissions.
+        require(base.allowance(msg.sender, address(tex)) > 0, "Base token without allowance");
+        //Calc and transfer the commissions of your platform.
         uint256 commissions = calcCommissions(_amount);
         bool success = base.transfer(commissionAddress, commissions);
         require(success, "Commission transfer failed");
-        
+
         //Insert the new buy order at start
         tex.insertBuyOrder(
             baseTokenAddress,
             secondaryTokenAddress,
             _amount.sub(commissions),
             _price,
-            _lifespan);      
+            _lifespan);
 
-        //Saves information to platform  
+        //Saves information to platform
         totalAmountOfBuyWithoutCommissions.add(_amount);
         buyOperations.add(1);
     }
