@@ -35,9 +35,17 @@ const insertMarketOrder = ({ type, accounts, accountIndex, ...props }) =>
     const price = pricefy(props.price || 1);
     const expiresInTick = props.expiresInTick || 5;
     const from = props.from || accounts[accountIndex];
-    return dex.insertMarketOrder(base.address, secondary.address, amount, price, expiresInTick, {
-      from
-    });
+    return dex.insertMarketOrder(
+      base.address,
+      secondary.address,
+      amount,
+      price,
+      expiresInTick,
+      type === 'buy',
+      {
+        from
+      }
+    );
   };
 
 const assertOrderBookLength = ({ type, expectedLength = 0 }) =>
