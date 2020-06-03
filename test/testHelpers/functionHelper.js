@@ -146,12 +146,51 @@ const insertLimitOrder = async ({
   ).args;
 };
 
+const insertMarketOrder = ({
+  dex,
+  defaultPair,
+  type,
+  accounts,
+  accountIndex,
+  pending = true,
+  ...props
+}) =>
+  async function() {
+    const amount = wadify(props.amount || 10);
+    const priceMultiplier = pricefy(props.priceMultiplier || 1);
+    const expiresInTick = props.expiresInTick || 5;
+    const from = props.from || accounts[accountIndex];
+    const baseToken = props.base || defaultPair.base;
+    const secondaryToken = props.secondary || defaultPair.secondary;
+
+    const insertReceipt = await dex.insertMarketOrder(
+      baseToken.address,
+      secondaryToken.address,
+      amount,
+      priceMultiplier,
+      expiresInTick,
+      type === 'buy',
+      {
+        from
+      }
+    );
+
+    return expectEvent.inLogs(
+      insertReceipt.logs,
+      pending ? 'NewOrderAddedToPendingQueue' : 'NewOrderInserted'
+    ).args;
+  };
+
 const decorateOrderInsertions = (dex, accounts, pair) =>
   Object.assign({}, dex, {
     insertBuyLimitOrder: props =>
       insertLimitOrder({ dex, defaultPair: pair, accounts, type: 'buy', ...props }),
     insertSellLimitOrder: props =>
-      insertLimitOrder({ dex, defaultPair: pair, accounts, type: 'sell', ...props })
+      insertLimitOrder({ dex, defaultPair: pair, accounts, type: 'sell', ...props }),
+    insertBuyMarketOrder: props =>
+      insertMarketOrder({ dex, defaultPair: pair, accounts, type: 'buy', ...props }),
+    insertSellMarketOrder: props =>
+      insertMarketOrder({ dex, defaultPair: pair, accounts, type: 'sell', ...props })
   });
 
 module.exports = {
