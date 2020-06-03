@@ -28,9 +28,16 @@ describe('Order insertion event tests', function() {
     describe('WHEN inserting a buy order', function() {
       before(async function() {
         await initContractsAndAllowance(accounts);
-        tx = await dex.insertBuyOrder(base.address, secondary.address, wadify(10), pricefy(1), 10, {
-          from
-        });
+        tx = await dex.insertBuyLimitOrder(
+          base.address,
+          secondary.address,
+          wadify(10),
+          pricefy(1),
+          10,
+          {
+            from
+          }
+        );
       });
       it('THEN an event is emitted for the buy order', function() {
         assertNewOrderEvent({ isBuy: true, expiresInTick: '11' }, () => ({
@@ -44,7 +51,7 @@ describe('Order insertion event tests', function() {
     describe('AND WHEN inserting a buy order with too much lifespan', function() {
       it('THEN it should revert', function() {
         return expectRevert(
-          dex.insertBuyOrder(base.address, secondary.address, wadify(10), pricefy(1), 33, {
+          dex.insertBuyLimitOrder(base.address, secondary.address, wadify(10), pricefy(1), 33, {
             from
           }),
           'Lifespan too high'
@@ -54,7 +61,7 @@ describe('Order insertion event tests', function() {
     describe('AND WHEN inserting a buy order with 0 price', function() {
       it('THEN it should revert', function() {
         return expectRevert(
-          dex.insertBuyOrder(base.address, secondary.address, wadify(10), pricefy(0), 10, {
+          dex.insertBuyLimitOrder(base.address, secondary.address, wadify(10), pricefy(0), 10, {
             from
           }),
           'Price cannot be zero'
@@ -67,7 +74,7 @@ describe('Order insertion event tests', function() {
     describe('WHEN inserting a sell order', function() {
       before(async function() {
         await initContractsAndAllowance(accounts);
-        tx = await dex.insertSellOrder(
+        tx = await dex.insertSellLimitOrder(
           base.address,
           secondary.address,
           wadify(10),
@@ -90,7 +97,7 @@ describe('Order insertion event tests', function() {
     describe('AND WHEN inserting a sell order with too much lifespan', function() {
       it('THEN it should revert', function() {
         return expectRevert(
-          dex.insertSellOrder(base.address, secondary.address, wadify(10), pricefy(1), 55, {
+          dex.insertSellLimitOrder(base.address, secondary.address, wadify(10), pricefy(1), 55, {
             from
           }),
           'Lifespan too high'
@@ -100,7 +107,7 @@ describe('Order insertion event tests', function() {
     describe('AND WHEN inserting a sell order with 0 price', function() {
       it('THEN it should revert', function() {
         return expectRevert(
-          dex.insertSellOrder(base.address, secondary.address, wadify(10), pricefy(0), 10, {
+          dex.insertSellLimitOrder(base.address, secondary.address, wadify(10), pricefy(0), 10, {
             from
           }),
           'Price cannot be zero'
@@ -113,13 +120,13 @@ describe('Order insertion event tests', function() {
     describe('WHEN inserting a sell order after a previous one', function() {
       before(async function() {
         await initContractsAndAllowance(accounts);
-        await dex.insertSellOrder(base.address, secondary.address, wadify(5), pricefy(1), 5, {
+        await dex.insertSellLimitOrder(base.address, secondary.address, wadify(5), pricefy(1), 5, {
           from
         });
-        await dex.insertSellOrder(base.address, secondary.address, wadify(5), pricefy(2), 5, {
+        await dex.insertSellLimitOrder(base.address, secondary.address, wadify(5), pricefy(2), 5, {
           from
         });
-        tx = await dex.insertSellOrderAfter(
+        tx = await dex.insertSellLimitOrderAfter(
           base.address,
           secondary.address,
           wadify(10),
@@ -144,17 +151,17 @@ describe('Order insertion event tests', function() {
     describe('GIVEN some previous buy orders', function() {
       before(async function() {
         await initContractsAndAllowance(accounts);
-        await dex.insertBuyOrder(base.address, secondary.address, wadify(5), pricefy(1), 5, {
+        await dex.insertBuyLimitOrder(base.address, secondary.address, wadify(5), pricefy(1), 5, {
           from
         });
-        await dex.insertBuyOrder(base.address, secondary.address, wadify(5), pricefy(2), 5, {
+        await dex.insertBuyLimitOrder(base.address, secondary.address, wadify(5), pricefy(2), 5, {
           from
         });
       });
       describe('WHEN inserting a buy order after a previous one', function() {
         it('THEN it should revert', function() {
           return expectRevert(
-            dex.insertBuyOrderAfter(
+            dex.insertBuyLimitOrderAfter(
               base.address,
               secondary.address,
               wadify(10),
@@ -169,7 +176,7 @@ describe('Order insertion event tests', function() {
       });
       describe('AND WHEN inserting a buy order after a previous one', function() {
         before(async function() {
-          tx = await dex.insertBuyOrderAfter(
+          tx = await dex.insertBuyLimitOrderAfter(
             base.address,
             secondary.address,
             wadify(10),

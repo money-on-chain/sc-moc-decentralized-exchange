@@ -34,7 +34,7 @@ describe('value is transferred to the exchange contract when inserting orders', 
       });
       it('WHEN the user tries to insert an order with a value of 4', async function() {
         await dex
-          .insertBuyOrder(...pair, wadify(4), pricefy(10), 5, { from: user })
+          .insertBuyLimitOrder(...pair, wadify(4), pricefy(10), 5, { from: user })
           .then(({ tx }) =>
             expectEvent.inTransaction(tx, testHelper.getBaseToken(), 'Transfer', {
               from: user,
@@ -65,7 +65,7 @@ describe('value is transferred to the exchange contract when inserting orders', 
         });
         it('WHEN the user tries to insert an order with a value of 60, THEN it should revert', async function() {
           await expectRevert(
-            dex.insertBuyOrder(...pair, wadify(60), pricefy(10), 5, {
+            dex.insertBuyLimitOrder(...pair, wadify(60), pricefy(10), 5, {
               from: user
             }),
             ERROR_MSG_SUBTRACTION_OVERFLOW // The Token throws that error
@@ -91,7 +91,7 @@ describe('value is transferred to the exchange contract when inserting orders', 
         });
         it('WHEN the user tries to insert an order with a value of 20(locking 200), THEN it should revert', async function() {
           await expectRevert(
-            dex.insertBuyOrder(...pair, wadify(20), pricefy(10), 5, { from: user }),
+            dex.insertBuyLimitOrder(...pair, wadify(20), pricefy(10), 5, { from: user }),
             ERROR_MSG_SUBTRACTION_OVERFLOW // The Token throws that error
           );
         });
@@ -116,7 +116,7 @@ describe('value is transferred to the exchange contract when inserting orders', 
       });
       it('WHEN the user tries to insert an order with a value of 200, THEN it should revert', async function() {
         await expectRevert(
-          dex.insertBuyOrder(...pair, wadify(200), pricefy(10), 5, { from: user }),
+          dex.insertBuyLimitOrder(...pair, wadify(200), pricefy(10), 5, { from: user }),
           ERROR_MSG_SUBTRACTION_OVERFLOW // The Token throws that error
         );
       });
@@ -140,7 +140,7 @@ describe('value is transferred to the exchange contract when inserting orders', 
       });
       it('WHEN the user tries to insert an order with a value of 4', async function() {
         await dex
-          .insertSellOrder(...pair, wadify(4), pricefy(10), 5, { from: user })
+          .insertSellLimitOrder(...pair, wadify(4), pricefy(10), 5, { from: user })
           .then(({ tx }) =>
             expectEvent.inTransaction(tx, testHelper.getSecondaryToken(), 'Transfer', {
               from: user,

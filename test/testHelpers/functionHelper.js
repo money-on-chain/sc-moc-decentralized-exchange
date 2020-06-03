@@ -125,7 +125,7 @@ const insertLimitOrder = async ({
   pending,
   ...props
 }) => {
-  const insertFn = type === 'buy' ? 'insertBuyOrder' : 'insertSellOrder';
+  const insertFn = type === 'buy' ? 'insertBuyLimitOrder' : 'insertSellLimitOrder';
   const amount = wadify(props.amount || DEFAULT_AMOUNT);
   const price = pricefy(props.price || DEFAULT_PRICE);
   const expiresInTick = props.expiresInTick || DEFAULT_LIFESPAN;

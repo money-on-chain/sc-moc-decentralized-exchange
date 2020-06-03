@@ -104,10 +104,10 @@ describe('multiple tokens tests', function() {
         (10 ** 4).toString(),
         governor
       );
-      await dex.insertBuyOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
+      await dex.insertBuyLimitOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
         from: user
       });
-      await dex.insertSellOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
+      await dex.insertSellLimitOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
         from: user
       });
     });
@@ -119,12 +119,19 @@ describe('multiple tokens tests', function() {
         (10 ** 4).toString(),
         governor
       );
-      await dex.insertBuyOrder(doc.address, otherSecondary.address, wadify(1), pricefy(1), 5, {
+      await dex.insertBuyLimitOrder(doc.address, otherSecondary.address, wadify(1), pricefy(1), 5, {
         from: user
       });
-      await dex.insertSellOrder(doc.address, otherSecondary.address, wadify(1), pricefy(1), 5, {
-        from: user
-      });
+      await dex.insertSellLimitOrder(
+        doc.address,
+        otherSecondary.address,
+        wadify(1),
+        pricefy(1),
+        5,
+        {
+          from: user
+        }
+      );
     });
     it('THEN order IDs are token-pair independent', async function() {
       const ids = await Promise.all([
@@ -180,10 +187,10 @@ describe('multiple tokens tests', function() {
           DEFAULT_PRICE_PRECISION.toString(),
           governor
         );
-        await dex.insertBuyOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
+        await dex.insertBuyLimitOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
           from: buyer
         });
-        await dex.insertSellOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
+        await dex.insertSellLimitOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
           from: seller
         });
 
@@ -194,12 +201,26 @@ describe('multiple tokens tests', function() {
           DEFAULT_PRICE_PRECISION.toString(),
           governor
         );
-        await dex.insertBuyOrder(doc.address, otherSecondary.address, wadify(2), pricefy(2), 5, {
-          from: buyer
-        });
-        await dex.insertSellOrder(doc.address, otherSecondary.address, wadify(1), pricefy(2), 5, {
-          from: seller
-        });
+        await dex.insertBuyLimitOrder(
+          doc.address,
+          otherSecondary.address,
+          wadify(2),
+          pricefy(2),
+          5,
+          {
+            from: buyer
+          }
+        );
+        await dex.insertSellLimitOrder(
+          doc.address,
+          otherSecondary.address,
+          wadify(1),
+          pricefy(2),
+          5,
+          {
+            from: seller
+          }
+        );
       });
       describe('Emergent price is generated independently for two token pairs', function() {
         it('WHEN calling getEmergentPrice, THEN the emergent prices are independent', async function() {
@@ -305,7 +326,7 @@ describe('multiple tokens tests', function() {
           scenario.comparisonPrecision,
           governor
         );
-        await dex.insertBuyOrder(
+        await dex.insertBuyLimitOrder(
           doc.address,
           secondary.address,
           wadify(1),
@@ -315,7 +336,7 @@ describe('multiple tokens tests', function() {
             from: buyer
           }
         );
-        await dex.insertSellOrder(
+        await dex.insertSellLimitOrder(
           doc.address,
           secondary.address,
           wadify(1),
@@ -343,7 +364,7 @@ describe('multiple tokens tests', function() {
           governor
         );
 
-        await dex.insertBuyOrder(
+        await dex.insertBuyLimitOrder(
           otherBase.address,
           otherSecondary.address,
           wadify(2),
@@ -353,7 +374,7 @@ describe('multiple tokens tests', function() {
             from: buyer
           }
         );
-        await dex.insertSellOrder(
+        await dex.insertSellLimitOrder(
           otherBase.address,
           otherSecondary.address,
           wadify(1),

@@ -52,12 +52,12 @@ describe('Token pair EMA Price tests', function() {
         accounts
       });
       await Promise.all([
-        dex.insertSellOrder(...insertionParams),
-        dex.insertSellOrder(...insertionParams),
-        dex.insertSellOrder(...insertionParams),
-        dex.insertBuyOrder(...insertionParams),
-        dex.insertBuyOrder(...insertionParams),
-        dex.insertBuyOrder(...insertionParams)
+        dex.insertSellLimitOrder(...insertionParams),
+        dex.insertSellLimitOrder(...insertionParams),
+        dex.insertSellLimitOrder(...insertionParams),
+        dex.insertBuyLimitOrder(...insertionParams),
+        dex.insertBuyLimitOrder(...insertionParams),
+        dex.insertBuyLimitOrder(...insertionParams)
       ]);
     };
   };

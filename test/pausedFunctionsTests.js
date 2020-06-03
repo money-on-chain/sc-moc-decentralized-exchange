@@ -59,10 +59,10 @@ describe('Paused functions tests', function() {
     action: 'continue the execution of an already started tick',
     functionName: 'matchOrders',
     fulfillPreconditions: async () => {
-      await dex.insertSellOrder(...pair, wadify(10), pricefy(1), 5);
-      await dex.insertSellOrder(...pair, wadify(10), pricefy(1), 5);
-      await dex.insertBuyOrder(...pair, wadify(10), pricefy(1), 5);
-      await dex.insertBuyOrder(...pair, wadify(10), pricefy(1), 5);
+      await dex.insertSellLimitOrder(...pair, wadify(10), pricefy(1), 5);
+      await dex.insertSellLimitOrder(...pair, wadify(10), pricefy(1), 5);
+      await dex.insertBuyLimitOrder(...pair, wadify(10), pricefy(1), 5);
+      await dex.insertBuyLimitOrder(...pair, wadify(10), pricefy(1), 5);
       await dex.matchOrders(...pair, 1);
     },
     getParams() {
@@ -74,8 +74,8 @@ describe('Paused functions tests', function() {
     action: 'execute a tick',
     functionName: 'matchOrders',
     fulfillPreconditions: async () => {
-      await dex.insertSellOrder(...pair, wadify(10), pricefy(1), 5);
-      await dex.insertBuyOrder(...pair, wadify(10), pricefy(1), 5);
+      await dex.insertSellLimitOrder(...pair, wadify(10), pricefy(1), 5);
+      await dex.insertBuyLimitOrder(...pair, wadify(10), pricefy(1), 5);
     },
     getParams() {
       return [base.address, secondary.address, testHelper.DEFAULT_STEPS_FOR_MATCHING];
@@ -83,32 +83,32 @@ describe('Paused functions tests', function() {
   });
 
   testPaused({
-    action: 'insert a sell order',
-    functionName: 'insertSellOrder',
+    action: 'insert a sell limit order',
+    functionName: 'insertSellLimitOrder',
     getParams: () => [...pair, wadify(10), pricefy(1), 5]
   });
   testPaused({
-    action: 'insert a buy order',
-    functionName: 'insertBuyOrder',
+    action: 'insert a buy limit order',
+    functionName: 'insertBuyLimitOrder',
     getParams: () => [...pair, wadify(10), pricefy(1), 5]
   });
   testPaused({
-    action: 'insert a sell order with hint',
-    functionName: 'insertSellOrderAfter',
+    action: 'insert a sell limit order with hint',
+    functionName: 'insertSellLimitOrderAfter',
     getParams: () => [...pair, wadify(10), pricefy(1), 5, 1]
   });
   testPaused({
-    action: 'insert a buy order with hint',
-    functionName: 'insertBuyOrderAfter',
+    action: 'insert a buy limit order with hint',
+    functionName: 'insertBuyLimitOrderAfter',
     getParams: () => [...pair, wadify(10), pricefy(1), 5, 1]
   });
   testPaused({
-    action: 'cancel a buy order',
+    action: 'cancel a buy limit order',
     functionName: 'cancelBuyOrder',
     getParams: () => [...pair, 0, 0]
   });
   testPaused({
-    action: 'cancel a sell order',
+    action: 'cancel a sell limit order',
     functionName: 'cancelSellOrder',
     getParams: () => [...pair, 0, 0]
   });

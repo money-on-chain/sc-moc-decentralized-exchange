@@ -138,7 +138,7 @@ describe('token listing tests', function() {
         });
       });
       it('WHEN a buy order is inserted for that pair', async function() {
-        await dex.insertBuyOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
+        await dex.insertBuyLimitOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
           from: user
         });
       });
@@ -146,7 +146,7 @@ describe('token listing tests', function() {
         testHelper.assertBig(await dex.buyOrdersLength(doc.address, secondary.address), 1);
       });
       it('AND WHEN a sell order is inserted for that pair', async function() {
-        await dex.insertSellOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
+        await dex.insertSellLimitOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
           from: user
         });
       });
@@ -197,17 +197,31 @@ describe('token listing tests', function() {
         });
       });
       it('WHEN a buy order is inserted for that pair', async function() {
-        await dex.insertBuyOrder(newBase.address, newSecondary.address, wadify(1), pricefy(1), 5, {
-          from: user
-        });
+        await dex.insertBuyLimitOrder(
+          newBase.address,
+          newSecondary.address,
+          wadify(1),
+          pricefy(1),
+          5,
+          {
+            from: user
+          }
+        );
       });
       it('THEN the buy orderbook for that pair has length 1', async function() {
         testHelper.assertBig(await dex.buyOrdersLength(newBase.address, newSecondary.address), 1);
       });
       it('AND WHEN a sell order is inserted for that pair', async function() {
-        await dex.insertSellOrder(newBase.address, newSecondary.address, wadify(1), pricefy(1), 5, {
-          from: user
-        });
+        await dex.insertSellLimitOrder(
+          newBase.address,
+          newSecondary.address,
+          wadify(1),
+          pricefy(1),
+          5,
+          {
+            from: user
+          }
+        );
       });
       it('THEN the sell orderbook for that pair has length 1', async function() {
         testHelper.assertBig(await dex.sellOrdersLength(newBase.address, newSecondary.address), 1);
@@ -324,7 +338,7 @@ describe('token listing tests', function() {
       });
       it('WHEN a buy order is inserted with an invalid base token, THEN it should revert', async function() {
         await expectRevert(
-          dex.insertBuyOrder(dex.address, secondary.address, wadify(1), pricefy(1), 5, {
+          dex.insertBuyLimitOrder(dex.address, secondary.address, wadify(1), pricefy(1), 5, {
             from: user
           }),
           ERROR_MSG_PAIR_DOESNT_EXIST
@@ -332,7 +346,7 @@ describe('token listing tests', function() {
       });
       it('WHEN a sell order is inserted with an invalid base token, THEN it should revert', async function() {
         await expectRevert(
-          dex.insertSellOrder(dex.address, secondary.address, wadify(1), pricefy(1), 5, {
+          dex.insertSellLimitOrder(dex.address, secondary.address, wadify(1), pricefy(1), 5, {
             from: user
           }),
           ERROR_MSG_PAIR_DOESNT_EXIST
@@ -340,7 +354,7 @@ describe('token listing tests', function() {
       });
       it('WHEN a buy order is inserted with an invalid secondary token, THEN it should revert', function() {
         return expectRevert(
-          dex.insertBuyOrder(doc.address, dex.address, wadify(1), pricefy(1), 5, {
+          dex.insertBuyLimitOrder(doc.address, dex.address, wadify(1), pricefy(1), 5, {
             from: user
           }),
           ERROR_MSG_PAIR_DOESNT_EXIST
@@ -348,7 +362,7 @@ describe('token listing tests', function() {
       });
       it('WHEN a sell order is inserted with an invalid secondary token, THEN it should revert', function() {
         return expectRevert(
-          dex.insertSellOrder(doc.address, dex.address, wadify(1), pricefy(1), 5, {
+          dex.insertSellLimitOrder(doc.address, dex.address, wadify(1), pricefy(1), 5, {
             from: user
           }),
           ERROR_MSG_PAIR_DOESNT_EXIST

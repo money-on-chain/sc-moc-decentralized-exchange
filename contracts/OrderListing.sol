@@ -102,14 +102,14 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     @param _price Maximum price to be paid [base/secondary]
     @param _lifespan After _lifespan ticks the order will be expired and no longer matched, must be lower or equal than the maximum
    */
-  function insertBuyOrder(
+  function insertBuyLimitOrder(
     address _baseToken,
     address _secondaryToken,
     uint256 _amount,
     uint256 _price,
     uint64 _lifespan
   ) public {
-    insertBuyOrderAfter(_baseToken, _secondaryToken, _amount, _price, _lifespan, INSERT_FIRST);
+    insertBuyLimitOrderAfter(_baseToken, _secondaryToken, _amount, _price, _lifespan, INSERT_FIRST);
   }
 
   /**
@@ -123,14 +123,14 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     @param _price Minimum price to charge [base/secondary]
     @param _lifespan After _lifespan ticks the order will be expired and no longer matched, must be lower or equal than the maximum
    */
-  function insertSellOrder(
+  function insertSellLimitOrder(
     address _baseToken,
     address _secondaryToken,
     uint256 _amount,
     uint256 _price,
     uint64 _lifespan
   ) public {
-    insertSellOrderAfter(_baseToken, _secondaryToken, _amount, _price, _lifespan, INSERT_FIRST);
+    insertSellLimitOrderAfter(_baseToken, _secondaryToken, _amount, _price, _lifespan, INSERT_FIRST);
   }
 
   /**
@@ -146,7 +146,7 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     0 is considered as no hint and the smart contract must iterate
     INSERT_FIRST is considered a hint to be put at the start
   */
-  function insertBuyOrderAfter(
+  function insertBuyLimitOrderAfter(
     address _baseToken,
     address _secondaryToken,
     uint256 _amount,
@@ -154,7 +154,7 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     uint64 _lifespan,
     uint256 _previousOrderIdHint
   ) public whenNotPaused {
-    insertBuyOrderAfter(getTokenPair(_baseToken, _secondaryToken), _amount, _price, _lifespan, _previousOrderIdHint);
+    insertBuyLimitOrderAfter(getTokenPair(_baseToken, _secondaryToken), _amount, _price, _lifespan, _previousOrderIdHint);
   }
 
   /**
@@ -171,7 +171,7 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     0 is considered as no hint and the smart contract must iterate
     INSERT_FIRST is considered a hint to be put at the start
   */
-  function insertSellOrderAfter(
+  function insertSellLimitOrderAfter(
     address _baseToken,
     address _secondaryToken,
     uint256 _amount,
@@ -179,7 +179,7 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     uint64 _lifespan,
     uint256 _previousOrderIdHint
   ) public whenNotPaused {
-    insertSellOrderAfter(getTokenPair(_baseToken, _secondaryToken), _amount, _price, _lifespan, _previousOrderIdHint);
+    insertSellLimitOrderAfter(getTokenPair(_baseToken, _secondaryToken), _amount, _price, _lifespan, _previousOrderIdHint);
   }
 
   /**
@@ -310,7 +310,7 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     0 is considered as no hint and the smart contract must iterate
     INSERT_FIRST is considered a hint to be put at the start
   */
-  function insertBuyOrderAfter(
+  function insertBuyLimitOrderAfter(
     MoCExchangeLib.Pair storage _pair,
     uint256 _amount,
     uint256 _price,
@@ -318,7 +318,17 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     uint256 _previousOrderIdHint
   ) private {
     uint256 initialFee = commissionManager.calculateInitialFee(_amount);
-    _pair.doInsertOrder(nextId(), _amount.sub(initialFee), initialFee, _price, _lifespan, _previousOrderIdHint, msg.sender, address(this), true);
+    _pair.doInsertLimitOrder(
+      nextId(),
+      _amount.sub(initialFee),
+      initialFee,
+      _price,
+      _lifespan,
+      _previousOrderIdHint,
+      msg.sender,
+      address(this),
+      true
+    );
   }
 
   /**
@@ -333,7 +343,7 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     0 is considered as no hint and the smart contract must iterate
     INSERT_FIRST is considered a hint to be put at the start
    */
-  function insertSellOrderAfter(
+  function insertSellLimitOrderAfter(
     MoCExchangeLib.Pair storage _pair,
     uint256 _amount,
     uint256 _price,
@@ -341,7 +351,7 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     uint256 _previousOrderIdHint
   ) private {
     uint256 initialFee = commissionManager.calculateInitialFee(_amount);
-    _pair.doInsertOrder(
+    _pair.doInsertLimitOrder(
       nextId(),
       _amount.sub(initialFee),
       initialFee,

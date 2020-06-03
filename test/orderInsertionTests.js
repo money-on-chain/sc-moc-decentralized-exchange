@@ -52,7 +52,7 @@ describe('Tests related to the insertion of an order', function() {
       return initContractsAndAllowance(accounts);
     });
     it('WHEN inserting a buy order', async function() {
-      insertionBuyReceipt = await dex.insertBuyOrder(...pair, wadify(10), pricefy(1), 5, {
+      insertionBuyReceipt = await dex.insertBuyLimitOrder(...pair, wadify(10), pricefy(1), 5, {
         from: accounts[DEFAULT_ACCOUNT_INDEX]
       });
     });
@@ -78,7 +78,7 @@ describe('Tests related to the insertion of an order', function() {
     });
     describe('WHEN inserting a sell order', function() {
       before(async function() {
-        insertionSellReceipt = await dex.insertSellOrder(...pair, wadify(10), pricefy(1), 5, {
+        insertionSellReceipt = await dex.insertSellLimitOrder(...pair, wadify(10), pricefy(1), 5, {
           from: accounts[DEFAULT_ACCOUNT_INDEX]
         });
       });
@@ -114,7 +114,7 @@ describe('Tests related to the insertion of an order', function() {
     });
     describe('WHEN inserting a buy order', function() {
       before(async function() {
-        insertionBuyReceipt = await dex.insertBuyOrder(...pair, wadify(10), pricefy(1), 5, {
+        insertionBuyReceipt = await dex.insertBuyLimitOrder(...pair, wadify(10), pricefy(1), 5, {
           from: accounts[DEFAULT_ACCOUNT_INDEX]
         });
       });
@@ -140,9 +140,15 @@ describe('Tests related to the insertion of an order', function() {
       });
       describe('WHEN inserting a sell order', function() {
         before(async function() {
-          insertionSellReceipt = await dex.insertSellOrder(...pair, wadify(10), pricefy(1), 5, {
-            from: accounts[DEFAULT_ACCOUNT_INDEX]
-          });
+          insertionSellReceipt = await dex.insertSellLimitOrder(
+            ...pair,
+            wadify(10),
+            pricefy(1),
+            5,
+            {
+              from: accounts[DEFAULT_ACCOUNT_INDEX]
+            }
+          );
         });
         it('THEN the order is inserted', async function() {
           const order = await dex.getSellOrderAtIndex(...pair, 0);
@@ -181,7 +187,7 @@ describe('Tests related to the insertion of an order', function() {
         for (i = 0; i < 10; i++) {
           // intentionally sequential
           // eslint-disable-next-line
-          await dex.insertSellOrder(...pair, wadify(10), pricefy(10 - i), 5, {
+          await dex.insertSellLimitOrder(...pair, wadify(10), pricefy(10 - i), 5, {
             from: accounts[DEFAULT_ACCOUNT_INDEX]
           });
         }
@@ -201,7 +207,7 @@ describe('Tests related to the insertion of an order', function() {
         for (i = 0; i < 10; i++) {
           // intentionally sequential
           // eslint-disable-next-line
-          await dex.insertBuyOrder(...pair, wadify(10), pricefy(1 + i), 5, {
+          await dex.insertBuyLimitOrder(...pair, wadify(10), pricefy(1 + i), 5, {
             from: accounts[DEFAULT_ACCOUNT_INDEX]
           });
         }

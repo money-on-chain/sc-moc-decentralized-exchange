@@ -42,14 +42,28 @@ describe('small amounts test', function() {
     before(initContractsAndAllowance(accounts));
     let tx;
     it('GIVEN there is a normal sell order', async function() {
-      await dex.insertSellOrder(base.address, secondary.address, wadify(2), pricefy(0.0001), 5, {
-        from: accounts[DEFAULT_ACCOUNT_INDEX]
-      });
+      await dex.insertSellLimitOrder(
+        base.address,
+        secondary.address,
+        wadify(2),
+        pricefy(0.0001),
+        5,
+        {
+          from: accounts[DEFAULT_ACCOUNT_INDEX]
+        }
+      );
     });
     it('AND there is a very small buy order', async function() {
-      await dex.insertBuyOrder(base.address, secondary.address, wadify(0.001), pricefy(0.001), 5, {
-        from: accounts[DEFAULT_ACCOUNT_INDEX]
-      });
+      await dex.insertBuyLimitOrder(
+        base.address,
+        secondary.address,
+        wadify(0.001),
+        pricefy(0.001),
+        5,
+        {
+          from: accounts[DEFAULT_ACCOUNT_INDEX]
+        }
+      );
     });
     it('WHEN instructed to match orders', async function() {
       tx = await dex.matchOrders(

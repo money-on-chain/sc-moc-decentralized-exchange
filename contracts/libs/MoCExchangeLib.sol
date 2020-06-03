@@ -229,7 +229,7 @@ library MoCExchangeLib {
     @param _price Target price of the order[base/secondary]
     @param _expiresInTick Number of tick in which the order can no longer be matched
   */
-  function insertOrder(
+  function insertLimitOrder(
     Data storage self,
     uint256 _orderId,
     address _sender,
@@ -238,7 +238,7 @@ library MoCExchangeLib {
     uint256 _price,
     uint64 _expiresInTick
   ) public {
-    insertOrder(
+    insertLimitOrder(
       self,
       _orderId,
       _sender,
@@ -309,7 +309,7 @@ library MoCExchangeLib {
     @param _expiresInTick Number of tick in which the order can no longer be matched
     @param  _intendedPreviousOrderId Hint id of the order to be before the new order in the orderbook
   */
-  function insertOrder(
+  function insertLimitOrder(
     Data storage self,
     uint256 _orderId,
     address _sender,
@@ -361,7 +361,7 @@ library MoCExchangeLib {
     @param _price Target price of the order[base/secondary]
     @param _expiresInTick Number of tick in which the order can no longer be matched
   */
-  function insertOrderAsPending(
+  function insertLimitOrderAsPending(
     Data storage self,
     uint256 _orderId,
     address _sender,
@@ -1077,7 +1077,7 @@ library MoCExchangeLib {
     @param _sender address of the account executing the insertion
     @param _isBuy true if it's a buy order, meaning the funds should be from base Token
   */
-  function doInsertOrder(
+  function doInsertLimitOrder(
     Pair storage _self,
     uint256 _id,
     uint256 _exchangeableAmount,
@@ -1099,13 +1099,13 @@ library MoCExchangeLib {
     uint64 expiresInTick = _self.tickState.number + _lifespan;
 
     if (goesToPendingQueue) {
-      insertOrderAsPending(token.orderbook, _id, _sender, _exchangeableAmount, _reservedCommission, _price, expiresInTick);
+      insertLimitOrderAsPending(token.orderbook, _id, _sender, _exchangeableAmount, _reservedCommission, _price, expiresInTick);
       emit NewOrderAddedToPendingQueue(_id, 0);
     } else {
       if (_previousOrderIdHint == INSERT_FIRST) {
-        insertOrder(token.orderbook, _id, _sender, _exchangeableAmount, _reservedCommission, _price, expiresInTick);
+        insertLimitOrder(token.orderbook, _id, _sender, _exchangeableAmount, _reservedCommission, _price, expiresInTick);
       } else {
-        insertOrder(token.orderbook, _id, _sender, _exchangeableAmount, _reservedCommission, _price, expiresInTick, _previousOrderIdHint);
+        insertLimitOrder(token.orderbook, _id, _sender, _exchangeableAmount, _reservedCommission, _price, expiresInTick, _previousOrderIdHint);
       }
       emitNewOrderEvent(_id, _self, _sender, _exchangeableAmount, _reservedCommission, _price, expiresInTick, _isBuy, OrderType.LIMIT_ORDER);
     }

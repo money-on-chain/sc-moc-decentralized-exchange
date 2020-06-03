@@ -43,38 +43,54 @@ describe('token enable/disable tests', function() {
       before(async function() {
         result = await dex.disableTokenPair(base.address, secondary.address, governor);
       });
-      it('THEN the insertBuyOrder fails', async function() {
+      it('THEN the insertBuyLimitOrder fails', async function() {
         await expectRevert(
-          dex.insertBuyOrder(base.address, secondary.address, wadify(1), pricefy(1), 5, {
+          dex.insertBuyLimitOrder(base.address, secondary.address, wadify(1), pricefy(1), 5, {
             from: user
           }),
           'Pair has been disabled'
         );
       });
 
-      it('THEN the insertSellOrder fails', async function() {
+      it('THEN the insertSellLimitOrder fails', async function() {
         await expectRevert(
-          dex.insertSellOrder(base.address, secondary.address, wadify(1), pricefy(1), 5, {
+          dex.insertSellLimitOrder(base.address, secondary.address, wadify(1), pricefy(1), 5, {
             from: user
           }),
           'Pair has been disabled'
         );
       });
 
-      it('THEN the insertSellOrderAfter fails', async function() {
+      it('THEN the insertSellLimitOrderAfter fails', async function() {
         await expectRevert(
-          dex.insertSellOrderAfter(base.address, secondary.address, wadify(1), pricefy(1), 5, 0, {
-            from: user
-          }),
+          dex.insertSellLimitOrderAfter(
+            base.address,
+            secondary.address,
+            wadify(1),
+            pricefy(1),
+            5,
+            0,
+            {
+              from: user
+            }
+          ),
           'Pair has been disabled'
         );
       });
 
-      it('THEN the insertBuyOrderAfter fails', async function() {
+      it('THEN the insertBuyLimitOrderAfter fails', async function() {
         await expectRevert(
-          dex.insertBuyOrderAfter(base.address, secondary.address, wadify(1), pricefy(1), 5, 0, {
-            from: user
-          }),
+          dex.insertBuyLimitOrderAfter(
+            base.address,
+            secondary.address,
+            wadify(1),
+            pricefy(1),
+            5,
+            0,
+            {
+              from: user
+            }
+          ),
           'Pair has been disabled'
         );
       });
@@ -112,22 +128,22 @@ describe('token enable/disable tests', function() {
       before(async function() {
         result = await dex.enableTokenPair(base.address, secondary.address, governor);
       });
-      it('THEN the insertBuyOrder succeeds', async function() {
-        await dex.insertBuyOrder(base.address, secondary.address, wadify(1), pricefy(1), 5, {
+      it('THEN the insertBuyLimitOrder succeeds', async function() {
+        await dex.insertBuyLimitOrder(base.address, secondary.address, wadify(1), pricefy(1), 5, {
           from: user
         });
         testHelper.assertBig(await dex.buyOrdersLength(base.address, secondary.address), 1);
       });
 
-      it('THEN the insertSellOrder succeeds', async function() {
-        await dex.insertSellOrder(base.address, secondary.address, wadify(1), pricefy(1), 5, {
+      it('THEN the insertSellLimitOrder succeeds', async function() {
+        await dex.insertSellLimitOrder(base.address, secondary.address, wadify(1), pricefy(1), 5, {
           from: user
         });
         testHelper.assertBig(await dex.sellOrdersLength(base.address, secondary.address), 1);
       });
 
-      it('THEN the insertSellOrderAfter succeeds', async function() {
-        await dex.insertSellOrderAfter(
+      it('THEN the insertSellLimitOrderAfter succeeds', async function() {
+        await dex.insertSellLimitOrderAfter(
           base.address,
           secondary.address,
           wadify(1),
@@ -141,8 +157,8 @@ describe('token enable/disable tests', function() {
         testHelper.assertBig(await dex.sellOrdersLength(base.address, secondary.address), 2);
       });
 
-      it('THEN the insertBuyOrderAfter succeeds', async function() {
-        await dex.insertBuyOrderAfter(
+      it('THEN the insertBuyLimitOrderAfter succeeds', async function() {
+        await dex.insertBuyLimitOrderAfter(
           base.address,
           secondary.address,
           wadify(1),
@@ -196,7 +212,7 @@ describe('token enable/disable tests', function() {
           await dex.disableTokenPair(base.address, secondary.address, governor);
         });
         it('THEN the insertions on the last pair succeed', async function() {
-          await dex.insertBuyOrder(
+          await dex.insertBuyLimitOrder(
             newBase.address,
             newSecondary.address,
             wadify(1),
@@ -210,7 +226,7 @@ describe('token enable/disable tests', function() {
         });
         it('THEN the insertions on the intermediate pair fails', async function() {
           await expectRevert(
-            dex.insertBuyOrder(base.address, secondary.address, wadify(1), pricefy(1), 5, {
+            dex.insertBuyLimitOrder(base.address, secondary.address, wadify(1), pricefy(1), 5, {
               from: user
             }),
             'Pair has been disabled'

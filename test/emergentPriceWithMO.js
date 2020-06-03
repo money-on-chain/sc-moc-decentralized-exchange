@@ -1,8 +1,7 @@
 /* eslint-disable mocha/no-identical-title */
 const testHelperBuilder = require('./testHelpers/testHelper');
 
-const HARDCODED_BUY_PRICE = 1.5;
-const HARDCODED_SELL_PRICE = 1.4;
+const HARDCODED_PRICE = 1.5;
 
 describe('multiple tokens tests - emergent price', function() {
   let doc;
@@ -96,7 +95,6 @@ describe('multiple tokens tests - emergent price', function() {
     describe('AND there are only orders in two token pairs', function() {
       const multiplyFactor01 = 1;
       const multiplyFactor02 = 2;
-      const averagePrice = (HARDCODED_BUY_PRICE + HARDCODED_SELL_PRICE) / 2;
       before(async function() {
         await dex.addTokenPair(
           doc.address,
@@ -161,11 +159,11 @@ describe('multiple tokens tests - emergent price', function() {
         it('WHEN calling getEmergentPrice, THEN the emergent prices are independent', async function() {
           await testHelper.assertBigPrice(
             getEmergentPriceValue(doc.address, secondary.address),
-            averagePrice * multiplyFactor01
+            HARDCODED_PRICE * multiplyFactor01
           );
           await testHelper.assertBigPrice(
             getEmergentPriceValue(doc.address, otherSecondary.address),
-            averagePrice * multiplyFactor02
+            HARDCODED_PRICE * multiplyFactor02
           );
         });
       });
@@ -184,14 +182,14 @@ describe('multiple tokens tests - emergent price', function() {
             const { emergentPrice } = await dex.getPageMemory.call(
               ...[doc.address, secondary.address]
             );
-            await testHelper.assertBigPrice(emergentPrice, averagePrice * multiplyFactor01);
+            await testHelper.assertBigPrice(emergentPrice, HARDCODED_PRICE * multiplyFactor01);
             await testHelper.assertBig(dex.buyOrdersLength(doc.address, secondary.address), 0);
             await testHelper.assertBig(dex.sellOrdersLength(doc.address, secondary.address), 0);
           });
           it('AND the other pair is not matched', async function() {
             await testHelper.assertBigPrice(
               getEmergentPriceValue(doc.address, otherSecondary.address),
-              averagePrice * multiplyFactor02
+              HARDCODED_PRICE * multiplyFactor02
             );
             await testHelper.assertBig(dex.buyOrdersLength(doc.address, otherSecondary.address), 1);
             await testHelper.assertBig(
@@ -216,8 +214,8 @@ describe('multiple tokens tests - emergent price', function() {
       const multiplyFactor02 = 2;
       const buyLOPrice1 = 1.5;
       const sellLOPrice2 = 3;
-      const averagePrice1 = (buyLOPrice1 + HARDCODED_SELL_PRICE * multiplyFactor01) / 2;
-      const averagePrice2 = (sellLOPrice2 + HARDCODED_BUY_PRICE * multiplyFactor02) / 2;
+      const averagePrice1 = (buyLOPrice1 + HARDCODED_PRICE * multiplyFactor01) / 2;
+      const averagePrice2 = (sellLOPrice2 + HARDCODED_PRICE * multiplyFactor02) / 2;
       before(async function() {
         await dex.addTokenPair(
           doc.address,
@@ -226,7 +224,7 @@ describe('multiple tokens tests - emergent price', function() {
           DEFAULT_PRICE_PRECISION.toString(),
           governor
         );
-        await dex.insertBuyOrder(
+        await dex.insertBuyLimitOrder(
           doc.address,
           secondary.address,
           wadify(1),
@@ -276,7 +274,7 @@ describe('multiple tokens tests - emergent price', function() {
             from: buyer
           }
         );
-        await dex.insertSellOrder(
+        await dex.insertSellLimitOrder(
           doc.address,
           otherSecondary.address,
           wadify(1),
@@ -286,7 +284,7 @@ describe('multiple tokens tests - emergent price', function() {
             from: seller
           }
         );
-        await dex.insertSellOrder(
+        await dex.insertSellLimitOrder(
           doc.address,
           otherSecondary.address,
           wadify(1),

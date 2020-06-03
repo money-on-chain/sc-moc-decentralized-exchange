@@ -91,7 +91,7 @@ const orderBookMatcher = (getMocHelper, scenario) => {
           const from = accounts[order.accountIndex || DEFAULT_ACCOUNT_INDEX];
           const transferParams = { from, to: dex.address, value: wadify(order.lockingAmount) };
           await dex
-            .insertBuyOrder(
+            .insertBuyLimitOrder(
               baseToken.address,
               secondaryToken.address,
               wadify(order.lockingAmount),
@@ -126,7 +126,7 @@ const orderBookMatcher = (getMocHelper, scenario) => {
           const from = accounts[order.accountIndex || DEFAULT_ACCOUNT_INDEX];
           const transferParams = { from, to: dex.address, value: wadify(order.lockingAmount) };
           await dex
-            .insertSellOrder(
+            .insertSellLimitOrder(
               baseToken.address,
               secondaryToken.address,
               wadify(order.lockingAmount),
