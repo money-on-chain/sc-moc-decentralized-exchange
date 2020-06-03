@@ -1185,21 +1185,11 @@ library MoCExchangeLib {
    */
   function priceOfMarketOrders(uint256 _multiplyFactor, bool _isBuy) public pure returns (uint256) {
     //TODO: get price from last tick or oracle
-    uint256 HARDCODED_BUY_PRICE = 1500000000000000000;
-    uint256 HARDCODED_SELL_PRICE = 1400000000000000000;
-    uint256 price = 0;
+    uint256 HARDCODED_PRICE = 1500000000000000000;
     if (_isBuy){
-      price = _multiplyFactor.mul(HARDCODED_BUY_PRICE).div(RATE_PRECISION);
+      return _multiplyFactor.mul(HARDCODED_PRICE).div(RATE_PRECISION);
     }
-    else {
-      price = _multiplyFactor.mul(HARDCODED_SELL_PRICE).div(RATE_PRECISION);
-    }
-    
-    if (price == 0){
-      return (_isBuy) ? HARDCODED_BUY_PRICE : HARDCODED_SELL_PRICE;
-    }
-
-    return price;
+    return _multiplyFactor.mul(HARDCODED_PRICE).div(RATE_PRECISION);
   }
 
   /**
