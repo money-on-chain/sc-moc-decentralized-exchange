@@ -48,7 +48,7 @@ describe('FEATURE: Min amount for order', function() {
       contract('GIVEN a contract with several token pairs', function(accounts) {
         let base;
         let secondary;
-        let doInsertOrder;
+        let doInsertLimitOrder;
         let pairAddresses;
 
         before(async function() {
@@ -91,12 +91,12 @@ describe('FEATURE: Min amount for order', function() {
           from = accounts[testHelper.DEFAULT_ACCOUNT_INDEX];
 
           // simplify insertion function
-          doInsertOrder = async function() {
+          doInsertLimitOrder = async function() {
             return isBuy
-              ? dex.insertBuyOrder(...pairAddresses, wadify(amount), pricefy(1), 5, {
+              ? dex.insertBuyLimitOrder(...pairAddresses, wadify(amount), pricefy(1), 5, {
                   from
                 })
-              : dex.insertSellOrder(...pairAddresses, wadify(amount), pricefy(1), 5, {
+              : dex.insertSellLimitOrder(...pairAddresses, wadify(amount), pricefy(1), 5, {
                   from
                 });
           };
@@ -111,13 +111,13 @@ describe('FEATURE: Min amount for order', function() {
             before(setup(pair));
             if (shouldFail) {
               it(`WHEN trying to insert an order with amount: ${amount}, THEN it should revert`, async function() {
-                return expectRevert(doInsertOrder(), 'Amount too low');
+                return expectRevert(doInsertLimitOrder(), 'Amount too low');
               });
             } else {
               describe(`WHEN inserting an order with amount: ${amount}`, function() {
                 let tx;
                 before(async function() {
-                  tx = await doInsertOrder();
+                  tx = await doInsertLimitOrder();
                 });
 
                 if (!goesToPendingQueue) {
@@ -144,11 +144,11 @@ describe('FEATURE: Min amount for order', function() {
 
   const goToRunningMatchingStage = pairGetter => async () => {
     const pair = pairGetter().map(it => it.address);
-    await dex.insertBuyOrder(...pair, wadify(1), pricefy(1), 5, { from });
-    await dex.insertBuyOrder(...pair, wadify(1), pricefy(1), 5, { from });
+    await dex.insertBuyLimitOrder(...pair, wadify(1), pricefy(1), 5, { from });
+    await dex.insertBuyLimitOrder(...pair, wadify(1), pricefy(1), 5, { from });
 
-    await dex.insertSellOrder(...pair, wadify(1), pricefy(1), 5, { from });
-    await dex.insertSellOrder(...pair, wadify(1), pricefy(1), 5, { from });
+    await dex.insertSellLimitOrder(...pair, wadify(1), pricefy(1), 5, { from });
+    await dex.insertSellLimitOrder(...pair, wadify(1), pricefy(1), 5, { from });
     await dex.matchOrders(...pair, 1);
   };
 

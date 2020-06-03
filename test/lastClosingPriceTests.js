@@ -23,7 +23,7 @@ const createNewPair = (dex, governor) =>
     );
     if (price && user) {
       await Promise.all([
-        dex.insertBuyOrder(
+        dex.insertBuyLimitOrder(
           baseToken.address,
           secondaryToken.address,
           wadify(1),
@@ -33,7 +33,7 @@ const createNewPair = (dex, governor) =>
             from: user
           }
         ),
-        dex.insertSellOrder(
+        dex.insertSellLimitOrder(
           baseToken.address,
           secondaryToken.address,
           wadify(1),
@@ -132,10 +132,10 @@ describe('Last closing price tests', function() {
             })
           ]);
           await dex.createNewPair(doc, secondary, DEFAULT_INITIAL_PRICE);
-          await dex.insertBuyOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
+          await dex.insertBuyLimitOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
             from: user
           });
-          await dex.insertSellOrder(doc.address, secondary.address, wadify(1), pricefy(3), 5, {
+          await dex.insertSellLimitOrder(doc.address, secondary.address, wadify(1), pricefy(3), 5, {
             from: user
           });
           ({ emergentPrice } = await dex.getTokenPairStatus.call(doc.address, secondary.address));

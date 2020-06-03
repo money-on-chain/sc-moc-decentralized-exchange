@@ -30,7 +30,7 @@ orderTracker.getByOrderId = function(id) {
 
 const insertLimitOrder = ({ type, accounts, accountIndex, ...props }) =>
   function() {
-    const insertFn = type === 'buy' ? 'insertBuyOrder' : 'insertSellOrder';
+    const insertFn = type === 'buy' ? 'insertBuyLimitOrder' : 'insertSellLimitOrder';
     const { amount, price, lifespan } = Object.assign(
       {},
       { amount: wadify(10), price: pricefy(1), lifespan: 5 },

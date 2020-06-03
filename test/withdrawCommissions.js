@@ -31,7 +31,7 @@ describe('Withdraw commissions tests', function() {
     await testHelper.setBalancesAndAllowances({
       accounts
     });
-    await dex.insertBuyOrder(base.address, secondary.address, wadify(10), pricefy(2), 5, {
+    await dex.insertBuyLimitOrder(base.address, secondary.address, wadify(10), pricefy(2), 5, {
       from: accounts[testHelper.DEFAULT_ACCOUNT_INDEX]
     });
     await dex.cancelBuyOrder(base.address, secondary.address, 1, 0, {
@@ -46,7 +46,7 @@ describe('Withdraw commissions tests', function() {
     await testHelper.setBalancesAndAllowances({
       accounts
     });
-    await dex.insertSellOrder(base.address, secondary.address, wadify(10), pricefy(2), 5, {
+    await dex.insertSellLimitOrder(base.address, secondary.address, wadify(10), pricefy(2), 5, {
       from: accounts[testHelper.DEFAULT_ACCOUNT_INDEX]
     });
     await dex.cancelSellOrder(base.address, secondary.address, 1, 0, {

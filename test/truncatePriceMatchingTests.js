@@ -35,12 +35,12 @@ describe('truncate price matching tests', function() {
     let tx;
     let matchEvent;
     it('GIVEN there are is one sell order with the absolute minimum price', async function() {
-      await dex.insertSellOrder(base.address, secondary.address, wadify(2), new BN(1), 5, {
+      await dex.insertSellLimitOrder(base.address, secondary.address, wadify(2), new BN(1), 5, {
         from: accounts[1]
       });
     });
     it('AND there is one buy order that match the sell order 1v1', async function() {
-      await dex.insertBuyOrder(base.address, secondary.address, wadify(10), new BN(10), 5, {
+      await dex.insertBuyLimitOrder(base.address, secondary.address, wadify(10), new BN(10), 5, {
         from: accounts[2]
       });
     });

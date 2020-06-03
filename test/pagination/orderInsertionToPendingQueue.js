@@ -126,7 +126,7 @@ describe('Insertion of orders to a pending queue when the tick is being run', fu
       describe('WHEN a buy order is inserted with an incorrect hinting', function() {
         it('THEN it reverts', function() {
           return expectRevert(
-            dex.insertBuyOrderAfter(...pair, wadify(1), pricefy(1), 5, 1, {
+            dex.insertBuyLimitOrderAfter(...pair, wadify(1), pricefy(1), 5, 1, {
               from: buyer
             }),
             'Order should go after'
@@ -139,7 +139,7 @@ describe('Insertion of orders to a pending queue when the tick is being run', fu
           describe('WHEN the same order is inserted', function() {
             let logs;
             before(async function() {
-              ({ logs } = await dex.insertBuyOrderAfter(...pair, wadify(1), pricefy(1), 5, 1, {
+              ({ logs } = await dex.insertBuyLimitOrderAfter(...pair, wadify(1), pricefy(1), 5, 1, {
                 from: buyer
               }));
             });

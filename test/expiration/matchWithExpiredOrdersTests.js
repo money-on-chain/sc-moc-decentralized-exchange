@@ -21,7 +21,7 @@ let pricefy;
 
 const insertLimitOrder = ({ type, accounts, accountIndex, ...props }) =>
   function() {
-    const insertFn = type === 'buy' ? 'insertBuyOrder' : 'insertSellOrder';
+    const insertFn = type === 'buy' ? 'insertBuyLimitOrder' : 'insertSellLimitOrder';
     const amount = wadify(props.amount || 10);
     const price = pricefy(props.price || 1);
     const expiresInTick = props.expiresInTick || 5;
