@@ -564,16 +564,25 @@ library MoCExchangeLib {
     @return new orderbook top (first)
    */
   function popAndGetNewTop(Data storage self) internal returns (Order storage) {
-    Order storage nextOrder = get(self, get(self, self.firstId).next);
-    // TODO: benchmark this operation as this 2 writes inside a loop could be optimiced.
-    // Readability over perfirmance was prioratized in this stage.
-    bool isMarketOrder = self.orders[self.firstId].orderType == OrderType.MARKET_ORDER;
-    delete (self.orders[self.firstId]);
-    self.firstId = nextOrder.id;
+    Order storage orderToPop = mostCompetitiveOrder(self, first(self), firstMarketOrder(self));
+    Order storage nextOrder = get(self, orderToPop.next);
+    bool isMarketOrder = true;
+    if (orderToPop.orderType == OrderType.LIMIT_ORDER){
+      isMarketOrder = false;
+      delete (self.orders[self.firstId]);
+      self.firstId = nextOrder.id;
+    }
+    else{
+      delete (self.orders[self.firstMarketOrderId]);
+      self.firstMarketOrderId = nextOrder.id;      
+    }
     decreaseQueuesLength(self, isMarketOrder);
     return nextOrder;
   }
 
+  /**
+    @notice decreases the size of the orders queue
+   */
   function decreaseQueuesLength(Data storage _self, bool _isMarketOrder) internal {
     _self.length = _self.length.sub(1);
     (_isMarketOrder) ? _self.marketOrderLength.sub(1) : _self.limitOrderLength.sub(1);
@@ -1426,7 +1435,7 @@ library MoCExchangeLib {
     view
     returns (uint256, uint256)
   {
-    uint256 buyerExpectedSend = convertToBase(_limitingAmount, _buy.price, _pair.priceComparisonPrecision);
+    uint256 buyerExpectedSend = convertToBase(_limitingAmount, getOrderPrice(_buy, true), _pair.priceComparisonPrecision);
     uint256 buyerSent = convertToBase(_limitingAmount, _price, _pair.priceComparisonPrecision);
     return (buyerExpectedSend, buyerSent);
   }
@@ -1473,7 +1482,7 @@ library MoCExchangeLib {
       address(_pair.secondaryToken.token)
     );
 
-    uint256 sellerExpectedReturn = convertToBase(_limitingAmount, _sell.price, _pair.priceComparisonPrecision);
+    uint256 sellerExpectedReturn = convertToBase(_limitingAmount, getOrderPrice(_sell, false), _pair.priceComparisonPrecision);
     uint256 buyerSent = convertToBase(_limitingAmount, _price, _pair.priceComparisonPrecision);
     uint256 surplus = buyerSent.sub(sellerExpectedReturn);
 
@@ -1610,8 +1619,6 @@ If zero, will start from ordebook top.
     @return True if there are more orders to be matched, false otherwise
    */
   function matchOrders(Pair storage _self, CommissionManager _commissionManager) public returns (bool) {
-    assert(_self.tickStage == TickStage.RUNNING_MATCHING);
-
     // If there are no matches, skip everything
     if (_self.pageMemory.matchesAmount == 0) {
       return false;
@@ -1635,12 +1642,14 @@ If zero, will start from ordebook top.
       sell.exchangeableAmount,
       _self.priceComparisonPrecision
     );
+    
     executeMatch(_commissionManager, _self, buy, sell, limitingAmount, _self.pageMemory.emergentPrice);
-
     if (matchType == MatchType.DOUBLE_FILL) {
+      //require(false, "DOUBLE_FILL WACHO");
       buy = onOrderFullMatched(_commissionManager, _self.baseToken, buy, _self.tickState.number, _self.pageMemory.lastBuyMatch.id);
       sell = onOrderFullMatched(_commissionManager, _self.secondaryToken, sell, _self.tickState.number, _self.pageMemory.lastSellMatch.id);
     } else if (matchType == MatchType.BUYER_FILL) {
+      //require(false, "BUYER_FILL WACHO");
       buy = onOrderFullMatched(_commissionManager, _self.baseToken, buy, _self.tickState.number, _self.pageMemory.lastBuyMatch.id);
     } else if (matchType == MatchType.SELLER_FILL) {
       sell = onOrderFullMatched(_commissionManager, _self.secondaryToken, sell, _self.tickState.number, _self.pageMemory.lastSellMatch.id);
@@ -1712,7 +1721,7 @@ If zero, will start from ordebook top.
     @return the first valid order in the orderbook
   */
   function getFirstForMatching(CommissionManager _commissionManager, Token storage _token, uint64 _tickNumber) private returns (Order storage) {
-    Order storage order = first(_token.orderbook);
+    Order storage order = mostCompetitiveOrder(_token.orderbook, first(_token.orderbook), firstMarketOrder(_token.orderbook));
     if (isExpired(order, _tickNumber)) {
       processExpiredOrder(_commissionManager, _token, order.id, order.exchangeableAmount, order.reservedCommission, order.owner);
       return getNextValidOrderForMatching(_commissionManager, _token, _tickNumber);
@@ -1757,9 +1766,11 @@ If zero, will start from ordebook top.
     uint256 _lastOrderThatMatches
   ) private returns (Order storage) {
     if (_lastOrderThatMatches == _order.id) {
+      //require(false, "WACHO LAST == ORDER.DI");
       // If we"d reached the target order id, we don"t need the next valid, just the next
       return popAndGetNewTop(_token.orderbook);
     } else {
+      //require(false, "WACHO GET NETX");
       return getNextValidOrderForMatching(_commissionManager, _token, _tickNumber);
     }
   }
@@ -1775,7 +1786,7 @@ If zero, will start from ordebook top.
     @return transferResult True if the transfer to _account was successful
     @return exchangeableAmount Amount tried to be transfered from the orders to the user
     @return chargedCommission Commission charged as penalization
-    @return commissionToRetrun Amount tried to be trasfered from the commissions to the user
+    @return commissionToReturn Amount tried to be trasfered from the commissions to the user
   */
   function refundOrder(
     CommissionManager _commissionManager,
