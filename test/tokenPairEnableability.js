@@ -52,9 +52,27 @@ describe('token enable/disable tests', function() {
         );
       });
 
+      it('THEN the insertSellMarketOrder fails', async function() {
+        await expectRevert(
+          dex.insertMarketOrder(base.address, secondary.address, wadify(1), pricefy(1), 5, false, {
+            from: user
+          }),
+          'Pair has been disabled'
+        );
+      });
+
       it('THEN the insertSellLimitOrder fails', async function() {
         await expectRevert(
           dex.insertSellLimitOrder(base.address, secondary.address, wadify(1), pricefy(1), 5, {
+            from: user
+          }),
+          'Pair has been disabled'
+        );
+      });
+
+      it('THEN the insertBuyMarketOrder fails', async function() {
+        await expectRevert(
+          dex.insertMarketOrder(base.address, secondary.address, wadify(1), pricefy(1), 5, true, {
             from: user
           }),
           'Pair has been disabled'
@@ -78,6 +96,24 @@ describe('token enable/disable tests', function() {
         );
       });
 
+      it('THEN the insertSellMarketOrderAfter fails', async function() {
+        await expectRevert(
+          dex.insertMarketOrderAfter(
+            base.address,
+            secondary.address,
+            wadify(1),
+            pricefy(1),
+            5,
+            0,
+            false,
+            {
+              from: user
+            }
+          ),
+          'Pair has been disabled'
+        );
+      });
+
       it('THEN the insertBuyLimitOrderAfter fails', async function() {
         await expectRevert(
           dex.insertBuyLimitOrderAfter(
@@ -87,6 +123,24 @@ describe('token enable/disable tests', function() {
             pricefy(1),
             5,
             0,
+            {
+              from: user
+            }
+          ),
+          'Pair has been disabled'
+        );
+      });
+
+      it('THEN the insertBuyMarketOrderAfter fails', async function() {
+        await expectRevert(
+          dex.insertMarketOrderAfter(
+            base.address,
+            secondary.address,
+            wadify(1),
+            pricefy(1),
+            5,
+            0,
+            true,
             {
               from: user
             }
