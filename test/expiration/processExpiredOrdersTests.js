@@ -50,6 +50,7 @@ const initContractsAndAllowance = async accounts => {
     {}
   );
   dex = testHelper.decorateOrderInsertions(dex, accounts, { base, secondary });
+  dex = testHelper.decorateGetOrderAtIndex(dex);
   await testHelper.setBalancesAndAllowances({ accounts, userData });
 
   /**

@@ -50,6 +50,7 @@ const initContractsAndAllowance = async accounts => {
     testHelper.getBase(),
     testHelper.getSecondary()
   ]);
+  dex = testHelper.decorateGetOrderAtIndex(dex);
   const userData = [1, 2, 3, 4, 5, 6].reduce(
     (acc, it) => ({
       ...acc,
