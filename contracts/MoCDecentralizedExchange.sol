@@ -185,6 +185,22 @@ If zero, will start from ordebook top.
     MoCExchangeLib.processExpired(pair, commissionManager, _isBuy, _orderId, _previousOrderIdHint, _steps);
   }
 
+    /**
+@notice Process expired Orders for the given orderbook, returning funds to the owner while applying commission
+@dev iterates _steps times over the orderbook starting from _orderId and process any encountered expired order
+@param _baseToken Base token to identify the orderbook
+@param _secondaryToken Secondary token to identify the orderbook
+@param _isBuy true if buy order, needed to identify the orderbook
+*/
+  function areOrdersToExpire(
+    address _baseToken,
+    address _secondaryToken,
+    bool _isBuy
+  ) external view returns (bool) {
+    MoCExchangeLib.Pair storage pair = getTokenPair(_baseToken, _secondaryToken);
+    MoCExchangeLib.areOrdersToExpire(pair, _isBuy);
+  }
+
   /**
 @notice Getter for every value related to a pair
 @param _baseToken Address of the base token of the pair

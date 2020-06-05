@@ -1566,6 +1566,32 @@ If zero, will start from ordebook top.
     require(hasProcess, "No expired order found");
   }
 
+   /**
+@notice Process expired Orders for the given orderbook, returning funds to the owner while applying commission
+@dev iterates _steps times over the orderbook starting from _orderId and process any encountered expired order
+@param _pair Pair of tokens
+@param _isBuy true if buy order, needed to identify the orderbook
+*/
+  function areOrdersToExpire(
+    Pair storage _pair,
+    bool _isBuy
+  ) internal view returns (bool) {
+    MoCExchangeLib.Token storage token = _isBuy ? _pair.baseToken : _pair.secondaryToken;
+    MoCExchangeLib.Order storage toEvaluate = first(token.orderbook);
+    uint256 nextOrderId = toEvaluate.next;
+    uint256 previousOrderId;
+    while (toEvaluate.id != 0) {
+      if (isExpired(toEvaluate, _pair.tickState.number)) {
+        return true;
+      } else {
+        previousOrderId = toEvaluate.id;
+        nextOrderId = toEvaluate.next;
+      }
+      toEvaluate = get(token.orderbook, nextOrderId);
+    }
+    return false;
+  }
+
   /**
     @notice returns funds to the owner, paying commission in the process and emits ExpiredOrderProcessed event
     @param _commissionManager commission manager.
