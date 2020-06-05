@@ -1,6 +1,6 @@
 const testHelperBuilder = require('./testHelpers/testHelper');
 
-describe('Token pair EMA Price tests', function() {
+describe.only('Token pair EMA Price tests', function() {
   let dex;
   let base;
   let secondary;
@@ -10,19 +10,21 @@ describe('Token pair EMA Price tests', function() {
   let DEFAULT_BALANCE;
   let decorateGovernedSetters;
 
-  const getCommonInsertionParams = () => [
+  const getLimitInsertionParams = price => [
     base.address,
     secondary.address,
     wadify(10),
-    pricefy(1),
+    pricefy(price),
     5
   ];
-  const getNotCommonInsertionParams = () => [
+  // Assuming market price of 15
+  const getMarketInsertionParams = (price, isBuy) => [
     base.address,
     secondary.address,
     wadify(10),
-    pricefy(2),
-    5
+    pricefy(price),
+    5,
+    isBuy
   ];
   before(async function() {
     testHelper = testHelperBuilder();
@@ -36,7 +38,7 @@ describe('Token pair EMA Price tests', function() {
 
     dex = decorateGovernedSetters(dex);
   });
-  const initContractsAndOrders = function(accounts, insertionParams) {
+  const initContractsAndOrders = function(accounts, price) {
     return async function() {
       const userData = accounts.map(() => ({
         baseBalance: DEFAULT_BALANCE,
@@ -52,12 +54,12 @@ describe('Token pair EMA Price tests', function() {
         accounts
       });
       await Promise.all([
-        dex.insertSellLimitOrder(...insertionParams),
-        dex.insertSellLimitOrder(...insertionParams),
-        dex.insertSellLimitOrder(...insertionParams),
-        dex.insertBuyLimitOrder(...insertionParams),
-        dex.insertBuyLimitOrder(...insertionParams),
-        dex.insertBuyLimitOrder(...insertionParams)
+        dex.insertSellLimitOrder(...getLimitInsertionParams(price)),
+        dex.insertSellLimitOrder(...getLimitInsertionParams(price)),
+        dex.insertMarketOrder(...getMarketInsertionParams(price, false)),
+        dex.insertBuyLimitOrder(...getLimitInsertionParams(price)),
+        dex.insertBuyLimitOrder(...getLimitInsertionParams(price)),
+        dex.insertMarketOrder(...getMarketInsertionParams(price, true))
       ]);
     };
   };
@@ -70,11 +72,11 @@ describe('Token pair EMA Price tests', function() {
   });
 
   describe('RULE: When the pair has runned one tick and some orders matched', function() {
-    contract(
+    contract.skip(
       'GIVEN that there are three buy orders and three sell orders where there is matching price is 1',
       function(accounts) {
         before(async function() {
-          await initContractsAndOrders(accounts, getCommonInsertionParams())();
+          await initContractsAndOrders(accounts, 1)();
           await dex.matchOrders(base.address, secondary.address, 10000);
         });
 
@@ -84,11 +86,11 @@ describe('Token pair EMA Price tests', function() {
         });
       }
     );
-    contract(
+    contract.skip(
       'GIVEN that there are three buy orders and three sell orders where there is matching price is not 1',
       function(accounts) {
         before(async function() {
-          await initContractsAndOrders(accounts, getNotCommonInsertionParams())();
+          await initContractsAndOrders(accounts, 2)();
           await dex.matchOrders(base.address, secondary.address, 10000);
         });
 
