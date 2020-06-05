@@ -1596,6 +1596,19 @@ If zero, will start from ordebook top.
     emit ExpiredOrderProcessed(_orderId, _owner, returnedAmount, commission, returnedCommission);
     return transferResult;
   }
+  /**
+    @notice Hook called when the simulation of the matching of orders starts; marks as so the tick stage
+    Initializes the pageMemory with the first valid orders
+    Has one discarded param; kept to have a fixed signature
+    @dev The initialization of lastBuyMatch/lastSellMatch without checking if they should match can cause
+    some inconsistency but it is covered by the matchesAmount attribute in the pageMemory
+    @param _pair The pair of toekns
+  */
+  function onSimulationStart(Pair storage _pair) public {
+    _pair.tickStage = TickStage.RUNNING_SIMULATION;
+    _pair.pageMemory.lastBuyMatch = getNextValidOrder(_pair.baseToken.orderbook, _pair.tickState.number, 0);
+    _pair.pageMemory.lastSellMatch = getNextValidOrder(_pair.secondaryToken.orderbook, _pair.tickState.number, 0);
+  }
 
   /**
   @notice Hook called when the simulation of the matching of orders finish; marks as so the tick stage

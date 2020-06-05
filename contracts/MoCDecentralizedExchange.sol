@@ -365,10 +365,7 @@ for the execution of a tick of a given pair
   function onSimulationStart(bytes32 _groupId, bytes32) private {
     MoCExchangeLib.Pair storage pair = getTokenPair(_groupId);
     assert(pair.tickStage == MoCExchangeLib.TickStage.RECEIVING_ORDERS);
-    pair.tickStage = MoCExchangeLib.TickStage.RUNNING_SIMULATION;
-
-    pair.pageMemory.lastBuyMatch = pair.baseToken.orderbook.getNextValidOrder(pair.tickState.number, 0);
-    pair.pageMemory.lastSellMatch = pair.secondaryToken.orderbook.getNextValidOrder(pair.tickState.number, 0);
+    MoCExchangeLib.onSimulationStart(pair);
   }
 
   /**
