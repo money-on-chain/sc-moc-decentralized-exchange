@@ -1,7 +1,7 @@
 /* eslint-disable mocha/no-async-describe */
 
 const _ = require('lodash');
-const { orderBookMatcher } = require('./testHelpers/orderBookMatcher');
+const { orderBookMatcherBothTypes } = require('./testHelpers/orderBookMatcher');
 const testHelperBuilder = require('./testHelpers/testHelper');
 
 describe('Dex: Non matching tests', function() {
@@ -10,7 +10,7 @@ describe('Dex: Non matching tests', function() {
     testHelper = testHelperBuilder();
   });
 
-  const matcher = _.curry(orderBookMatcher)(() => testHelper);
+  const matcher = _.curry(orderBookMatcherBothTypes)(() => testHelper);
   [
     {
       description: 'there are buy and sell orders, but they should not match',
