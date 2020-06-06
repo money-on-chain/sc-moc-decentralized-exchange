@@ -49,7 +49,7 @@ library MoCExchangeLib {
     being exchanged in this pair)
     @param exchangeableAmount Amount that was left to be exchanged
     @param reservedCommission Commission reserved to be charged later
-    @param price Target price of the order[base/secondary]
+    @param price Target price of the order[base/secondary] or priceMultiplier [dimentionless] [pricePrecision]
     @param expiresInTick Number of tick in which the order can no longer be matched
     @param isBuy The order is a buy order
     @param orderType The order's type; LIMIT_ORDER or MARKET_ORDER
