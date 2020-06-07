@@ -113,9 +113,9 @@ const insertBuyMarketOrder = (
     { from: sender }
   );
 
-const expectInsertionEventMarket = (
+const expectInsertionEventMarket = isBuy => (
   receipt,
-  { baseTokenAddress, secondaryTokenAddress, price, commission, lockingAmount, isBuy }
+  { baseTokenAddress, secondaryTokenAddress, price, commission, lockingAmount }
 ) => {
   expectEvent.inTransaction(receipt.tx, MoCDecentralizedExchange, 'NewOrderInserted', {
     baseTokenAddress,
@@ -127,9 +127,9 @@ const expectInsertionEventMarket = (
   });
 };
 
-const expectInsertionEventLimit = (
+const expectInsertionEventLimit = isBuy => (
   receipt,
-  { baseTokenAddress, secondaryTokenAddress, price, commission, lockingAmount, isBuy }
+  { baseTokenAddress, secondaryTokenAddress, price, commission, lockingAmount }
 ) =>
   expectEvent.inTransaction(receipt.tx, MoCDecentralizedExchange, 'NewOrderInserted', {
     baseTokenAddress,
@@ -140,10 +140,12 @@ const expectInsertionEventLimit = (
     isBuy
   });
 
-const orderBookMatcherGeneric = (insertSellOrder, insertBuyOrder, expectInsertionEvent) => (
-  getMocHelper,
-  scenario
-) => {
+const orderBookMatcherGeneric = (
+  insertSellOrder,
+  insertBuyOrder,
+  expectInsertionSellEvent,
+  expectInsertionBuyEvent
+) => (getMocHelper, scenario) => {
   contract(scenario.description, function(accounts) {
     // eslint-disable-next-line mocha/no-top-level-hooks
     before(async function() {
@@ -208,10 +210,9 @@ const orderBookMatcherGeneric = (insertSellOrder, insertBuyOrder, expectInsertio
           ).then(function(tx) {
             return Promise.all([
               currifiedInTransaction(_, BaseToken, 'Transfer', transferParams)(tx),
-              expectInsertionEvent(tx, {
+              expectInsertionBuyEvent(tx, {
                 baseTokenAddress: baseToken.address,
                 secondaryTokenAddress: secondaryToken.address,
-                isBuy: true,
                 ...order
               })
             ]);
@@ -235,10 +236,9 @@ const orderBookMatcherGeneric = (insertSellOrder, insertBuyOrder, expectInsertio
           ).then(function(tx) {
             return Promise.all([
               currifiedInTransaction(_, SecondaryToken, 'Transfer', transferParams)(tx),
-              expectInsertionEvent(tx, {
+              expectInsertionSellEvent(tx, {
                 baseTokenAddress: baseToken.address,
                 secondaryTokenAddress: secondaryToken.address,
-                isBuy: false,
                 ...order
               })
             ]);
@@ -385,13 +385,22 @@ const orderBookMatcherGeneric = (insertSellOrder, insertBuyOrder, expectInsertio
 const orderBookMatcherMarket = orderBookMatcherGeneric(
   insertSellMarketOrder,
   insertBuyMarketOrder,
-  expectInsertionEventMarket
+  expectInsertionEventMarket(false),
+  expectInsertionEventMarket(true)
 );
 
 const orderBookMatcherLimit = orderBookMatcherGeneric(
   insertSellLimitOrder,
   insertBuyLimitOrder,
-  expectInsertionEventLimit
+  expectInsertionEventLimit(false),
+  expectInsertionEventLimit(true)
+);
+
+const orderBookMatcherCombined = orderBookMatcherGeneric(
+  insertSellMarketOrder,
+  insertBuyLimitOrder,
+  expectInsertionEventMarket(false),
+  expectInsertionEventLimit(true)
 );
 
 const orderBookMatcherBothTypes = (getMocHelper, scenario) => {
@@ -400,6 +409,9 @@ const orderBookMatcherBothTypes = (getMocHelper, scenario) => {
   });
   describe.skip('Orderbook matching - Market order', function() {
     orderBookMatcherMarket(getMocHelper, scenario);
+  });
+  describe.skip('Orderbook matching - Combined order', function() {
+    orderBookMatcherCombined(getMocHelper, scenario);
   });
 };
 module.exports = { orderBookMatcherBothTypes, orderBookMatcherMarket, orderBookMatcherLimit };
