@@ -146,40 +146,39 @@ const insertLimitOrder = async ({
   ).args;
 };
 
-const insertMarketOrder = ({
+const insertMarketOrder = async ({
   dex,
   defaultPair,
   type,
   accounts,
-  accountIndex,
-  pending = true,
+  accountIndex = DEFAULT_ACCOUNT_INDEX,
+  pending,
   ...props
-}) =>
-  async function() {
-    const amount = wadify(props.amount || 10);
-    const priceMultiplier = pricefy(props.priceMultiplier || 1);
-    const expiresInTick = props.expiresInTick || 5;
-    const from = props.from || accounts[accountIndex];
-    const baseToken = props.base || defaultPair.base;
-    const secondaryToken = props.secondary || defaultPair.secondary;
+}) => {
+  const amount = wadify(props.amount || 10);
+  const priceMultiplier = pricefy(props.priceMultiplier || 1);
+  const expiresInTick = props.expiresInTick || 5;
+  const from = props.from || accounts[accountIndex];
+  const baseToken = props.base || defaultPair.base;
+  const secondaryToken = props.secondary || defaultPair.secondary;
 
-    const insertReceipt = await dex.insertMarketOrder(
-      baseToken.address,
-      secondaryToken.address,
-      amount,
-      priceMultiplier,
-      expiresInTick,
-      type === 'buy',
-      {
-        from
-      }
-    );
+  const insertReceipt = await dex.insertMarketOrder(
+    baseToken.address,
+    secondaryToken.address,
+    amount,
+    priceMultiplier,
+    expiresInTick,
+    type === 'buy',
+    {
+      from
+    }
+  );
 
-    return expectEvent.inLogs(
-      insertReceipt.logs,
-      pending ? 'NewOrderAddedToPendingQueue' : 'NewOrderInserted'
-    ).args;
-  };
+  return expectEvent.inLogs(
+    insertReceipt.logs,
+    pending ? 'NewOrderAddedToPendingQueue' : 'NewOrderInserted'
+  ).args;
+};
 
 const decorateOrderInsertions = (dex, accounts, pair) =>
   Object.assign({}, dex, {
