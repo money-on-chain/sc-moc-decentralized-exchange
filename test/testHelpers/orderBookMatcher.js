@@ -22,7 +22,7 @@ let secondaryToken;
 let baseToken;
 let DEFAULT_ACCOUNT_INDEX;
 let DEFAULT_BALANCES_AND_ALLOWANCES;
-const MARKET_PRICE = 15;
+const MARKET_PRICE = 2;
 const filterEvents = (tx, eventName) =>
   tx.logs.filter(it => it.event === eventName).map(it => it.args);
 
@@ -312,7 +312,7 @@ const orderBookMatcherGeneric = (
               secondaryToken.address,
               index
             );
-            testHelper.assertOrder(
+            return testHelper.assertOrder(
               order,
               getExpectation(scenario.remainingSellOrders.orders[index])
             );
@@ -347,7 +347,7 @@ const orderBookMatcherGeneric = (
               secondaryToken.address,
               index
             );
-            testHelper.assertOrder(
+            return testHelper.assertOrder(
               order,
               getExpectation(scenario.remainingBuyOrders.orders[index])
             );
@@ -407,10 +407,10 @@ const orderBookMatcherBothTypes = (getMocHelper, scenario) => {
   describe('Orderbook matching - Limit order', function() {
     orderBookMatcherLimit(getMocHelper, scenario);
   });
-  describe.skip('Orderbook matching - Market order', function() {
+  describe('Orderbook matching - Market order', function() {
     orderBookMatcherMarket(getMocHelper, scenario);
   });
-  describe.skip('Orderbook matching - Combined order', function() {
+  describe('Orderbook matching - Combined order', function() {
     orderBookMatcherCombined(getMocHelper, scenario);
   });
 };

@@ -9,6 +9,7 @@ describe('Token pair EMA Price tests', function() {
   let pricefy;
   let DEFAULT_BALANCE;
   let decorateGovernedSetters;
+  const MARKET_PRICE = 2;
 
   const getLimitInsertionParams = price => [
     base.address,
@@ -17,12 +18,12 @@ describe('Token pair EMA Price tests', function() {
     pricefy(price),
     5
   ];
-  // Assuming market price of 15
+  // Assuming market price of MARKET_PRICE
   const getMarketInsertionParams = (price, isBuy) => [
     base.address,
     secondary.address,
     wadify(10),
-    pricefy(price),
+    pricefy(price / MARKET_PRICE),
     5,
     isBuy
   ];
@@ -67,12 +68,16 @@ describe('Token pair EMA Price tests', function() {
   describe('RULE: When the pair has not runned any tick', function() {
     it('THEN the EmaPrice should be the same as the initial price', async function() {
       const tokenPairStatus = await dex.getTokenPairStatus(base.address, secondary.address);
-      testHelper.assertBig(tokenPairStatus.emaPrice, tokenPairStatus.lastClosingPrice, 'EmaPrice');
+      return testHelper.assertBig(
+        tokenPairStatus.emaPrice,
+        tokenPairStatus.lastClosingPrice,
+        'EmaPrice'
+      );
     });
   });
 
   describe('RULE: When the pair has runned one tick and some orders matched', function() {
-    contract.skip(
+    contract(
       'GIVEN that there are three buy orders and three sell orders where there is matching price is 1',
       function(accounts) {
         before(async function() {
@@ -82,11 +87,11 @@ describe('Token pair EMA Price tests', function() {
 
         it('THEN the emaPrice should stay the same', async function() {
           const tokenPairStatus = await dex.getTokenPairStatus(base.address, secondary.address);
-          testHelper.assertBigWad(tokenPairStatus.emaPrice, 1, 'EmaPrice');
+          return testHelper.assertBigWad(tokenPairStatus.emaPrice, 1, 'EmaPrice');
         });
       }
     );
-    contract.skip(
+    contract(
       'GIVEN that there are three buy orders and three sell orders where there is matching price is not 1',
       function(accounts) {
         before(async function() {
@@ -96,7 +101,7 @@ describe('Token pair EMA Price tests', function() {
 
         it('THEN the emaPrice should change and be different than the previous one (it was 1)', async function() {
           const tokenPairStatus = await dex.getTokenPairStatus(base.address, secondary.address);
-          testHelper.assertBigWad(tokenPairStatus.emaPrice, 1.01653, 'EmaPrice');
+          return testHelper.assertBigWad(tokenPairStatus.emaPrice, 1.01653, 'EmaPrice');
         });
       }
     );
