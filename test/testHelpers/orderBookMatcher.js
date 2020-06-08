@@ -208,7 +208,7 @@ const orderBookMatcher = (getMocHelper, scenario) => {
     if (scenario.remainingSellOrders) {
       it(scenario.remainingSellOrders.description, async function() {
         const ordersLength = await dex.sellOrdersLength(baseToken.address, secondaryToken.address);
-        testHelper.assertBig(
+        await testHelper.assertBig(
           ordersLength,
           scenario.remainingSellOrders.orders.length,
           'sell orders length'
@@ -232,7 +232,7 @@ const orderBookMatcher = (getMocHelper, scenario) => {
         const expectedBalance =
           scenario.remainingSellOrders.dexSecondaryBalance ||
           scenario.remainingSellOrders.orders.reduce((acc, it) => acc + it.lockedAmount, 0);
-        testHelper.assertBigWad(
+        return testHelper.assertBigWad(
           await secondaryToken.balanceOf(dex.address),
           expectedBalance,
           'exchange contract Secondary balance'
@@ -243,7 +243,7 @@ const orderBookMatcher = (getMocHelper, scenario) => {
     if (scenario.remainingBuyOrders) {
       it(scenario.remainingBuyOrders.description, async function() {
         const ordersLength = await dex.buyOrdersLength(baseToken.address, secondaryToken.address);
-        testHelper.assertBig(
+        await testHelper.assertBig(
           ordersLength,
           scenario.remainingBuyOrders.orders.length,
           'buy orders length'
@@ -267,7 +267,7 @@ const orderBookMatcher = (getMocHelper, scenario) => {
         const expectedBalance =
           scenario.remainingBuyOrders.dexBaseBalance ||
           scenario.remainingBuyOrders.orders.reduce((acc, it) => acc + it.lockedAmount, 0);
-        testHelper.assertBigWad(
+        return testHelper.assertBigWad(
           await baseToken.balanceOf(dex.address),
           expectedBalance,
           'exchange contract base balance'

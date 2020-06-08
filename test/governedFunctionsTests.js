@@ -86,7 +86,7 @@ describe('Governed functions tests', function() {
     then: () =>
       it('THEN the expected orders for tick has changed', async function() {
         const { expectedOrdersForTick } = await dex.tickConfig();
-        testHelper.assertBig(expectedOrdersForTick, 5, 'Expected orders for tick');
+        return testHelper.assertBig(expectedOrdersForTick, 5, 'Expected orders for tick');
       }),
     getChanger: () => ExpectedOrdersForTickChanger.new(dex.address, 5)
   });
@@ -99,7 +99,7 @@ describe('Governed functions tests', function() {
     then: () =>
       it('THEN the max blocks for tick has changed', async function() {
         const { maxBlocksForTick } = await dex.tickConfig();
-        testHelper.assertBig(maxBlocksForTick, 200, 'max blocks for tick');
+        return testHelper.assertBig(maxBlocksForTick, 200, 'max blocks for tick');
       }),
     getChanger: () => MaxBlocksForTickChanger.new(dex.address, 200)
   });
@@ -112,7 +112,7 @@ describe('Governed functions tests', function() {
     then: () =>
       it('THEN the min blocks for tick has changed', async function() {
         const { minBlocksForTick } = await dex.tickConfig();
-        testHelper.assertBig(minBlocksForTick, 5, 'min blocks for tick');
+        return testHelper.assertBig(minBlocksForTick, 5, 'min blocks for tick');
       }),
     getChanger: () => MinBlocksForTickChanger.new(dex.address, 5)
   });
@@ -128,7 +128,7 @@ describe('Governed functions tests', function() {
           base.address,
           secondary.address
         );
-        testHelper.assertBig(lastClosingPrice, 17, 'Last closing price');
+        return testHelper.assertBig(lastClosingPrice, 17, 'Last closing price');
       }),
     getChanger: () => LastClosingPriceChanger.new(dex.address, base.address, secondary.address, 17)
   });
@@ -141,7 +141,7 @@ describe('Governed functions tests', function() {
     then: () =>
       it('THEN the minimum order amount has changed', async function() {
         const minOrderAmount = await dex.minOrderAmount();
-        testHelper.assertBigWad(minOrderAmount, 2, 'Min order amount');
+        return testHelper.assertBigWad(minOrderAmount, 2, 'Min order amount');
       }),
     getChanger: () => MinOrderAmountChanger.new(dex.address, testHelper.wadify(2))
   });
@@ -154,7 +154,7 @@ describe('Governed functions tests', function() {
     then: () =>
       it('THEN the max order lifespan has changed', async function() {
         const maxOrderLifespan = await dex.maxOrderLifespan();
-        testHelper.assertBig(maxOrderLifespan, 9, 'Max order lifespan');
+        return testHelper.assertBig(maxOrderLifespan, 9, 'Max order lifespan');
       }),
     getChanger: () => MaxOrderLifespanChanger.new(dex.address, 9)
   });
@@ -168,7 +168,7 @@ describe('Governed functions tests', function() {
     then: () =>
       it('THEN the address of the beneficiary has changed', async function() {
         const beneficiaryAddress = await commissionManager.beneficiaryAddress();
-        testHelper.assertAddresses(
+        return testHelper.assertAddresses(
           ANY_ADDRESS,
           beneficiaryAddress.toLowerCase(),
           'Address of the beneficiary'
@@ -184,7 +184,7 @@ describe('Governed functions tests', function() {
     then: () =>
       it('THEN the commission rate has changed', async function() {
         const commissionRate = await commissionManager.commissionRate();
-        testHelper.assertBigWad(commissionRate, 0.012, 'Commission rate');
+        return testHelper.assertBigWad(commissionRate, 0.012, 'Commission rate');
       }),
     getChanger: () => CommissionRateChanger.new(commissionManager.address, testHelper.wadify(0.012))
   });
@@ -197,7 +197,7 @@ describe('Governed functions tests', function() {
     then: () =>
       it('THEN the cancelation penalty rate has changed', async function() {
         const cancelationPenaltyRate = await commissionManager.cancelationPenaltyRate();
-        testHelper.assertBigWad(cancelationPenaltyRate, 0.225, 'Cancelation penalty rate');
+        return testHelper.assertBigWad(cancelationPenaltyRate, 0.225, 'Cancelation penalty rate');
       }),
     getChanger: () =>
       CancelationPenaltyRateChanger.new(commissionManager.address, testHelper.wadify(0.225))
@@ -211,7 +211,7 @@ describe('Governed functions tests', function() {
     then: () =>
       it('THEN the expiration penalty rate has changed', async function() {
         const expirationPenaltyRate = await commissionManager.expirationPenaltyRate();
-        testHelper.assertBigWad(expirationPenaltyRate, 0.75, 'Expiration penalty rate');
+        return testHelper.assertBigWad(expirationPenaltyRate, 0.75, 'Expiration penalty rate');
       }),
     getChanger: () =>
       ExpirationPenaltyRateChanger.new(commissionManager.address, testHelper.wadify(0.75))
@@ -258,7 +258,7 @@ describe('Governed functions tests', function() {
       it('THEN the token pair shuold have a different EmaPrice', async function() {
         const tokenPairStatus = await dex.getTokenPairStatus(base.address, secondary.address);
         // eslint-disable-next-line no-unused-expressions
-        testHelper.assertBigWad(tokenPairStatus.emaPrice, 3, 'EMA Price');
+        return testHelper.assertBigWad(tokenPairStatus.emaPrice, 3, 'EMA Price');
       }),
     getContract: () => dex,
     getChanger: () =>
@@ -273,7 +273,7 @@ describe('Governed functions tests', function() {
       it('THEN the token pair should have a different smoothing factor', async function() {
         const tokenPairStatus = await dex.getTokenPairStatus(base.address, secondary.address);
         // eslint-disable-next-line no-unused-expressions
-        testHelper.assertBigWad(tokenPairStatus.smoothingFactor, 0.72, 'Smoothing factor');
+        return testHelper.assertBigWad(tokenPairStatus.smoothingFactor, 0.72, 'Smoothing factor');
       }),
     getContract: () => dex,
     getChanger: () =>

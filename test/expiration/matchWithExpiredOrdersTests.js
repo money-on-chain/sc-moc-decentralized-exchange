@@ -52,7 +52,7 @@ const assertOrderBookLength = ({ type, expectedLength = 0 }) =>
   async function() {
     const lengthFn = type === 'buy' ? 'buyOrdersLength' : 'sellOrdersLength';
     const ordersLength = await dex[lengthFn](base.address, secondary.address);
-    testHelper.assertBig(ordersLength, expectedLength, `${type} orders length`);
+    return testHelper.assertBig(ordersLength, expectedLength, `${type} orders length`);
   };
 
 const initContractsAndAllowance = async accounts => {

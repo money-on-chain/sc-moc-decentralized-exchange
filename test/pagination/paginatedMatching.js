@@ -61,28 +61,32 @@ describe('Matching can be run in several pages', function() {
   };
   const assertEmergentPrice = async function(expected) {
     const { emergentPrice } = await dex.getEmergentPrice.call(...pair);
-    testHelper.assertBigPrice(emergentPrice, expected);
+    return testHelper.assertBigPrice(emergentPrice, expected);
   };
 
   // FIXME this doesn't work for fields of the tokenPairStatus that are not prices
   const assertTokenPairStatus = async function(expected) {
     const actual = await dex.getTokenPairStatus.call(...pair);
-    Object.keys(expected).forEach(function(key) {
-      testHelper.assertBigPrice(actual[key], expected[key], key);
-    });
+    return Promise.all(
+      Object.keys(expected).map(function(key) {
+        return testHelper.assertBigPrice(actual[key], expected[key], key);
+      })
+    );
   };
 
   const assertPageMemory = async function(expected) {
     const actual = await dex.getPageMemory.call(...pair);
-    Object.keys(expected).forEach(function(key) {
-      if (['lastBuyMatchAmount', 'lastSellMatchAmount'].find(it => it === key)) {
-        testHelper.assertBigWad(actual[key], expected[key], key);
-      } else if (['emergentPrice'].find(it => it === key)) {
-        testHelper.assertBigPrice(actual[key], expected[key], key);
-      } else {
-        testHelper.assertBig(actual[key], expected[key], key);
-      }
-    });
+    return Promise.all(
+      Object.keys(expected).map(function(key) {
+        if (['lastBuyMatchAmount', 'lastSellMatchAmount'].find(it => it === key))
+          return testHelper.assertBigWad(actual[key], expected[key], key);
+
+        if (['emergentPrice'].find(it => it === key))
+          return testHelper.assertBigPrice(actual[key], expected[key], key);
+
+        return testHelper.assertBig(actual[key], expected[key], key);
+      })
+    );
   };
 
   /** RATIONALE: a bug was introduced which consisted on the counter for the amount of matches
@@ -133,7 +137,7 @@ describe('Matching can be run in several pages', function() {
       it('THEN the tick length is the minimum (5)', async function() {
         await assertTickStage(testHelper.tickStages.RECEIVING_ORDERS);
         const { nextTickBlock, lastTickBlock } = await dex.getNextTick(...pair);
-        assertBig(nextTickBlock.sub(lastTickBlock), minBlocksForTick);
+        return assertBig(nextTickBlock.sub(lastTickBlock), minBlocksForTick);
       });
 
       describe('WHEN running a match with only two orders', function() {
@@ -146,7 +150,7 @@ describe('Matching can be run in several pages', function() {
         it('THEN the tick length is extended', async function() {
           await assertTickStage(testHelper.tickStages.RECEIVING_ORDERS);
           const { nextTickBlock, lastTickBlock } = await dex.getNextTick(...pair);
-          assertBig(nextTickBlock.sub(lastTickBlock), 12);
+          return assertBig(nextTickBlock.sub(lastTickBlock), 12);
         });
       });
     });
@@ -204,8 +208,8 @@ describe('Matching can be run in several pages', function() {
               dex.buyOrdersLength(...pair),
               dex.sellOrdersLength(...pair)
             ]);
-            testHelper.assertBig(buyOrderbookLength, 2);
-            testHelper.assertBig(sellOrderbookLength, 2);
+            await testHelper.assertBig(buyOrderbookLength, 2);
+            return testHelper.assertBig(sellOrderbookLength, 2);
           });
           it('AND the emergent price is 1, and lastClosingPrice updated to 1', async function() {
             await assertTokenPairStatus({ emergentPrice: 1, lastClosingPrice: 1 });
@@ -234,8 +238,8 @@ describe('Matching can be run in several pages', function() {
                 dex.buyOrdersLength(...pair),
                 dex.sellOrdersLength(...pair)
               ]);
-              testHelper.assertBig(buyOrderbookLength, 1);
-              testHelper.assertBig(sellOrderbookLength, 1);
+              await testHelper.assertBig(buyOrderbookLength, 1);
+              return testHelper.assertBig(sellOrderbookLength, 1);
             });
             it('AND the pair is in the running matching stage', async function() {
               await assertTickStage(testHelper.tickStages.RUNNING_MATCHING);
@@ -266,8 +270,8 @@ describe('Matching can be run in several pages', function() {
                   dex.buyOrdersLength(...pair),
                   dex.sellOrdersLength(...pair)
                 ]);
-                testHelper.assertBig(buyOrderbookLength, 0);
-                testHelper.assertBig(sellOrderbookLength, 0);
+                await testHelper.assertBig(buyOrderbookLength, 0);
+                return testHelper.assertBig(sellOrderbookLength, 0);
               });
 
               // finishing the moving of pending orders
@@ -346,8 +350,8 @@ describe('Matching can be run in several pages', function() {
               dex.buyOrdersLength(...pair),
               dex.sellOrdersLength(...pair)
             ]);
-            testHelper.assertBig(buyOrderbookLength, 2);
-            testHelper.assertBig(sellOrderbookLength, 2);
+            await testHelper.assertBig(buyOrderbookLength, 2);
+            return testHelper.assertBig(sellOrderbookLength, 2);
           });
           it('AND the emergent price is that of the first pair, and lastClosingPrice is the initial', function() {
             return assertTokenPairStatus({
@@ -377,8 +381,8 @@ describe('Matching can be run in several pages', function() {
                 dex.buyOrdersLength(...pair),
                 dex.sellOrdersLength(...pair)
               ]);
-              testHelper.assertBig(buyOrderbookLength, 1);
-              testHelper.assertBig(sellOrderbookLength, 1);
+              await testHelper.assertBig(buyOrderbookLength, 1);
+              return testHelper.assertBig(sellOrderbookLength, 1);
             });
             it('AND the emergent price is 0 again, and lastClosingPrice doesnt change', function() {
               return assertTokenPairStatus({
@@ -406,8 +410,8 @@ describe('Matching can be run in several pages', function() {
                   dex.buyOrdersLength(...pair),
                   dex.sellOrdersLength(...pair)
                 ]);
-                testHelper.assertBig(buyOrderbookLength, 1);
-                testHelper.assertBig(sellOrderbookLength, 1);
+                await testHelper.assertBig(buyOrderbookLength, 1);
+                return testHelper.assertBig(sellOrderbookLength, 1);
               });
               it('AND there is no emergent price', async function() {
                 await assertTokenPairStatus({ emergentPrice: 0 });
@@ -433,8 +437,8 @@ describe('Matching can be run in several pages', function() {
                   dex.buyOrdersLength(...pair),
                   dex.sellOrdersLength(...pair)
                 ]);
-                testHelper.assertBig(buyOrderbookLength, 1);
-                testHelper.assertBig(sellOrderbookLength, 1);
+                await testHelper.assertBig(buyOrderbookLength, 1);
+                return testHelper.assertBig(sellOrderbookLength, 1);
               });
             });
           });
@@ -489,8 +493,8 @@ describe('Matching can be run in several pages', function() {
               dex.buyOrdersLength(...pair),
               dex.sellOrdersLength(...pair)
             ]);
-            testHelper.assertBig(buyOrderbookLength, 2);
-            testHelper.assertBig(sellOrderbookLength, 1);
+            await testHelper.assertBig(buyOrderbookLength, 2);
+            return testHelper.assertBig(sellOrderbookLength, 1);
           });
           it('AND the emergent price and last closing price is equal to the price of the first pair', function() {
             return assertTokenPairStatus({
@@ -520,8 +524,8 @@ describe('Matching can be run in several pages', function() {
                 dex.buyOrdersLength(...pair),
                 dex.sellOrdersLength(...pair)
               ]);
-              testHelper.assertBig(buyOrderbookLength, 1);
-              testHelper.assertBig(sellOrderbookLength, 1);
+              await testHelper.assertBig(buyOrderbookLength, 1);
+              return testHelper.assertBig(sellOrderbookLength, 1);
             });
             it('AND the emergent price is 0 again, and lastClosingPrice is the still the same', function() {
               return assertTokenPairStatus({
@@ -549,8 +553,8 @@ describe('Matching can be run in several pages', function() {
                   dex.buyOrdersLength(...pair),
                   dex.sellOrdersLength(...pair)
                 ]);
-                testHelper.assertBig(buyOrderbookLength, 1);
-                testHelper.assertBig(sellOrderbookLength, 1);
+                await testHelper.assertBig(buyOrderbookLength, 1);
+                return testHelper.assertBig(sellOrderbookLength, 1);
               });
               it('AND there is no emergent price', async function() {
                 await assertTokenPairStatus({ emergentPrice: 0 });
@@ -576,8 +580,8 @@ describe('Matching can be run in several pages', function() {
                   dex.buyOrdersLength(...pair),
                   dex.sellOrdersLength(...pair)
                 ]);
-                testHelper.assertBig(buyOrderbookLength, 1);
-                testHelper.assertBig(sellOrderbookLength, 1);
+                await testHelper.assertBig(buyOrderbookLength, 1);
+                return testHelper.assertBig(sellOrderbookLength, 1);
               });
             });
           });
@@ -626,8 +630,8 @@ describe('Matching can be run in several pages', function() {
             dex.buyOrdersLength(...pair),
             dex.sellOrdersLength(...pair)
           ]);
-          testHelper.assertBig(buyOrderbookLength, 1);
-          testHelper.assertBig(sellOrderbookLength, 1);
+          await testHelper.assertBig(buyOrderbookLength, 1);
+          return testHelper.assertBig(sellOrderbookLength, 1);
         });
         it('AND the emergent price is 0, and lastClosingPrice is the initial', function() {
           return assertTokenPairStatus({ emergentPrice: 0, lastClosingPrice: initialPrice });
@@ -653,8 +657,8 @@ describe('Matching can be run in several pages', function() {
               dex.buyOrdersLength(...pair),
               dex.sellOrdersLength(...pair)
             ]);
-            testHelper.assertBig(buyOrderbookLength, 1);
-            testHelper.assertBig(sellOrderbookLength, 1);
+            await testHelper.assertBig(buyOrderbookLength, 1);
+            return testHelper.assertBig(sellOrderbookLength, 1);
           });
           it('AND there is no emergent price', async function() {
             await assertTokenPairStatus({ emergentPrice: 0 });
@@ -684,8 +688,8 @@ describe('Matching can be run in several pages', function() {
                 dex.buyOrdersLength(...pair),
                 dex.sellOrdersLength(...pair)
               ]);
-              testHelper.assertBig(buyOrderbookLength, 1);
-              testHelper.assertBig(sellOrderbookLength, 1);
+              await testHelper.assertBig(buyOrderbookLength, 1);
+              return testHelper.assertBig(sellOrderbookLength, 1);
             });
           });
         });
@@ -783,13 +787,13 @@ describe('Matching can be run in several pages', function() {
                 });
                 it('AND the lastTickBlock is the one when the tick started', async function() {
                   const { lastTickBlock } = await dex.getNextTick(...pair);
-                  assertBig(lastTickBlock, blockWhenTickStarted, 'Block When Tick Started');
+                  return assertBig(lastTickBlock, blockWhenTickStarted, 'Block When Tick Started');
                 });
                 // The amount of blocks it took to run the matching should not be
                 // considered as tick duration.
                 it('AND the next tick spans half as many blocks as the previous one(50)', async function() {
                   const { nextTickBlock, lastTickBlock } = await dex.getNextTick(...pair);
-                  assertBig(nextTickBlock.sub(lastTickBlock), 50, 'Blocks until next tick');
+                  return assertBig(nextTickBlock.sub(lastTickBlock), 50, 'Blocks until next tick');
                 });
               });
             });

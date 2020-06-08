@@ -123,7 +123,7 @@ describe('Commissions tests', function() {
             testHelper.DEFAULT_STEPS_FOR_MATCHING
           );
         });
-        it('THEN full match events is emitted', async function() {
+        it('THEN all the match events is emitted', async function() {
           await assertBuyerMatch(txReceipt, {
             orderId: 1,
             received: 10.8,

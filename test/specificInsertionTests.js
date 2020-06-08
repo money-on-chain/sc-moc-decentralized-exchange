@@ -50,8 +50,8 @@ describe('specific insertion tests', function() {
         });
         it('THEN it end up ordered', async function() {
           const order = await dex.getBuyOrderAtIndex(...pair, 0);
-          testHelper.assertBigWad(order.exchangeableAmount, 1, 'order amount');
-          testHelper.assertBigPrice(order.price, 1, 'order price');
+          await testHelper.assertBigWad(order.exchangeableAmount, 1, 'order amount');
+          return testHelper.assertBigPrice(order.price, 1, 'order price');
         });
       });
     });

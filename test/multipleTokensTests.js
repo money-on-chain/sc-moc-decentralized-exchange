@@ -63,10 +63,10 @@ describe('multiple tokens tests', function() {
         });
         it('THEN the emergent price is zero, just as expected', async function() {
           const { emergentPrice, lastBuyMatchId, lastBuyMatchAmount, lastSellMatchId } = result;
-          testHelper.assertBig(emergentPrice, 0, 'Emergent price');
-          testHelper.assertBig(lastBuyMatchId, 0, 'Last Buy Match Id');
-          testHelper.assertBig(lastBuyMatchAmount, 0, 'Last Buy Match Amount');
-          testHelper.assertBig(lastSellMatchId, 0, 'Last Sell Match Id');
+          await testHelper.assertBig(emergentPrice, 0, 'Emergent price');
+          await testHelper.assertBig(lastBuyMatchId, 0, 'Last Buy Match Id');
+          await testHelper.assertBig(lastBuyMatchAmount, 0, 'Last Buy Match Amount');
+          return testHelper.assertBig(lastSellMatchId, 0, 'Last Sell Match Id');
         });
       });
     });
@@ -141,9 +141,11 @@ describe('multiple tokens tests', function() {
         dex.getSellOrderAtIndex(doc.address, otherSecondary.address, 0)
       ]).then(orders => orders.map(it => it.id));
       const correctIds = [1, 2, 3, 4];
-      ids.forEach(function(element, index) {
-        testHelper.assertBig(element, correctIds[index]);
-      });
+      return Promise.all(
+        ids.map(function(element, index) {
+          return testHelper.assertBig(element, correctIds[index]);
+        })
+      );
     });
   });
 
@@ -386,10 +388,10 @@ describe('multiple tokens tests', function() {
         );
       });
       it('THEN emergent prices have different precision', async function() {
-        testHelper.assertBigWithPrecision(
+        await testHelper.assertBigWithPrecision(
           scenario.comparisonPrecision
         )(await getEmergentPriceValue(doc.address, secondary.address), 1);
-        testHelper.assertBigWithPrecision(
+        return testHelper.assertBigWithPrecision(
           scenario.alternateComparisonPrecision
         )(await getEmergentPriceValue(otherBase.address, otherSecondary.address), 2);
       });
@@ -405,21 +407,24 @@ describe('multiple tokens tests', function() {
           );
         });
         it('THEN the first pair is matched', async function() {
-          testHelper.assertBigWithPrecision(
+          await testHelper.assertBigWithPrecision(
             scenario.comparisonPrecision
           )(await getEmergentPriceValue(doc.address, secondary.address), 0);
-          testHelper.assertBig(await dex.buyOrdersLength(doc.address, secondary.address), 0);
-          testHelper.assertBig(await dex.sellOrdersLength(doc.address, secondary.address), 0);
+          await testHelper.assertBig(await dex.buyOrdersLength(doc.address, secondary.address), 0);
+          return testHelper.assertBig(
+            await dex.sellOrdersLength(doc.address, secondary.address),
+            0
+          );
         });
         it('AND the second pair is not matched', async function() {
-          testHelper.assertBigWithPrecision(
+          await testHelper.assertBigWithPrecision(
             scenario.alternateComparisonPrecision
           )(await getEmergentPriceValue(otherBase.address, otherSecondary.address), 2);
-          testHelper.assertBig(
+          await testHelper.assertBig(
             await dex.buyOrdersLength(otherBase.address, otherSecondary.address),
             1
           );
-          testHelper.assertBig(
+          return testHelper.assertBig(
             await dex.sellOrdersLength(otherBase.address, otherSecondary.address),
             1
           );
@@ -433,14 +438,14 @@ describe('multiple tokens tests', function() {
           );
         });
         it('THEN the second pair is matched', async function() {
-          testHelper.assertBigWithPrecision(
+          await testHelper.assertBigWithPrecision(
             scenario.alternateComparisonPrecision
           )(await getEmergentPriceValue(otherBase.address, otherSecondary.address), 0);
-          testHelper.assertBig(
+          await testHelper.assertBig(
             await dex.buyOrdersLength(otherBase.address, otherSecondary.address),
             0
           );
-          testHelper.assertBig(
+          return testHelper.assertBig(
             await dex.sellOrdersLength(otherBase.address, otherSecondary.address),
             0
           );
