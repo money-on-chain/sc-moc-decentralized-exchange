@@ -125,8 +125,8 @@ or its inverse must not be listed already
     bytes32 pairIndex = hashAddresses(_baseToken, _secondaryToken);
     tokenPairAddresses.push([_baseToken, _secondaryToken]);
     tokenPairs[pairIndex] = MoCExchangeLib.Pair(
-      MoCExchangeLib.Token(MoCExchangeLib.Data(0, 0, 0, 0, 0, 0, 0, 0, 0, true), IERC20(_baseToken)),
-      MoCExchangeLib.Token(MoCExchangeLib.Data(0, 0, 0, 0, 0, 0, 0, 0, 0, false), IERC20(_secondaryToken)),
+      MoCExchangeLib.Token(MoCExchangeLib.Data(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, true), IERC20(_baseToken)),
+      MoCExchangeLib.Token(MoCExchangeLib.Data(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false), IERC20(_secondaryToken)),
       // initialize TickState with the given Tick number and an nextTickBlock of blocksForTick after the current one
       TickState.Data(SafeMath.add(block.number, tickConfig.minBlocksForTick), 0, 0, 1),
       MoCExchangeLib.TickPaginationMemory(

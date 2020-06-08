@@ -37,6 +37,7 @@ const MoCDexFake = artifacts.require('MoCDexFake');
 const DocToken = artifacts.require('DocToken');
 const BProToken = artifacts.require('BProToken');
 const WRBTC = artifacts.require('WRBTC');
+const TestToken = artifacts.require('TestToken');
 const ERC20WithBlacklist = artifacts.require('ERC20WithBlacklist');
 const TickStateFake = artifacts.require('TickStateFake');
 const Governor = artifacts.require('Governor');
@@ -53,6 +54,7 @@ const getOwnerBurnableToken = () => OwnerBurnableToken;
 const getBase = () => DocToken.deployed();
 const getSecondary = () => this.using.secondary || BProToken.deployed();
 const getWRBTC = () => this.using.wrbtc || WRBTC.deployed();
+const getTestToken = () => this.using.testToken || TestToken.deployed();
 const getDex = () =>
   this.using.dex || MoCDecentralizedExchange.at(getProxyAddress('MoCDecentralizedExchange'));
 const getCommissionManager = () =>
@@ -168,6 +170,7 @@ module.exports = () => {
     getTickState,
     getGovernor,
     getStopper,
-    getOwnerBurnableToken
+    getOwnerBurnableToken,
+    getTestToken
   };
 };

@@ -21,14 +21,24 @@ const DEFAULT_BALANCES_AND_ALLOWANCES = {
     baseBalance: DEFAULT_BALANCE,
     baseAllowance: DEFAULT_BALANCE,
     secondaryBalance: DEFAULT_BALANCE,
-    secondaryAllowance: DEFAULT_BALANCE
+    secondaryAllowance: DEFAULT_BALANCE,
+    testTokenBalance: DEFAULT_BALANCE,
+    testTokenAllowance: DEFAULT_BALANCE
   }
 };
 
-const setBalancesAndAllowances = async function({ dex, base, secondary, userData, accounts }) {
+const setBalancesAndAllowances = async function({
+  dex,
+  base,
+  secondary,
+  testToken,
+  userData,
+  accounts
+}) {
   const dexInstance = dex || (await this.getDex());
   const baseInstance = base || (await this.getBase());
   const secondaryInstance = secondary || (await this.getSecondary());
+  const testTokenInstance = testToken || (await this.getTestToken());
   const accountsToUse = userData || DEFAULT_BALANCES_AND_ALLOWANCES;
   await Promise.all(
     Object.keys(accountsToUse).map(accountIndex => {
@@ -53,6 +63,16 @@ const setBalancesAndAllowances = async function({ dex, base, secondary, userData
           : Promise.resolve(),
         values.secondaryAllowance
           ? secondaryInstance.approve(dexInstance.address, contractify(values.secondaryAllowance), {
+              from: accounts[accountIndex]
+            })
+          : Promise.resolve(),
+        values.testTokenBalance
+          ? testTokenInstance.mint(accounts[accountIndex], contractify(values.testTokenBalance), {
+              from: accounts[0]
+            })
+          : Promise.resolve(),
+        values.testTokenAllowance
+          ? testTokenInstance.approve(dexInstance.address, contractify(values.testTokenAllowance), {
               from: accounts[accountIndex]
             })
           : Promise.resolve()

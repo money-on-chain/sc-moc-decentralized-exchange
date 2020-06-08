@@ -402,7 +402,16 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
   ) public whenNotPaused {
     MoCExchangeLib.Pair storage pair = getTokenPair(_baseToken, _secondaryToken);
     uint256 initialFee = commissionManager.calculateInitialFee(_amount);
-    pair.doInsertMarketOrder(nextId(), _amount, initialFee, _multiplyFactor, _lifespan, _previousOrderIdHint, msg.sender, _isBuy);
+    pair.doInsertMarketOrder(
+      nextId(),
+      _amount.sub(initialFee),
+      initialFee,
+      _multiplyFactor,
+      _lifespan,
+      _previousOrderIdHint,
+      msg.sender,
+      _isBuy
+    );
   }
 
   // Leave a gap betweeen inherited contracts variables in order to be
