@@ -565,19 +565,18 @@ library MoCExchangeLib {
    */
   function popAndGetNewTop(Data storage self) internal returns (Order storage) {
     Order storage orderToPop = mostCompetitiveOrder(self, first(self), firstMarketOrder(self));
-    Order storage nextOrder = get(self, orderToPop.next);
-    bool isMarketOrder = true;
-    if (orderToPop.orderType == OrderType.LIMIT_ORDER){
-      isMarketOrder = false;
-      delete (self.orders[self.firstId]);
-      self.firstId = nextOrder.id;
+    Order storage newTop = get(self, orderToPop.next);
+    delete (self.orders[orderToPop.id]);
+    if (newTop.orderType == OrderType.LIMIT_ORDER){
+      self.firstId = newTop.id;
+      decreaseQueuesLength(self, false);
+      return mostCompetitiveOrder(self, newTop, firstMarketOrder(self));
     }
     else{
-      delete (self.orders[self.firstMarketOrderId]);
-      self.firstMarketOrderId = nextOrder.id;      
+      self.firstMarketOrderId = newTop.id;
+      decreaseQueuesLength(self, true);
+      return mostCompetitiveOrder(self, first(self), newTop);
     }
-    decreaseQueuesLength(self, isMarketOrder);
-    return nextOrder;
   }
 
   /**
@@ -1194,7 +1193,7 @@ library MoCExchangeLib {
    */
   function priceOfMarketOrders(uint256 _multiplyFactor, bool _isBuy) public pure returns (uint256) {
     //TODO: get price from last tick or oracle
-    uint256 HARDCODED_PRICE = 1500000000000000000;
+    uint256 HARDCODED_PRICE = 2000000000000000000;
     if (_isBuy){
       return _multiplyFactor.mul(HARDCODED_PRICE).div(RATE_PRECISION);
     }
@@ -1658,14 +1657,12 @@ If zero, will start from ordebook top.
     
     executeMatch(_commissionManager, _self, buy, sell, limitingAmount, _self.pageMemory.emergentPrice);
     if (matchType == MatchType.DOUBLE_FILL) {
-      //require(false, "DOUBLE_FILL WACHO");
-      buy = onOrderFullMatched(_commissionManager, _self.baseToken, buy, _self.tickState.number, _self.pageMemory.lastBuyMatch.id);
-      sell = onOrderFullMatched(_commissionManager, _self.secondaryToken, sell, _self.tickState.number, _self.pageMemory.lastSellMatch.id);
+      onOrderFullMatched(_commissionManager, _self.baseToken, buy, _self.tickState.number, _self.pageMemory.lastBuyMatch.id);
+      onOrderFullMatched(_commissionManager, _self.secondaryToken, sell, _self.tickState.number, _self.pageMemory.lastSellMatch.id);
     } else if (matchType == MatchType.BUYER_FILL) {
-      //require(false, "BUYER_FILL WACHO");
-      buy = onOrderFullMatched(_commissionManager, _self.baseToken, buy, _self.tickState.number, _self.pageMemory.lastBuyMatch.id);
+      onOrderFullMatched(_commissionManager, _self.baseToken, buy, _self.tickState.number, _self.pageMemory.lastBuyMatch.id);
     } else if (matchType == MatchType.SELLER_FILL) {
-      sell = onOrderFullMatched(_commissionManager, _self.secondaryToken, sell, _self.tickState.number, _self.pageMemory.lastSellMatch.id);
+      onOrderFullMatched(_commissionManager, _self.secondaryToken, sell, _self.tickState.number, _self.pageMemory.lastSellMatch.id);
     } else {
       // TODO
       require(false, "Unknown type");
@@ -1777,15 +1774,23 @@ If zero, will start from ordebook top.
     Order storage _order,
     uint64 _tickNumber,
     uint256 _lastOrderThatMatches
-  ) private returns (Order storage) {
-    if (_lastOrderThatMatches == _order.id) {
-      //require(false, "WACHO LAST == ORDER.DI");
-      // If we"d reached the target order id, we don"t need the next valid, just the next
-      return popAndGetNewTop(_token.orderbook);
-    } else {
-      //require(false, "WACHO GET NETX");
-      return getNextValidOrderForMatching(_commissionManager, _token, _tickNumber);
+  ) private {
+    // TODO refactor; this code is repeated in popAndGetNewTop
+    
+    //just pop the most competitive order
+
+    Order storage orderToPop = mostCompetitiveOrder(_token.orderbook, first(_token.orderbook), firstMarketOrder(_token.orderbook));
+    Order storage newTop = get(_token.orderbook, orderToPop.next);
+
+    if (orderToPop.orderType == OrderType.LIMIT_ORDER){
+      _token.orderbook.firstId = newTop.id;
+      decreaseQueuesLength(_token.orderbook, false);
     }
+    else{
+      _token.orderbook.firstMarketOrderId = newTop.id;
+      decreaseQueuesLength(_token.orderbook, true);
+    }
+    delete (_token.orderbook.orders[orderToPop.id]);
   }
 
   /**
