@@ -338,4 +338,40 @@ describe('Process expired Order', function() {
       });
     });
   });
+
+  contract('Dex Fake: uses order edit to manipulate expiration', function(accounts) {
+    describe('GIVEN there are two expired buy orders before valid ones [B, B, B, E, E]', function() {
+      let orderId2;
+      beforeEach(async function() {
+        await initContractsAndAllowance(accounts);
+        await dex.insertBuyOrder({ accountIndex: 1 });
+        await dex.insertBuyOrder({ accountIndex: 2 });
+        await dex.insertBuyOrder({ accountIndex: 3 });
+        ({ id: orderId } = await dex.insertBuyOrder({ accountIndex: 4 }));
+        ({ id: orderId2 } = await dex.insertBuyOrder({ accountIndex: 5 }));
+        await dex.editOrder(...pair, orderId, isBuy, '1');
+        await dex.editOrder(...pair, orderId2, isBuy, '1');
+      });
+      it('THEN the DEX system should detect if there are order to expire', async function() {
+        const thereAreOrderToExpire = await dex.areOrdersToExpire(pair[0], pair[1], isBuy);
+        assert(thereAreOrderToExpire, "The are not orders to expire");
+      });
+      describe('WHEN invoking buy processExpired for many orders starting from top', function() {
+        beforeEach(async function() {
+          txReceipt = await dex.processExpired(...pair, isBuy, startFromTop, noHint, manySteps);
+        });
+        it('THEN both order has been processed', async function() {
+          await assertExpiredOrderProcessed({ orderId }, { to: accounts[4] });
+          await assertExpiredOrderProcessed({ orderId: orderId2 }, { to: accounts[5] });
+        });
+        it('AND the other orders remain in the orderbook', function() {
+          return assertAccountOrderSequence([1, 2, 3]);
+        });
+        it('THEN the DEX system should detect that there are not orders to expire', async function() {
+          const thereAreOrderToExpire = await dex.areOrdersToExpire(pair[0], pair[1], isBuy);
+          assert(!thereAreOrderToExpire, "The are orders to expire");
+        });
+      });
+    });
+  });
 });
