@@ -939,13 +939,13 @@ library MoCExchangeLib {
    */
   function getNextValidMarketOrder(Data storage _orderbook, uint64 _tickNumber, uint256 _orderId) public view returns (Order storage) {
     Order storage next = _orderId == 0 ? firstMarketOrder(_orderbook) : getNext(_orderbook, _orderId);
-    
+
     if (next.id == 0 || !isExpired(next, _tickNumber)) return next;
     else return getNextValidMarketOrder(_orderbook, _tickNumber, next.id);
   }
-  
+
   /**
-    @notice returns the most competitive order using curring market price. 
+    @notice returns the most competitive order using curring market price.
     @dev LOs have higher priority to be processed because they have a TTL (lifespan).
     @param _orderbook the orderbook
     @param _limitOrder The Limit Order to compare
@@ -953,8 +953,8 @@ library MoCExchangeLib {
     @return next valid Order, id = 0 if no valid order found
   */
   function mostCompetitiveOrder(
-    Data storage _orderbook, 
-    Order storage _limitOrder, 
+    Data storage _orderbook,
+    Order storage _limitOrder,
     Order storage _marketOrder
     ) public view returns (Order storage) {
     //Both are empty. Return first LO empty order
@@ -969,7 +969,7 @@ library MoCExchangeLib {
     else if (_limitOrder.id == 0 && _marketOrder.id != 0){
       return _marketOrder;
     }
-    //There is a limit order and a market order. 
+    //There is a limit order and a market order.
     //The price to compare MO with LO is computed: multiplyFactor * current market price.
     //LOs have time to live (lifespan) so they has priority to  be processed in case of same price.
     //Descending orderbooks => Buy Orders
@@ -1654,7 +1654,7 @@ If zero, will start from ordebook top.
       sell.exchangeableAmount,
       _self.priceComparisonPrecision
     );
-    
+
     executeMatch(_commissionManager, _self, buy, sell, limitingAmount, _self.pageMemory.emergentPrice);
     if (matchType == MatchType.DOUBLE_FILL) {
       onOrderFullMatched(_commissionManager, _self.baseToken, buy, _self.tickState.number, _self.pageMemory.lastBuyMatch.id);
@@ -1776,7 +1776,7 @@ If zero, will start from ordebook top.
     uint256 _lastOrderThatMatches
   ) private {
     // TODO refactor; this code is repeated in popAndGetNewTop
-    
+
     //just pop the most competitive order
 
     Order storage orderToPop = mostCompetitiveOrder(_token.orderbook, first(_token.orderbook), firstMarketOrder(_token.orderbook));
