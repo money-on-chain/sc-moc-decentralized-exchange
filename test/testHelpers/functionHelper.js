@@ -100,15 +100,15 @@ const orderArrayToObj = order => ({
   next: order[6]
 });
 
-const getSellOrderAtIndex = dex => async (baseAddress, secondaryAddress, index) => {
-  const order = await dex.getSellOrderAtIndex(baseAddress, secondaryAddress, index);
+const getOrderAtIndex = async (dex, baseAddress, secondaryAddress, index, isBuy) => {
+  const order = await dex.getOrderAtIndex(baseAddress, secondaryAddress, index, isBuy);
   return orderArrayToObj(order);
 };
+const getSellOrderAtIndex = dex => async (baseAddress, secondaryAddress, index) =>
+  getOrderAtIndex(dex, baseAddress, secondaryAddress, index, false);
 
-const getBuyOrderAtIndex = dex => async (baseAddress, secondaryAddress, index) => {
-  const order = await dex.getBuyOrderAtIndex(baseAddress, secondaryAddress, index);
-  return orderArrayToObj(order);
-};
+const getBuyOrderAtIndex = dex => async (baseAddress, secondaryAddress, index) =>
+  getOrderAtIndex(dex, baseAddress, secondaryAddress, index, true);
 
 const decorateGetOrderAtIndex = dex =>
   Object.assign({}, dex, {
@@ -116,7 +116,7 @@ const decorateGetOrderAtIndex = dex =>
     getSellOrderAtIndex: getSellOrderAtIndex(dex)
   });
 
-const insertOrder = async ({
+const insertLimitOrder = async ({
   dex,
   defaultPair,
   type,
@@ -125,7 +125,7 @@ const insertOrder = async ({
   pending,
   ...props
 }) => {
-  const insertFn = type === 'buy' ? 'insertBuyOrder' : 'insertSellOrder';
+  const insertFn = type === 'buy' ? 'insertBuyLimitOrder' : 'insertSellLimitOrder';
   const amount = wadify(props.amount || DEFAULT_AMOUNT);
   const price = pricefy(props.price || DEFAULT_PRICE);
   const expiresInTick = props.expiresInTick || DEFAULT_LIFESPAN;
@@ -146,12 +146,50 @@ const insertOrder = async ({
   ).args;
 };
 
+const insertMarketOrder = async ({
+  dex,
+  defaultPair,
+  type,
+  accounts,
+  accountIndex = DEFAULT_ACCOUNT_INDEX,
+  pending,
+  ...props
+}) => {
+  const amount = wadify(props.amount || 10);
+  const priceMultiplier = pricefy(props.priceMultiplier || 1);
+  const expiresInTick = props.expiresInTick || 5;
+  const from = props.from || accounts[accountIndex];
+  const baseToken = props.base || defaultPair.base;
+  const secondaryToken = props.secondary || defaultPair.secondary;
+
+  const insertReceipt = await dex.insertMarketOrder(
+    baseToken.address,
+    secondaryToken.address,
+    amount,
+    priceMultiplier,
+    expiresInTick,
+    type === 'buy',
+    {
+      from
+    }
+  );
+
+  return expectEvent.inLogs(
+    insertReceipt.logs,
+    pending ? 'NewOrderAddedToPendingQueue' : 'NewOrderInserted'
+  ).args;
+};
+
 const decorateOrderInsertions = (dex, accounts, pair) =>
   Object.assign({}, dex, {
-    insertBuyOrder: props =>
-      insertOrder({ dex, defaultPair: pair, accounts, type: 'buy', ...props }),
-    insertSellOrder: props =>
-      insertOrder({ dex, defaultPair: pair, accounts, type: 'sell', ...props })
+    insertBuyLimitOrder: props =>
+      insertLimitOrder({ dex, defaultPair: pair, accounts, type: 'buy', ...props }),
+    insertSellLimitOrder: props =>
+      insertLimitOrder({ dex, defaultPair: pair, accounts, type: 'sell', ...props }),
+    insertBuyMarketOrder: props =>
+      insertMarketOrder({ dex, defaultPair: pair, accounts, type: 'buy', ...props }),
+    insertSellMarketOrder: props =>
+      insertMarketOrder({ dex, defaultPair: pair, accounts, type: 'sell', ...props })
   });
 
 module.exports = {

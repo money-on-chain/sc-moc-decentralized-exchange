@@ -61,10 +61,10 @@ describe('Insertion of orders to a pending queue when the tick is being run', fu
       describe('GIVEN there are 2 buy and 2 sell orders (requires 2 steps to match)', function() {
         before(async function() {
           return Promise.all([
-            dex.insertBuyOrder({ from: buyer }),
-            dex.insertBuyOrder({ from: buyer }),
-            dex.insertSellOrder({ from: seller }),
-            dex.insertSellOrder({ from: seller })
+            dex.insertBuyLimitOrder({ from: buyer }),
+            dex.insertBuyLimitOrder({ from: buyer }),
+            dex.insertSellLimitOrder({ from: seller }),
+            dex.insertSellLimitOrder({ from: seller })
           ]);
         });
 
@@ -85,7 +85,7 @@ describe('Insertion of orders to a pending queue when the tick is being run', fu
           describe('WHEN a sell order is inserted', function() {
             let pensingOrderEvent;
             before(async function() {
-              pensingOrderEvent = await dex.insertSellOrder({ from: seller, pending: true });
+              pensingOrderEvent = await dex.insertSellLimitOrder({ from: seller, pending: true });
             });
             it('THEN sell orderbook length is not affected', function() {
               return assertBig(dex.sellOrdersLength(...pair), 1, 'sell Orders Length');
@@ -116,17 +116,17 @@ describe('Insertion of orders to a pending queue when the tick is being run', fu
     describe('GIVEN there are 2 buy and 2 sell orders', function() {
       before(function() {
         return Promise.all([
-          dex.insertBuyOrder({ from: buyer }),
-          dex.insertBuyOrder({ from: buyer }),
-          dex.insertSellOrder({ from: seller }),
-          dex.insertSellOrder({ from: seller })
+          dex.insertBuyLimitOrder({ from: buyer }),
+          dex.insertBuyLimitOrder({ from: buyer }),
+          dex.insertSellLimitOrder({ from: seller }),
+          dex.insertSellLimitOrder({ from: seller })
         ]);
       });
 
       describe('WHEN a buy order is inserted with an incorrect hinting', function() {
         it('THEN it reverts', function() {
           return expectRevert(
-            dex.insertBuyOrderAfter(...pair, wadify(1), pricefy(1), 5, 1, {
+            dex.insertBuyLimitOrderAfter(...pair, wadify(1), pricefy(1), 5, 1, {
               from: buyer
             }),
             'Order should go after'
@@ -139,7 +139,7 @@ describe('Insertion of orders to a pending queue when the tick is being run', fu
           describe('WHEN the same order is inserted', function() {
             let logs;
             before(async function() {
-              ({ logs } = await dex.insertBuyOrderAfter(...pair, wadify(1), pricefy(1), 5, 1, {
+              ({ logs } = await dex.insertBuyLimitOrderAfter(...pair, wadify(1), pricefy(1), 5, 1, {
                 from: buyer
               }));
             });

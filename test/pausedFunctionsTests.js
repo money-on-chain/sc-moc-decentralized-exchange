@@ -54,65 +54,136 @@ describe('Paused functions tests', function() {
       }
     );
   };
+  describe('', function() {
+    testPaused({
+      action: 'continue the execution of an already started tick',
+      functionName: 'matchOrders',
+      fulfillPreconditions: async () => {
+        await dex.insertSellLimitOrder(...pair, wadify(10), pricefy(1), 5);
+        await dex.insertSellLimitOrder(...pair, wadify(10), pricefy(1), 5);
+        // TODO Uncomment when insertion works correctly
+        // await dex.insertMarketOrder(...pair, wadify(10), pricefy(1), 5, false);
+        await dex.insertBuyLimitOrder(...pair, wadify(10), pricefy(1), 5);
+        await dex.insertBuyLimitOrder(...pair, wadify(10), pricefy(1), 5);
+        // TODO Uncomment when insertion works correctly
+        //  await dex.insertMarketOrder(...pair, wadify(10), pricefy(1), 5, true);
+        await dex.matchOrders(...pair, 1);
+      },
+      getParams() {
+        return [base.address, secondary.address, 1];
+      }
+    });
+  });
+  describe('Execute tick', function() {
+    testPaused({
+      action: 'execute a tick',
+      functionName: 'matchOrders',
+      fulfillPreconditions: async () => {
+        await dex.insertSellLimitOrder(...pair, wadify(10), pricefy(1), 5);
+        // TODO Uncomment when insertion works correctly
+        // await dex.insertMarketOrder(...pair, wadify(10), pricefy(1), 5, false);
+        await dex.insertBuyLimitOrder(...pair, wadify(10), pricefy(1), 5);
+        // TODO Uncomment when insertion works correctly
+        // await dex.insertMarketOrder(...pair, wadify(10), pricefy(1), 5, true);
+      },
+      getParams() {
+        return [base.address, secondary.address, testHelper.DEFAULT_STEPS_FOR_MATCHING];
+      }
+    });
 
-  testPaused({
-    action: 'continue the execution of an already started tick',
-    functionName: 'matchOrders',
-    fulfillPreconditions: async () => {
-      await dex.insertSellOrder(...pair, wadify(10), pricefy(1), 5);
-      await dex.insertSellOrder(...pair, wadify(10), pricefy(1), 5);
-      await dex.insertBuyOrder(...pair, wadify(10), pricefy(1), 5);
-      await dex.insertBuyOrder(...pair, wadify(10), pricefy(1), 5);
-      await dex.matchOrders(...pair, 1);
-    },
-    getParams() {
-      return [base.address, secondary.address, 1];
-    }
+    // limit order
+  });
+  describe('Insert a sell limit order', function() {
+    testPaused({
+      action: 'insert a sell limit order',
+      functionName: 'insertSellLimitOrder',
+      getParams: () => [...pair, wadify(10), pricefy(1), 5]
+    });
+  });
+  describe('Insert a buy limit order', function() {
+    testPaused({
+      action: 'insert a buy limit order',
+      functionName: 'insertBuyLimitOrder',
+      getParams: () => [...pair, wadify(10), pricefy(1), 5]
+    });
+  });
+  describe('Insert a sell limit order with hint', function() {
+    testPaused({
+      action: 'insert a sell limit order with hint',
+      functionName: 'insertSellLimitOrderAfter',
+      getParams: () => [...pair, wadify(10), pricefy(1), 5, 1]
+    });
+  });
+  describe('Insert a buy limit order with hint', function() {
+    testPaused({
+      action: 'insert a buy limit order with hint',
+      functionName: 'insertBuyLimitOrderAfter',
+      getParams: () => [...pair, wadify(10), pricefy(1), 5, 1]
+    });
+  });
+  describe('cancel a buy limit order', function() {
+    testPaused({
+      action: 'cancel a buy limit order',
+      functionName: 'cancelBuyOrder',
+      getParams: () => [...pair, 0, 0],
+      fulfillPreconditions: () => dex.insertBuyLimitOrder(...pair, wadify(10), pricefy(1), 5)
+    });
+  });
+  describe('Cancel a sell limit order', function() {
+    testPaused({
+      action: 'cancel a sell limit order',
+      functionName: 'cancelSellOrder',
+      getParams: () => [...pair, 0, 0],
+      fulfillPreconditions: () => dex.insertSellLimitOrder(...pair, wadify(10), pricefy(1), 5)
+    });
+
+    // market order
+  });
+  describe('Insert a sell market order', function() {
+    testPaused({
+      action: 'insert a sell market order',
+      functionName: 'insertMarketOrder',
+      getParams: () => [...pair, wadify(10), pricefy(1), 5, false]
+    });
+  });
+  describe('Insert a buy market order', function() {
+    testPaused({
+      action: 'insert a buy market order',
+      functionName: 'insertMarketOrder',
+      getParams: () => [...pair, wadify(10), pricefy(1), 5, true]
+    });
+  });
+  describe('Insert a sell market order with hint', function() {
+    testPaused({
+      action: 'insert a sell market order with hint',
+      functionName: 'insertMarketOrderAfter',
+      getParams: () => [...pair, wadify(10), pricefy(1), 5, 1, false]
+    });
   });
 
-  testPaused({
-    action: 'execute a tick',
-    functionName: 'matchOrders',
-    fulfillPreconditions: async () => {
-      await dex.insertSellOrder(...pair, wadify(10), pricefy(1), 5);
-      await dex.insertBuyOrder(...pair, wadify(10), pricefy(1), 5);
-    },
-    getParams() {
-      return [base.address, secondary.address, testHelper.DEFAULT_STEPS_FOR_MATCHING];
-    }
+  describe('Insert a buy market order with hint', function() {
+    testPaused({
+      action: 'insert a buy market order with hint',
+      functionName: 'insertMarketOrderAfter',
+      getParams: () => [...pair, wadify(10), pricefy(1), 5, 1, true]
+    });
   });
-
-  testPaused({
-    action: 'insert a sell order',
-    functionName: 'insertSellOrder',
-    getParams: () => [...pair, wadify(10), pricefy(1), 5]
+  describe('Cancel a buy market order', function() {
+    testPaused({
+      action: 'cancel a buy market order',
+      functionName: 'cancelBuyOrder',
+      getParams: () => [...pair, 1, 0],
+      fulfillPreconditions: () => dex.insertMarketOrder(...pair, wadify(10), pricefy(1), 5, true)
+    });
   });
-  testPaused({
-    action: 'insert a buy order',
-    functionName: 'insertBuyOrder',
-    getParams: () => [...pair, wadify(10), pricefy(1), 5]
+  describe('Cancel a sell market order', function() {
+    testPaused({
+      action: 'cancel a sell market order',
+      functionName: 'cancelSellOrder',
+      getParams: () => [...pair, 1, 0],
+      fulfillPreconditions: () => dex.insertMarketOrder(...pair, wadify(10), pricefy(1), 5, false)
+    });
   });
-  testPaused({
-    action: 'insert a sell order with hint',
-    functionName: 'insertSellOrderAfter',
-    getParams: () => [...pair, wadify(10), pricefy(1), 5, 1]
-  });
-  testPaused({
-    action: 'insert a buy order with hint',
-    functionName: 'insertBuyOrderAfter',
-    getParams: () => [...pair, wadify(10), pricefy(1), 5, 1]
-  });
-  testPaused({
-    action: 'cancel a buy order',
-    functionName: 'cancelBuyOrder',
-    getParams: () => [...pair, 0, 0]
-  });
-  testPaused({
-    action: 'cancel a sell order',
-    functionName: 'cancelSellOrder',
-    getParams: () => [...pair, 0, 0]
-  });
-
   // TODO add a new test that tests a tick that has been partially executed before pausing
   // TODO add an execute order expiration buy/order
 });

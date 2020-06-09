@@ -103,8 +103,8 @@ describe('volume tests and gas cost report generation, using a 1% commission rat
               // intentionally sequential
               // eslint-disable-next-line no-await-in-loop
               ...(await Promise.all([
-                dex.insertSellOrder(...pair, wadify(1), pricefy(1), 5, { from: getFrom(i) }),
-                dex.insertBuyOrder(...pair, wadify(1), pricefy(1), 5, { from: getFrom(i + 1) })
+                dex.insertSellLimitOrder(...pair, wadify(1), pricefy(1), 5, { from: getFrom(i) }),
+                dex.insertBuyLimitOrder(...pair, wadify(1), pricefy(1), 5, { from: getFrom(i + 1) })
               ])).map(tx => tx.receipt),
               ...receipts
             ];
@@ -152,13 +152,15 @@ describe('volume tests and gas cost report generation, using a 1% commission rat
       let promises = [];
       for (let i = totalOrdersPerType; i > 0; i--) {
         promises.push(
-          dex.insertBuyOrder(...pair, wadify(1), pricefy(1), 5, { from: getFrom(i + 1) })
+          dex.insertBuyLimitOrder(...pair, wadify(1), pricefy(1), 5, { from: getFrom(i + 1) })
         );
       }
       await Promise.all(promises);
       promises = [];
       for (let i = totalOrdersPerType; i > 0; i--) {
-        promises.push(dex.insertSellOrder(...pair, wadify(1), pricefy(1), 5, { from: getFrom(i) }));
+        promises.push(
+          dex.insertSellLimitOrder(...pair, wadify(1), pricefy(1), 5, { from: getFrom(i) })
+        );
       }
       await Promise.all(promises);
       promises = [];
@@ -222,12 +224,12 @@ describe('volume tests and gas cost report generation, using a 1% commission rat
             receipts = [
               // intentionally sequential
               // eslint-disable-next-line no-await-in-loop
-              (await dex.insertSellOrder(...pair, wadify(1), pricefy(1), 5, { from })).receipt,
+              (await dex.insertSellLimitOrder(...pair, wadify(1), pricefy(1), 5, { from })).receipt,
               ...receipts
             ];
           }
           logObject.sellOrdersInsertion = receipts.reduce((sum, curr) => curr.gasUsed + sum, 0);
-          logObject.buyOrdersInsertion = (await dex.insertBuyOrder(
+          logObject.buyOrdersInsertion = (await dex.insertBuyLimitOrder(
             ...pair,
             wadify(totalOrders),
             pricefy(1),

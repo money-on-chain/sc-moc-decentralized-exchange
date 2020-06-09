@@ -51,10 +51,10 @@ describe('value is transferred to the users when matching', function() {
       )
     );
     it('GIVEN there are buy and sell orders at price 1', async function() {
-      await dex.insertBuyOrder(base.address, secondary.address, wadify(1), pricefy(1), 5, {
+      await dex.insertBuyLimitOrder(base.address, secondary.address, wadify(1), pricefy(1), 5, {
         from: buyer
       });
-      await dex.insertSellOrder(base.address, secondary.address, wadify(1), pricefy(1), 5, {
+      await dex.insertSellLimitOrder(base.address, secondary.address, wadify(1), pricefy(1), 5, {
         from: seller
       });
     });
@@ -126,10 +126,10 @@ describe('value is transferred to the users when matching', function() {
       )
     );
     it('GIVEN there are buy and sell orders at price 1, 2', async function() {
-      await dex.insertBuyOrder(base.address, secondary.address, wadify(2), pricefy(2), 5, {
+      await dex.insertBuyLimitOrder(base.address, secondary.address, wadify(2), pricefy(2), 5, {
         from: buyer
       }); // buyer intent: 1
-      await dex.insertSellOrder(base.address, secondary.address, wadify(1), pricefy(1), 5, {
+      await dex.insertSellLimitOrder(base.address, secondary.address, wadify(1), pricefy(1), 5, {
         from: seller
       });
     });
@@ -209,13 +209,13 @@ describe('value is transferred to the users when matching', function() {
         )
       );
       it('GIVEN there are buy and sell orders at the 10x the absolute minimum price and the absolute minimum price, respectively', async function() {
-        await dex.insertBuyOrder(base.address, secondary.address, new BN(10), new BN(10), 5, {
+        await dex.insertBuyLimitOrder(base.address, secondary.address, new BN(10), new BN(10), 5, {
           from: buyer
         });
         // buyer intent: 1 entire token ,
         // assuming the price has a precision equal to the token precision;
         // more precisely the intent is 1 price_precision
-        await dex.insertSellOrder(base.address, secondary.address, wadify(1), new BN(1), 5, {
+        await dex.insertSellLimitOrder(base.address, secondary.address, wadify(1), new BN(1), 5, {
           from: seller
         });
       });
@@ -295,13 +295,13 @@ describe('value is transferred to the users when matching', function() {
         )
       );
       it('GIVEN there are two buy orders, one sell order', async function() {
-        await dex.insertBuyOrder(base.address, secondary.address, wadify(2), pricefy(2), 5, {
+        await dex.insertBuyLimitOrder(base.address, secondary.address, wadify(2), pricefy(2), 5, {
           from: buyer
         }); // buyer intent: 1
-        await dex.insertBuyOrder(base.address, secondary.address, wadify(2), pricefy(2), 5, {
+        await dex.insertBuyLimitOrder(base.address, secondary.address, wadify(2), pricefy(2), 5, {
           from: buyer
         }); // buyer intent: 1
-        await dex.insertSellOrder(base.address, secondary.address, wadify(1), pricefy(1), 5, {
+        await dex.insertSellLimitOrder(base.address, secondary.address, wadify(1), pricefy(1), 5, {
           from: seller
         });
       });

@@ -17,6 +17,7 @@ let testHelper;
 let wadify;
 let gov;
 let DEFAULT_ACCOUNT_INDEX;
+const MARKET_PRICE = 2;
 
 const assertDexCommissionBalances = ({ expectedBaseTokenBalance, expectedSecondaryTokenBalance }) =>
   function() {
@@ -60,7 +61,7 @@ const initContractsAndAllowance = async accounts => {
   await testHelper.setBalancesAndAllowances({ accounts });
 };
 
-describe('Commissions tests', function() {
+describe('Commissions tests - Market order should behave as a limit order if the price does not change ', function() {
   before(function() {
     testHelper = testHelperBuilder();
     ({ wadify, assertBuyerMatch, assertSellerMatch, DEFAULT_ACCOUNT_INDEX } = testHelper);
@@ -70,8 +71,21 @@ describe('Commissions tests', function() {
     describe('GIVEN there are two buy and sell order that fully match', function() {
       before(async function() {
         await initContractsAndAllowance(accounts);
-        await dex.insertBuyLimitOrder({ amount: 10, price: 10 }); // orderId: 1
-        await dex.insertSellLimitOrder({ amount: 1, price: 10 }); // orderId: 2
+        // Assuming a base price of MARKET_PRICE
+        await dex.insertBuyMarketOrder({ amount: 15, priceMultiplier: 15 / MARKET_PRICE }); // orderId: 1
+        await dex.insertSellMarketOrder({ amount: 1, priceMultiplier: 15 / MARKET_PRICE }); // orderId: 2
+
+        await testHelper.assertBig(
+          await dex.buyOrdersLength(base.address, secondary.address),
+          1,
+          'buyOrdersLength'
+        );
+
+        await testHelper.assertBig(
+          await dex.sellOrdersLength(base.address, secondary.address),
+          1,
+          'sellOrdersLength'
+        );
       });
       describe('WHEN instructed to match orders', function() {
         before(async function() {
@@ -81,29 +95,45 @@ describe('Commissions tests', function() {
             testHelper.DEFAULT_STEPS_FOR_MATCHING
           );
         });
+
         it('THEN match events are emitted', async function() {
           await assertBuyerMatch(txReceipt, {
             orderId: 1,
-            amountSent: 9,
+            amountSent: 13.5,
             received: 0.9,
-            commission: 1,
+            commission: 1.5,
             remainingAmount: 0
           });
           return assertSellerMatch(txReceipt, {
             orderId: 2,
             amountSent: 0.9,
-            received: 9,
+            received: 13.5,
             commission: 0.1,
             remainingAmount: 0
           });
         });
+
         it(
           'AND the funds have increased',
           assertDexCommissionBalances({
-            expectedBaseTokenBalance: 1,
+            expectedBaseTokenBalance: 1.5,
             expectedSecondaryTokenBalance: 0.1
           })
         );
+        it('AND the buy orderbook is empty', async function() {
+          return testHelper.assertBig(
+            await dex.buyOrdersLength(base.address, secondary.address),
+            0,
+            'buyOrdersLength'
+          );
+        });
+        it('AND the sell orderbook is empty', async function() {
+          return testHelper.assertBig(
+            await dex.sellOrdersLength(base.address, secondary.address),
+            0,
+            'sellOrdersLength'
+          );
+        });
       });
     });
   });
@@ -112,8 +142,9 @@ describe('Commissions tests', function() {
     describe('GIVEN there is a buy order that match partially', function() {
       before(async function() {
         await initContractsAndAllowance(accounts);
-        await dex.insertBuyLimitOrder({ amount: 17 }); // orderId: 1
-        await dex.insertSellLimitOrder({ amount: 12 }); // orderId: 2
+        // Assuming a base price of MARKET_PRICE
+        await dex.insertBuyMarketOrder({ amount: 17, priceMultiplier: 1 / MARKET_PRICE }); // orderId: 1
+        await dex.insertSellMarketOrder({ amount: 12, priceMultiplier: 1 / MARKET_PRICE }); // orderId: 2
       });
       describe('WHEN instructed to match orders', function() {
         before(async function() {
@@ -123,7 +154,8 @@ describe('Commissions tests', function() {
             testHelper.DEFAULT_STEPS_FOR_MATCHING
           );
         });
-        it('THEN all the match events is emitted', async function() {
+
+        it('THEN full match events is emitted', async function() {
           await assertBuyerMatch(txReceipt, {
             orderId: 1,
             received: 10.8,
@@ -148,15 +180,17 @@ describe('Commissions tests', function() {
           })
         );
       });
+
       describe('AND WHEN instructed to match with a new order that fully matches the modified one', function() {
         before(async function() {
-          await dex.insertSellLimitOrder({ amount: 5 }); // orderId: 3
+          await dex.insertSellMarketOrder({ amount: 5, priceMultiplier: 1 / MARKET_PRICE }); // orderId: 3
           txReceipt = await dex.matchOrders(
             base.address,
             secondary.address,
             testHelper.DEFAULT_STEPS_FOR_MATCHING
           );
         });
+
         it('THEN full match events are emitted', async function() {
           await assertBuyerMatch(txReceipt, {
             orderId: 1,
@@ -171,6 +205,7 @@ describe('Commissions tests', function() {
             remainingAmount: 0
           });
         });
+
         it(
           'AND the funds have increased',
           assertDexCommissionBalances({
@@ -198,10 +233,18 @@ describe('Commissions tests', function() {
           secondary: otherSecondary
         });
 
-        await dex.insertBuyLimitOrder({ amount: 15, secondary: otherSecondary }); // orderId: 1
-        await dex.insertSellLimitOrder({ amount: 15, secondary: otherSecondary }); // orderId: 2
-        await dex.insertBuyLimitOrder({ amount: 20 }); // orderId: 3
-        await dex.insertSellLimitOrder({ amount: 20 }); // orderId: 4
+        await dex.insertBuyMarketOrder({
+          amount: 15,
+          secondary: otherSecondary,
+          priceMultiplier: 1 / MARKET_PRICE
+        }); // orderId: 1
+        await dex.insertSellMarketOrder({
+          amount: 15,
+          secondary: otherSecondary,
+          priceMultiplier: 1 / MARKET_PRICE
+        }); // orderId: 2
+        await dex.insertBuyMarketOrder({ amount: 20, priceMultiplier: 1 / MARKET_PRICE }); // orderId: 3
+        await dex.insertSellMarketOrder({ amount: 20, priceMultiplier: 1 / MARKET_PRICE }); // orderId: 4
       });
       describe('WHEN instructed to match orders', function() {
         before(async function() {
@@ -211,6 +254,7 @@ describe('Commissions tests', function() {
             testHelper.DEFAULT_STEPS_FOR_MATCHING
           );
         });
+
         it(
           'AND the funds have increased',
           assertDexCommissionBalances({
@@ -227,6 +271,7 @@ describe('Commissions tests', function() {
             testHelper.DEFAULT_STEPS_FOR_MATCHING
           );
         });
+
         it('THEN full match events are emitted', async function() {
           await assertBuyerMatch(txReceipt, {
             orderId: 1,
@@ -241,15 +286,18 @@ describe('Commissions tests', function() {
             remainingAmount: 0
           });
         });
+
         it('AND the funds for the secondary token have increased', function() {
           return testHelper.assertBigWad(
             commissionManager.exchangeCommissions(otherSecondary.address),
             1.5
           );
         });
+
         it('AND the funds for the base token have increased as expected', function() {
           return testHelper.assertBigWad(commissionManager.exchangeCommissions(base.address), 3.5);
         });
+
         it('AND the funds for the secondary token for the first pair are still the same', function() {
           return testHelper.assertBigWad(
             commissionManager.exchangeCommissions(secondary.address),
@@ -264,8 +312,8 @@ describe('Commissions tests', function() {
     describe('GIVEN there are two buy and sell order that fully match with different prices', function() {
       before(async function() {
         await initContractsAndAllowance(accounts);
-        await dex.insertBuyLimitOrder({ amount: 60, price: 20 }); // orderId: 1
-        await dex.insertSellLimitOrder({ amount: 3, price: 10 }); // orderId: 2
+        await dex.insertBuyMarketOrder({ amount: 60, priceMultiplier: 20 / MARKET_PRICE }); // orderId: 1
+        await dex.insertSellMarketOrder({ amount: 3, priceMultiplier: 10 / MARKET_PRICE }); // orderId: 2
       });
       describe('WHEN instructed to match orders', function() {
         before(async function() {
@@ -275,6 +323,7 @@ describe('Commissions tests', function() {
             testHelper.DEFAULT_STEPS_FOR_MATCHING
           );
         });
+
         it('THEN full match events are emitted', async function() {
           await assertBuyerMatch(txReceipt, {
             orderId: 1,
@@ -292,6 +341,7 @@ describe('Commissions tests', function() {
             remainingAmount: 0
           });
         });
+
         it(
           'AND the funds have increased',
           assertDexCommissionBalances({
@@ -303,20 +353,23 @@ describe('Commissions tests', function() {
     });
   });
 
+  // Cancel is not implemented yet
   contract(
     'Dex: Commission 10%, cancelation penalty 25%, new buy order canceled',
     async accounts => {
       describe('GIVEN there is a buy order', function() {
         before(async function() {
           await initContractsAndAllowance(accounts);
-          await dex.insertBuyLimitOrder({ amount: 17 }); // orderId: 1
+          await dex.insertBuyMarketOrder({ amount: 17, priceMultiplier: 1 / MARKET_PRICE }); // orderId: 1
         });
-        describe('WHEN the order is canceled', function() {
+        // Unskip when cancel is implemented
+        describe.skip('WHEN the order is canceled', function() {
           before(async function() {
             txReceipt = await dex.cancelBuyOrder(base.address, secondary.address, 1, 0, {
               from: accounts[DEFAULT_ACCOUNT_INDEX]
             });
           });
+
           it('THEN the order cancelled event is emitted', function() {
             expectEvent.inLogs(txReceipt.logs, 'OrderCancelled', {
               id: '1',
@@ -327,6 +380,7 @@ describe('Commissions tests', function() {
               isBuy: true
             });
           });
+
           it('AND the transfer was successful', function() {
             return expectEvent.inTransaction(
               txReceipt.tx,
@@ -335,6 +389,7 @@ describe('Commissions tests', function() {
               { value: wadify(16.575), to: accounts[DEFAULT_ACCOUNT_INDEX] }
             );
           });
+
           it(
             'AND the funds have increased',
             assertDexCommissionBalances({
@@ -353,20 +408,21 @@ describe('Commissions tests', function() {
       describe('GIVEN there is a sell order that match partially', function() {
         before(async function() {
           await initContractsAndAllowance(accounts);
-          await dex.insertBuyLimitOrder({ amount: 12 }); // orderId: 1
-          await dex.insertSellLimitOrder({ amount: 17 }); // orderId: 2
+          await dex.insertBuyMarketOrder({ amount: 12, priceMultiplier: 1 / MARKET_PRICE }); // orderId: 1
+          await dex.insertSellMarketOrder({ amount: 17, priceMultiplier: 1 / MARKET_PRICE }); // orderId: 2
           await dex.matchOrders(
             base.address,
             secondary.address,
             testHelper.DEFAULT_STEPS_FOR_MATCHING
           );
         });
-        describe('WHEN the sell order is canceled', function() {
+        describe.skip('WHEN the sell order is canceled', function() {
           before(async function() {
             txReceipt = await dex.cancelSellOrder(base.address, secondary.address, 2, 0, {
               from: accounts[DEFAULT_ACCOUNT_INDEX]
             });
           });
+
           it('THEN the order cancelled event is emitted', function() {
             expectEvent.inLogs(txReceipt.logs, 'OrderCancelled', {
               id: '2',
@@ -377,6 +433,7 @@ describe('Commissions tests', function() {
               isBuy: false
             });
           });
+
           it('AND the transfer was successful', function() {
             return expectEvent.inTransaction(
               txReceipt.tx,
@@ -385,6 +442,7 @@ describe('Commissions tests', function() {
               { value: wadify(4.875), to: accounts[DEFAULT_ACCOUNT_INDEX] }
             );
           });
+
           it(
             'AND the funds have increased',
             assertDexCommissionBalances({

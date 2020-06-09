@@ -40,7 +40,7 @@ contract('Next Tick Block test', function() {
               it(`THEN the next tick block is ${expectedBlocksForTick}`, async function() {
                 const { lastTickBlock, nextTickBlock } = await tickStateContract.tickState();
                 const blocksUntilNextTick = nextTickBlock - lastTickBlock;
-                testHelper.assertBig(
+                return testHelper.assertBig(
                   blocksUntilNextTick,
                   expectedBlocksForTick,
                   'Blocks until next tick'
@@ -48,7 +48,9 @@ contract('Next Tick Block test', function() {
               });
               it('AND the event emitted it is as expected', function() {
                 const [event] = tx.logs.filter(it => it.event === 'TickEnd').map(it => it.args);
-                testHelper.assertTickEnd(tx, event, { blocksForTick: expectedBlocksForTick });
+                return testHelper.assertTickEnd(tx, event, {
+                  blocksForTick: expectedBlocksForTick
+                });
               });
             });
           });

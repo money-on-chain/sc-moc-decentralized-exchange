@@ -9,8 +9,8 @@ const testHelperBuilder = require('../testHelpers/testHelper');
 let dex;
 let base;
 let secondary;
-let insertBuyOrder;
-let insertSellOrder;
+let insertBuyLimitOrder;
+let insertSellLimitOrder;
 let assertSellAccountOrderSequence;
 let assertBuySellMatchEvents;
 let assertExpiredOrderProcessed;
@@ -19,9 +19,9 @@ let testHelper;
 let wadify;
 let pricefy;
 
-const insertOrder = ({ type, accounts, accountIndex, ...props }) =>
+const insertLimitOrder = ({ type, accounts, accountIndex, ...props }) =>
   function() {
-    const insertFn = type === 'buy' ? 'insertBuyOrder' : 'insertSellOrder';
+    const insertFn = type === 'buy' ? 'insertBuyLimitOrder' : 'insertSellLimitOrder';
     const amount = wadify(props.amount || 10);
     const price = pricefy(props.price || 1);
     const expiresInTick = props.expiresInTick || 5;
@@ -29,11 +29,32 @@ const insertOrder = ({ type, accounts, accountIndex, ...props }) =>
     return dex[insertFn](base.address, secondary.address, amount, price, expiresInTick, { from });
   };
 
+/* TODO: Add insertMarket test
+const insertMarketOrder = ({ type, accounts, accountIndex, ...props }) =>
+  function() {
+    const amount = wadify(props.amount || 10);
+    const price = pricefy(props.price || 1);
+    const expiresInTick = props.expiresInTick || 5;
+    const from = props.from || accounts[accountIndex];
+    return dex.insertMarketOrder(
+      base.address,
+      secondary.address,
+      amount,
+      price,
+      expiresInTick,
+      type === 'buy',
+      {
+        from
+      }
+    );
+  };
+*/
+
 const assertOrderBookLength = ({ type, expectedLength = 0 }) =>
   async function() {
     const lengthFn = type === 'buy' ? 'buyOrdersLength' : 'sellOrdersLength';
     const ordersLength = await dex[lengthFn](base.address, secondary.address);
-    testHelper.assertBig(ordersLength, expectedLength, `${type} orders length`);
+    return testHelper.assertBig(ordersLength, expectedLength, `${type} orders length`);
   };
 
 const initContractsAndAllowance = async accounts => {
@@ -50,6 +71,7 @@ const initContractsAndAllowance = async accounts => {
     testHelper.getBase(),
     testHelper.getSecondary()
   ]);
+  dex = testHelper.decorateGetOrderAtIndex(dex);
   const userData = [1, 2, 3, 4, 5, 6].reduce(
     (acc, it) => ({
       ...acc,
@@ -64,8 +86,8 @@ const initContractsAndAllowance = async accounts => {
   );
   await testHelper.setBalancesAndAllowances({ accounts, userData });
 
-  insertBuyOrder = props => insertOrder({ accounts, type: 'buy', ...props })();
-  insertSellOrder = props => insertOrder({ accounts, type: 'sell', ...props })();
+  insertBuyLimitOrder = props => insertLimitOrder({ accounts, type: 'buy', ...props })();
+  insertSellLimitOrder = props => insertLimitOrder({ accounts, type: 'sell', ...props })();
   /**
    * Verifies that the given account a owner of the order placed in correct position
    */
@@ -106,8 +128,8 @@ describe('Match with expired orders tests', function() {
     describe('GIVEN there are two buy and sell order that fully match', function() {
       before(async function() {
         await initContractsAndAllowance(accounts);
-        await insertBuyOrder({ accountIndex: 1 });
-        await insertSellOrder({ accountIndex: 2 });
+        await insertBuyLimitOrder({ accountIndex: 1 });
+        await insertSellLimitOrder({ accountIndex: 2 });
       });
       describe('WHEN instructed to match orders', function() {
         before(async function() {
@@ -130,8 +152,8 @@ describe('Match with expired orders tests', function() {
     describe('GIVEN there are one expired buy order, and sell order that "fully match"', function() {
       before(async function() {
         await initContractsAndAllowance(accounts);
-        await insertBuyOrder({ accountIndex: 1 });
-        await insertSellOrder({ accountIndex: 2 });
+        await insertBuyLimitOrder({ accountIndex: 1 });
+        await insertSellLimitOrder({ accountIndex: 2 });
         await dex.editOrder(base.address, secondary.address, '1', true, '1');
       });
       describe('WHEN instructed to match', function() {
@@ -158,9 +180,9 @@ describe('Match with expired orders tests', function() {
     describe('GIVEN there are two buy & sell order that "fully match" \nAND a third buy expired before', function() {
       before(async function() {
         await initContractsAndAllowance(accounts);
-        await insertBuyOrder({ accountIndex: 1 });
-        await insertSellOrder({ accountIndex: 2 });
-        await insertBuyOrder({ accountIndex: 3 });
+        await insertBuyLimitOrder({ accountIndex: 1 });
+        await insertSellLimitOrder({ accountIndex: 2 });
+        await insertBuyLimitOrder({ accountIndex: 3 });
         await dex.editOrder(base.address, secondary.address, '1', true, '1');
       });
       describe('WHEN instructed to match', function() {
@@ -187,14 +209,14 @@ describe('Match with expired orders tests', function() {
     describe('GIVEN there are two sets of buy & sell order that "fully match" AND a expired sell orders in between', function() {
       before(async function() {
         await initContractsAndAllowance(accounts);
-        await insertBuyOrder({ accountIndex: 1 });
-        await insertBuyOrder({ accountIndex: 1 });
-        await insertSellOrder({ accountIndex: 2 }); // Will be expired and processed
-        await insertSellOrder({ accountIndex: 3 });
-        await insertSellOrder({ accountIndex: 4 }); // Will be expired and processed
-        await insertSellOrder({ accountIndex: 5 });
-        await insertSellOrder({ accountIndex: 6 }); // Will be expired
-        await insertSellOrder({ accountIndex: 1 }); // valid but no matching
+        await insertBuyLimitOrder({ accountIndex: 1 });
+        await insertBuyLimitOrder({ accountIndex: 1 });
+        await insertSellLimitOrder({ accountIndex: 2 }); // Will be expired and processed
+        await insertSellLimitOrder({ accountIndex: 3 });
+        await insertSellLimitOrder({ accountIndex: 4 }); // Will be expired and processed
+        await insertSellLimitOrder({ accountIndex: 5 });
+        await insertSellLimitOrder({ accountIndex: 6 }); // Will be expired
+        await insertSellLimitOrder({ accountIndex: 1 }); // valid but no matching
         await dex.editOrder(base.address, secondary.address, '3', false, '1');
         await dex.editOrder(base.address, secondary.address, '5', false, '1');
         await dex.editOrder(base.address, secondary.address, '7', false, '1');
@@ -227,13 +249,13 @@ describe('Match with expired orders tests', function() {
     describe('GIVEN there is a buy that partially matches with two sell orders enclosed by expired ones', function() {
       before(async function() {
         await initContractsAndAllowance(accounts);
-        await insertBuyOrder({ accountIndex: 1 }); // default amount is 10
-        await insertSellOrder({ accountIndex: 2 }); // Will be expired and processed
-        await insertSellOrder({ accountIndex: 3, amount: 5 });
-        await insertSellOrder({ accountIndex: 4, amount: 4 });
-        await insertSellOrder({ accountIndex: 5 }); // Will be expired
-        await insertSellOrder({ accountIndex: 6 }); // Will be expired
-        await insertSellOrder({ accountIndex: 1, price: 10 }); // Valid but won't match
+        await insertBuyLimitOrder({ accountIndex: 1 }); // default amount is 10
+        await insertSellLimitOrder({ accountIndex: 2 }); // Will be expired and processed
+        await insertSellLimitOrder({ accountIndex: 3, amount: 5 });
+        await insertSellLimitOrder({ accountIndex: 4, amount: 4 });
+        await insertSellLimitOrder({ accountIndex: 5 }); // Will be expired
+        await insertSellLimitOrder({ accountIndex: 6 }); // Will be expired
+        await insertSellLimitOrder({ accountIndex: 1, price: 10 }); // Valid but won't match
         await dex.editOrder(base.address, secondary.address, '2', false, '1');
         await dex.editOrder(base.address, secondary.address, '5', false, '1');
         await dex.editOrder(base.address, secondary.address, '6', false, '1');
@@ -265,11 +287,11 @@ describe('Match with expired orders tests', function() {
     describe('GIVEN there is a buy that fully matches with two sell orders partially, that are enclosed by expired ones', function() {
       before(async function() {
         await initContractsAndAllowance(accounts);
-        await insertBuyOrder({ accountIndex: 1 }); // default amount is 10
-        await insertSellOrder({ accountIndex: 2 }); // Will be expired and processed
-        await insertSellOrder({ accountIndex: 3, amount: 5 });
-        await insertSellOrder({ accountIndex: 4, amount: 6 }); // Partial match
-        await insertSellOrder({ accountIndex: 5 }); // Will be expired
+        await insertBuyLimitOrder({ accountIndex: 1 }); // default amount is 10
+        await insertSellLimitOrder({ accountIndex: 2 }); // Will be expired and processed
+        await insertSellLimitOrder({ accountIndex: 3, amount: 5 });
+        await insertSellLimitOrder({ accountIndex: 4, amount: 6 }); // Partial match
+        await insertSellLimitOrder({ accountIndex: 5 }); // Will be expired
         await dex.editOrder(base.address, secondary.address, '2', false, '1');
         await dex.editOrder(base.address, secondary.address, '5', false, '1');
       });

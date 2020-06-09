@@ -6,7 +6,6 @@
 const testHelperBuilder = require('../testHelpers/testHelper');
 
 const initialPrice = 5;
-
 describe('Matching can be run in several pages', function() {
   let dex;
   let base;
@@ -18,6 +17,7 @@ describe('Matching can be run in several pages', function() {
   let pricefy;
   let DEFAULT_PRICE;
   let DEFAULT_AMOUNT;
+  const MARKET_PRICE = 2;
   const initContractsAndAllowance = (accounts, tickParams = {}) => async () => {
     testHelper = testHelperBuilder();
     ({ assertBig, assertTickStage, pricefy, DEFAULT_PRICE, DEFAULT_AMOUNT } = testHelper);
@@ -68,9 +68,7 @@ describe('Matching can be run in several pages', function() {
   const assertTokenPairStatus = async function(expected) {
     const actual = await dex.getTokenPairStatus.call(...pair);
     return Promise.all(
-      Object.keys(expected).map(function(key) {
-        return testHelper.assertBigPrice(actual[key], expected[key], key);
-      })
+      Object.keys(expected).map(key => testHelper.assertBigPrice(actual[key], expected[key], key))
     );
   };
 
@@ -80,10 +78,8 @@ describe('Matching can be run in several pages', function() {
       Object.keys(expected).map(function(key) {
         if (['lastBuyMatchAmount', 'lastSellMatchAmount'].find(it => it === key))
           return testHelper.assertBigWad(actual[key], expected[key], key);
-
         if (['emergentPrice'].find(it => it === key))
           return testHelper.assertBigPrice(actual[key], expected[key], key);
-
         return testHelper.assertBig(actual[key], expected[key], key);
       })
     );
@@ -101,7 +97,7 @@ describe('Matching can be run in several pages', function() {
    *   nextBlockTarget = 5*(5/32) == 0.78 (the minimum duration is set to 5, so it will be 5)
    */
 
-  contract('Subsequent ticks reset the amount of matches', function(accounts) {
+  contract('Subsequent ticks reset the amount of matches - Market', function(accounts) {
     const [, buyer, seller] = accounts;
     const ordersForTick = 5;
     const maxBlocksForTick = 30;
@@ -123,8 +119,14 @@ describe('Matching can be run in several pages', function() {
         await Promise.all(
           [...new Array(15)].map(() =>
             Promise.all([
-              dex.insertBuyLimitOrder({ from: buyer }),
-              dex.insertSellLimitOrder({ from: seller })
+              dex.insertBuyMarketOrder({
+                priceMultiplier: 1 / MARKET_PRICE,
+                from: buyer
+              }),
+              dex.insertSellMarketOrder({
+                priceMultiplier: 1 / MARKET_PRICE,
+                from: seller
+              })
             ])
           )
         );
@@ -142,8 +144,8 @@ describe('Matching can be run in several pages', function() {
 
       describe('WHEN running a match with only two orders', function() {
         before(async function() {
-          await dex.insertBuyLimitOrder({ from: buyer });
-          await dex.insertSellLimitOrder({ from: seller });
+          await dex.insertBuyMarketOrder({ from: buyer, priceMultiplier: 1 / MARKET_PRICE });
+          await dex.insertSellMarketOrder({ from: seller, priceMultiplier: 1 / MARKET_PRICE });
           await testHelper.waitNBlocks(2);
           await dex.matchOrders(...pair, 25);
         });
@@ -161,10 +163,10 @@ describe('Matching can be run in several pages', function() {
     before(initContractsAndAllowance(accounts));
     describe('GIVEN there are 2 buy and 2 sell orders which match 1v1', function() {
       before(async function() {
-        await dex.insertBuyLimitOrder({ from: buyer }); // id: 1
-        await dex.insertBuyLimitOrder({ from: buyer }); // id: 2
-        await dex.insertSellLimitOrder({ from: seller }); // id: 3
-        await dex.insertSellLimitOrder({ from: seller }); // id: 4
+        await dex.insertBuyMarketOrder({ from: buyer, priceMultiplier: 1 / MARKET_PRICE }); // id: 1
+        await dex.insertBuyMarketOrder({ from: buyer, priceMultiplier: 1 / MARKET_PRICE }); // id: 2
+        await dex.insertSellMarketOrder({ from: seller, priceMultiplier: 1 / MARKET_PRICE }); // id: 3
+        await dex.insertSellMarketOrder({ from: seller, priceMultiplier: 1 / MARKET_PRICE }); // id: 4
       });
 
       it('AND the pair is not running a tick', function() {
@@ -312,10 +314,22 @@ describe('Matching can be run in several pages', function() {
       before(initContractsAndAllowance(accounts));
       describe('GIVEN there is a pair of orders that match and there are one buy and one sell orders which dont match due to price difference', function() {
         before(async function() {
-          await dex.insertBuyLimitOrder({ from: buyer }); // id: 1
-          await dex.insertSellLimitOrder({ from: seller }); // id: 2
-          await dex.insertBuyLimitOrder({ from: buyer, price: DEFAULT_PRICE / 2 }); // id: 3
-          await dex.insertSellLimitOrder({ from: seller, price: DEFAULT_PRICE * 2 }); // id: 4
+          await dex.insertBuyMarketOrder({
+            priceMultiplier: 1 / MARKET_PRICE,
+            from: buyer
+          }); // id: 1
+          await dex.insertSellMarketOrder({
+            priceMultiplier: 1 / MARKET_PRICE,
+            from: seller
+          }); // id: 2
+          await dex.insertBuyMarketOrder({
+            priceMultiplier: 1 / MARKET_PRICE / 2,
+            from: buyer
+          }); // id: 3
+          await dex.insertSellMarketOrder({
+            priceMultiplier: 2 / MARKET_PRICE,
+            from: seller
+          }); // id: 4
         });
 
         it('AND the pair is not running a tick', function() {
@@ -381,8 +395,8 @@ describe('Matching can be run in several pages', function() {
                 dex.buyOrdersLength(...pair),
                 dex.sellOrdersLength(...pair)
               ]);
-              await testHelper.assertBig(buyOrderbookLength, 1);
-              return testHelper.assertBig(sellOrderbookLength, 1);
+              testHelper.assertBig(buyOrderbookLength, 1);
+              testHelper.assertBig(sellOrderbookLength, 1);
             });
             it('AND the emergent price is 0 again, and lastClosingPrice doesnt change', function() {
               return assertTokenPairStatus({
@@ -454,11 +468,21 @@ describe('Matching can be run in several pages', function() {
       before(initContractsAndAllowance(accounts));
       describe('GIVEN there is a pair of orders that matches partially, and another buy order with a lower price', function() {
         before(async function() {
-          await dex.insertBuyLimitOrder({ from: buyer }); // id: 1, matches completelly
+          await dex.insertBuyMarketOrder({
+            priceMultiplier: 1 / MARKET_PRICE,
+            from: buyer
+          }); // id: 1, matches completelly
           // id: 2 matches partially
-          await dex.insertSellLimitOrder({ from: seller, amount: DEFAULT_AMOUNT * 2 });
+          await dex.insertSellMarketOrder({
+            priceMultiplier: 1 / MARKET_PRICE,
+            from: seller,
+            amount: DEFAULT_AMOUNT * 2
+          });
           // id: 3 doesnt match with partial order 2
-          await dex.insertBuyLimitOrder({ from: buyer, price: DEFAULT_PRICE / 2 });
+          await dex.insertBuyMarketOrder({
+            priceMultiplier: 1 / MARKET_PRICE / 2,
+            from: buyer
+          });
         });
 
         it('AND the pair is not running a tick', function() {
@@ -524,8 +548,8 @@ describe('Matching can be run in several pages', function() {
                 dex.buyOrdersLength(...pair),
                 dex.sellOrdersLength(...pair)
               ]);
-              await testHelper.assertBig(buyOrderbookLength, 1);
-              return testHelper.assertBig(sellOrderbookLength, 1);
+              testHelper.assertBig(buyOrderbookLength, 1);
+              testHelper.assertBig(sellOrderbookLength, 1);
             });
             it('AND the emergent price is 0 again, and lastClosingPrice is the still the same', function() {
               return assertTokenPairStatus({
@@ -553,8 +577,8 @@ describe('Matching can be run in several pages', function() {
                   dex.buyOrdersLength(...pair),
                   dex.sellOrdersLength(...pair)
                 ]);
-                await testHelper.assertBig(buyOrderbookLength, 1);
-                return testHelper.assertBig(sellOrderbookLength, 1);
+                testHelper.assertBig(buyOrderbookLength, 1);
+                testHelper.assertBig(sellOrderbookLength, 1);
               });
               it('AND there is no emergent price', async function() {
                 await assertTokenPairStatus({ emergentPrice: 0 });
@@ -597,8 +621,14 @@ describe('Matching can be run in several pages', function() {
     before(initContractsAndAllowance(accounts));
     describe('GIVEN there are one buy and one sell orders which dont match due to price difference', function() {
       before(async function() {
-        await dex.insertBuyLimitOrder({ from: buyer, price: 2 }); // id: 1
-        await dex.insertSellLimitOrder({ from: seller, price: 10 }); // id: 2
+        await dex.insertBuyMarketOrder({
+          priceMultiplier: 0.99,
+          from: buyer
+        }); // id: 1
+        await dex.insertSellMarketOrder({
+          priceMultiplier: 1.01,
+          from: seller
+        }); // id: 2
       });
 
       it('AND the pair is not running a tick', function() {
@@ -657,8 +687,8 @@ describe('Matching can be run in several pages', function() {
               dex.buyOrdersLength(...pair),
               dex.sellOrdersLength(...pair)
             ]);
-            await testHelper.assertBig(buyOrderbookLength, 1);
-            return testHelper.assertBig(sellOrderbookLength, 1);
+            testHelper.assertBig(buyOrderbookLength, 1);
+            testHelper.assertBig(sellOrderbookLength, 1);
           });
           it('AND there is no emergent price', async function() {
             await assertTokenPairStatus({ emergentPrice: 0 });
@@ -729,8 +759,14 @@ describe('Matching can be run in several pages', function() {
           await Promise.all(
             [...new Array(8)].map(() =>
               Promise.all([
-                dex.insertBuyLimitOrder({ from: buyer }),
-                dex.insertSellLimitOrder({ from: seller })
+                dex.insertBuyMarketOrder({
+                  priceMultiplier: 1 / MARKET_PRICE,
+                  from: buyer
+                }),
+                dex.insertSellMarketOrder({
+                  priceMultiplier: 1 / MARKET_PRICE,
+                  from: seller
+                })
               ])
             )
           );
@@ -787,13 +823,13 @@ describe('Matching can be run in several pages', function() {
                 });
                 it('AND the lastTickBlock is the one when the tick started', async function() {
                   const { lastTickBlock } = await dex.getNextTick(...pair);
-                  return assertBig(lastTickBlock, blockWhenTickStarted, 'Block When Tick Started');
+                  assertBig(lastTickBlock, blockWhenTickStarted, 'Block When Tick Started');
                 });
                 // The amount of blocks it took to run the matching should not be
                 // considered as tick duration.
                 it('AND the next tick spans half as many blocks as the previous one(50)', async function() {
                   const { nextTickBlock, lastTickBlock } = await dex.getNextTick(...pair);
-                  return assertBig(nextTickBlock.sub(lastTickBlock), 50, 'Blocks until next tick');
+                  assertBig(nextTickBlock.sub(lastTickBlock), 50, 'Blocks until next tick');
                 });
               });
             });

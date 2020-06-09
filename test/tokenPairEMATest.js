@@ -9,20 +9,23 @@ describe('Token pair EMA Price tests', function() {
   let pricefy;
   let DEFAULT_BALANCE;
   let decorateGovernedSetters;
+  const MARKET_PRICE = 2;
 
-  const getCommonInsertionParams = () => [
+  const getLimitInsertionParams = price => [
     base.address,
     secondary.address,
     wadify(10),
-    pricefy(1),
+    pricefy(price),
     5
   ];
-  const getNotCommonInsertionParams = () => [
+  // Assuming market price of MARKET_PRICE
+  const getMarketInsertionParams = (price, isBuy) => [
     base.address,
     secondary.address,
     wadify(10),
-    pricefy(2),
-    5
+    pricefy(price / MARKET_PRICE),
+    5,
+    isBuy
   ];
   before(async function() {
     testHelper = testHelperBuilder();
@@ -36,7 +39,7 @@ describe('Token pair EMA Price tests', function() {
 
     dex = decorateGovernedSetters(dex);
   });
-  const initContractsAndOrders = function(accounts, insertionParams) {
+  const initContractsAndOrders = function(accounts, price) {
     return async function() {
       const userData = accounts.map(() => ({
         baseBalance: DEFAULT_BALANCE,
@@ -52,12 +55,12 @@ describe('Token pair EMA Price tests', function() {
         accounts
       });
       await Promise.all([
-        dex.insertSellOrder(...insertionParams),
-        dex.insertSellOrder(...insertionParams),
-        dex.insertSellOrder(...insertionParams),
-        dex.insertBuyOrder(...insertionParams),
-        dex.insertBuyOrder(...insertionParams),
-        dex.insertBuyOrder(...insertionParams)
+        dex.insertSellLimitOrder(...getLimitInsertionParams(price)),
+        dex.insertSellLimitOrder(...getLimitInsertionParams(price)),
+        dex.insertMarketOrder(...getMarketInsertionParams(price, false)),
+        dex.insertBuyLimitOrder(...getLimitInsertionParams(price)),
+        dex.insertBuyLimitOrder(...getLimitInsertionParams(price)),
+        dex.insertMarketOrder(...getMarketInsertionParams(price, true))
       ]);
     };
   };
@@ -65,7 +68,11 @@ describe('Token pair EMA Price tests', function() {
   describe('RULE: When the pair has not runned any tick', function() {
     it('THEN the EmaPrice should be the same as the initial price', async function() {
       const tokenPairStatus = await dex.getTokenPairStatus(base.address, secondary.address);
-      testHelper.assertBig(tokenPairStatus.emaPrice, tokenPairStatus.lastClosingPrice, 'EmaPrice');
+      return testHelper.assertBig(
+        tokenPairStatus.emaPrice,
+        tokenPairStatus.lastClosingPrice,
+        'EmaPrice'
+      );
     });
   });
 
@@ -74,13 +81,13 @@ describe('Token pair EMA Price tests', function() {
       'GIVEN that there are three buy orders and three sell orders where there is matching price is 1',
       function(accounts) {
         before(async function() {
-          await initContractsAndOrders(accounts, getCommonInsertionParams())();
+          await initContractsAndOrders(accounts, 1)();
           await dex.matchOrders(base.address, secondary.address, 10000);
         });
 
         it('THEN the emaPrice should stay the same', async function() {
           const tokenPairStatus = await dex.getTokenPairStatus(base.address, secondary.address);
-          testHelper.assertBigWad(tokenPairStatus.emaPrice, 1, 'EmaPrice');
+          return testHelper.assertBigWad(tokenPairStatus.emaPrice, 1, 'EmaPrice');
         });
       }
     );
@@ -88,13 +95,13 @@ describe('Token pair EMA Price tests', function() {
       'GIVEN that there are three buy orders and three sell orders where there is matching price is not 1',
       function(accounts) {
         before(async function() {
-          await initContractsAndOrders(accounts, getNotCommonInsertionParams())();
+          await initContractsAndOrders(accounts, 2)();
           await dex.matchOrders(base.address, secondary.address, 10000);
         });
 
         it('THEN the emaPrice should change and be different than the previous one (it was 1)', async function() {
           const tokenPairStatus = await dex.getTokenPairStatus(base.address, secondary.address);
-          testHelper.assertBigWad(tokenPairStatus.emaPrice, 1.01653, 'EmaPrice');
+          return testHelper.assertBigWad(tokenPairStatus.emaPrice, 1.01653, 'EmaPrice');
         });
       }
     );

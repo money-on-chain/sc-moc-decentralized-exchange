@@ -50,6 +50,7 @@ const initContractsAndAllowance = async accounts => {
     {}
   );
   dex = testHelper.decorateOrderInsertions(dex, accounts, { base, secondary });
+  dex = testHelper.decorateGetOrderAtIndex(dex);
   await testHelper.setBalancesAndAllowances({ accounts, userData });
 
   /**
@@ -98,7 +99,7 @@ describe('Process expired Order', function() {
         await dex.matchOrders(...pair, testHelper.DEFAULT_STEPS_FOR_MATCHING);
         await testHelper.assertBigWad(base.balanceOf(dex.address), 0);
         createOrder = async () => {
-          ({ id: orderId } = await dex.insertBuyOrder({ accountIndex: 1 }));
+          ({ id: orderId } = await dex.insertBuyLimitOrder({ accountIndex: 1 }));
           await dex.editOrder(...pair, orderId, isBuy, '1');
         };
       });
@@ -165,9 +166,9 @@ describe('Process expired Order', function() {
       before(async function() {
         isBuy = false;
         await initContractsAndAllowance(accounts);
-        ({ id: orderId } = await dex.insertSellOrder({ accountIndex: 1 }));
-        await dex.insertSellOrder({ accountIndex: 2 });
-        await dex.insertSellOrder({ accountIndex: 3 });
+        ({ id: orderId } = await dex.insertSellLimitOrder({ accountIndex: 1 }));
+        await dex.insertSellLimitOrder({ accountIndex: 2 });
+        await dex.insertSellLimitOrder({ accountIndex: 3 });
         await dex.editOrder(...pair, orderId, isBuy, '1');
       });
       after(function() {
@@ -191,9 +192,9 @@ describe('Process expired Order', function() {
     describe('GIVEN there are two buy and a third expired in the middle [B, E, B]', function() {
       beforeEach(async function() {
         await initContractsAndAllowance(accounts);
-        await dex.insertBuyOrder({ accountIndex: 1 });
-        ({ id: orderId } = await dex.insertBuyOrder({ accountIndex: 2 }));
-        await dex.insertBuyOrder({ accountIndex: 3 });
+        await dex.insertBuyLimitOrder({ accountIndex: 1 });
+        ({ id: orderId } = await dex.insertBuyLimitOrder({ accountIndex: 2 }));
+        await dex.insertBuyLimitOrder({ accountIndex: 3 });
         await dex.editOrder(...pair, orderId, isBuy, '1');
       });
       describe('WHEN invoking buy processExpired for many orders starting from top', function() {
@@ -256,11 +257,11 @@ describe('Process expired Order', function() {
       let orderId2;
       beforeEach(async function() {
         await initContractsAndAllowance(accounts);
-        await dex.insertBuyOrder({ accountIndex: 1 });
-        ({ id: orderId } = await dex.insertBuyOrder({ accountIndex: 2 }));
-        await dex.insertBuyOrder({ accountIndex: 3 });
-        ({ id: orderId2 } = await dex.insertBuyOrder({ accountIndex: 4 }));
-        await dex.insertBuyOrder({ accountIndex: 5 });
+        await dex.insertBuyLimitOrder({ accountIndex: 1 });
+        ({ id: orderId } = await dex.insertBuyLimitOrder({ accountIndex: 2 }));
+        await dex.insertBuyLimitOrder({ accountIndex: 3 });
+        ({ id: orderId2 } = await dex.insertBuyLimitOrder({ accountIndex: 4 }));
+        await dex.insertBuyLimitOrder({ accountIndex: 5 });
         await dex.editOrder(...pair, orderId, isBuy, '1');
         await dex.editOrder(...pair, orderId2, isBuy, '1');
       });
@@ -303,13 +304,18 @@ describe('Process expired Order', function() {
       let orderId2;
       beforeEach(async function() {
         await initContractsAndAllowance(accounts);
-        await dex.insertBuyOrder({ accountIndex: 1 });
-        await dex.insertBuyOrder({ accountIndex: 2 });
-        await dex.insertBuyOrder({ accountIndex: 3 });
-        ({ id: orderId } = await dex.insertBuyOrder({ accountIndex: 4 }));
-        ({ id: orderId2 } = await dex.insertBuyOrder({ accountIndex: 5 }));
+        await dex.insertBuyLimitOrder({ accountIndex: 1 });
+        await dex.insertBuyLimitOrder({ accountIndex: 2 });
+        await dex.insertBuyLimitOrder({ accountIndex: 3 });
+        ({ id: orderId } = await dex.insertBuyLimitOrder({ accountIndex: 4 }));
+        ({ id: orderId2 } = await dex.insertBuyLimitOrder({ accountIndex: 5 }));
         await dex.editOrder(...pair, orderId, isBuy, '1');
         await dex.editOrder(...pair, orderId2, isBuy, '1');
+      });
+
+      it('THEN the DEX system should detect if there are order to expire', async function() {
+        const thereAreOrderToExpire = await dex.areOrdersToExpire(pair[0], pair[1], isBuy);
+        assert(thereAreOrderToExpire, 'The orders to expire were not detected');
       });
       describe('WHEN invoking buy processExpired for many orders starting from top', function() {
         beforeEach(async function() {
@@ -333,6 +339,42 @@ describe('Process expired Order', function() {
         });
         it('AND the other orders remain in the orderbook', function() {
           return assertAccountOrderSequence([1, 2, 3]);
+        });
+      });
+    });
+  });
+
+  contract('Dex Fake: uses order edit to manipulate expiration', function(accounts) {
+    describe('GIVEN there are two expired market buy orders before valid ones [B, B, B, E, E]', function() {
+      let orderId2;
+      beforeEach(async function() {
+        await initContractsAndAllowance(accounts);
+        await dex.insertBuyLimitOrder({ accountIndex: 1 });
+        await dex.insertBuyLimitOrder({ accountIndex: 2 });
+        await dex.insertBuyLimitOrder({ accountIndex: 3 });
+        ({ id: orderId } = await dex.insertBuyLimitOrder({ accountIndex: 4 }));
+        ({ id: orderId2 } = await dex.insertBuyLimitOrder({ accountIndex: 5 }));
+        await dex.editOrder(...pair, orderId, isBuy, '1');
+        await dex.editOrder(...pair, orderId2, isBuy, '1');
+      });
+      it('THEN the DEX system should detect if there are order to expire', async function() {
+        const thereAreOrderToExpire = await dex.areOrdersToExpire(pair[0], pair[1], isBuy);
+        assert(thereAreOrderToExpire, 'The orders to expire were not detected');
+      });
+      describe('WHEN invoking buy processExpired for many orders starting from top', function() {
+        beforeEach(async function() {
+          txReceipt = await dex.processExpired(...pair, isBuy, startFromTop, noHint, manySteps);
+        });
+        it('THEN both order has been processed', async function() {
+          await assertExpiredOrderProcessed({ orderId }, { to: accounts[4] });
+          await assertExpiredOrderProcessed({ orderId: orderId2 }, { to: accounts[5] });
+        });
+        it('AND the other orders remain in the orderbook', function() {
+          return assertAccountOrderSequence([1, 2, 3]);
+        });
+        it('THEN the DEX system should detect that there are not orders to expire', async function() {
+          const thereAreOrderToExpire = await dex.areOrdersToExpire(pair[0], pair[1], isBuy);
+          assert(!thereAreOrderToExpire, 'Orders to expire wrongly detected');
         });
       });
     });

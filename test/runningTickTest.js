@@ -43,12 +43,12 @@ describe('Running tick functions tests', function() {
       }));
       await testHelper.setBalancesAndAllowances({ dex, base, secondary, userData, accounts });
       await Promise.all([
-        dex.insertSellOrder(...getCommonInsertionParams()),
-        dex.insertSellOrder(...getCommonInsertionParams()),
-        dex.insertSellOrder(...getCommonInsertionParams()),
-        dex.insertBuyOrder(...getCommonInsertionParams()),
-        dex.insertBuyOrder(...getCommonInsertionParams()),
-        dex.insertBuyOrder(...getCommonInsertionParams())
+        dex.insertSellLimitOrder(...getCommonInsertionParams()),
+        dex.insertSellLimitOrder(...getCommonInsertionParams()),
+        dex.insertSellLimitOrder(...getCommonInsertionParams()),
+        dex.insertBuyLimitOrder(...getCommonInsertionParams()),
+        dex.insertBuyLimitOrder(...getCommonInsertionParams()),
+        dex.insertBuyLimitOrder(...getCommonInsertionParams())
       ]);
       pair = [base.address, secondary.address];
     };
@@ -116,8 +116,8 @@ describe('Running tick functions tests', function() {
                 if (shouldCheckMovingPendingOrders) {
                   describe('WHEN the tick advances to inserting pending orders in that pair', function() {
                     before(async function() {
-                      await dex.insertSellOrder(...getCommonInsertionParams());
-                      await dex.insertSellOrder(...getCommonInsertionParams());
+                      await dex.insertSellLimitOrder(...getCommonInsertionParams());
+                      await dex.insertSellLimitOrder(...getCommonInsertionParams());
                       // Finish matching and start moving of pending orders
                       await dex.matchOrders(base.address, secondary.address, 3);
                     });

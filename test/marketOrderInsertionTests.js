@@ -69,8 +69,8 @@ describe('Tests related to the insertion of a market order', function() {
     it('THEN the buy market order is inserted', async function() {
       const order = await dex.getBuyOrderAtIndex(...pair, 0);
       expect(order.owner).to.be.equals(accounts[DEFAULT_ACCOUNT_INDEX], 'owner set incorrectly');
-      testHelper.assertBigWad(order.exchangeableAmount, 10, 'amount');
-      testHelper.assertBigPrice(order.multiplyFactor, 0.9, 'multiplyFactor');
+      await testHelper.assertBigWad(order.exchangeableAmount, 10, 'amount');
+      return testHelper.assertBigPrice(order.multiplyFactor, 0.9, 'multiplyFactor');
     });
     it('AND the insertion event emits the correct reserved commission and exchangeableAmount', async function() {
       const expectedReservedCommission = wadify(10 * 0.9 * DEFAULT_TOKEN_PRICE)
@@ -84,7 +84,7 @@ describe('Tests related to the insertion of a market order', function() {
       });
     });
     it('AND the buy orderbook length is updated accordingly', async function() {
-      testHelper.assertBig(await dex.buyOrdersLength(...pair), 1);
+      return testHelper.assertBig(await dex.buyOrdersLength(...pair), 1);
     });
 
     describe('WHEN inserting a sell market order at start', function() {
@@ -104,8 +104,8 @@ describe('Tests related to the insertion of a market order', function() {
       it('THEN the market order is inserted at start', async function() {
         const order = await dex.getSellOrderAtIndex(...pair, 0);
         expect(order.owner).to.be.equals(accounts[DEFAULT_ACCOUNT_INDEX], 'owner set incorrectly');
-        testHelper.assertBigWad(order.exchangeableAmount, 8, 'exchangeableAmount');
-        testHelper.assertBigPrice(order.multiplyFactor, 1.3, 'multiplyFactor');
+        await testHelper.assertBigWad(order.exchangeableAmount, 8, 'exchangeableAmount');
+        return testHelper.assertBigPrice(order.multiplyFactor, 1.3, 'multiplyFactor');
       });
       it('AND the event emits the correct reserved commission and exchangeableAmount', async function() {
         const expectedReservedCommission = wadify(8 * 1.3 * DEFAULT_TOKEN_PRICE)
@@ -118,7 +118,7 @@ describe('Tests related to the insertion of a market order', function() {
         });
       });
       it('AND the sell orderbook length is updated accordingly', async function() {
-        testHelper.assertBig(await dex.sellOrdersLength(...pair), 1, 'sellOrdersLength');
+        return testHelper.assertBig(await dex.sellOrdersLength(...pair), 1, 'sellOrdersLength');
       });
     });
   });
@@ -146,8 +146,8 @@ describe('Tests related to the insertion of a market order', function() {
     it('THEN the order is inserted', async function() {
       const order = await dex.getBuyOrderAtIndex(...pair, 0);
       expect(order.owner).to.be.equals(accounts[DEFAULT_ACCOUNT_INDEX], 'owner set incorrectly');
-      testHelper.assertBigWad(order.exchangeableAmount, 10, 'amount');
-      testHelper.assertBigPrice(order.multiplyFactor, 0.9, 'multiplyFactor');
+      await testHelper.assertBigWad(order.exchangeableAmount, 10, 'amount');
+      return testHelper.assertBigPrice(order.multiplyFactor, 0.9, 'multiplyFactor');
     });
     it('AND the event emits the correct reserved commission and exchangeableAmount', async function() {
       const expectedReservedCommission = wadify(10 * 0.9 * DEFAULT_TOKEN_PRICE)
@@ -161,7 +161,7 @@ describe('Tests related to the insertion of a market order', function() {
       });
     });
     it('AND the orderbook length is updated accordingly', async function() {
-      testHelper.assertBig(await dex.buyOrdersLength(...pair), 1);
+      return testHelper.assertBig(await dex.buyOrdersLength(...pair), 1);
     });
 
     describe('WHEN inserting a sell market order', function() {
@@ -182,8 +182,8 @@ describe('Tests related to the insertion of a market order', function() {
       it('THEN the market order is inserted', async function() {
         const order = await dex.getSellOrderAtIndex(...pair, 0);
         expect(order.owner).to.be.equals(accounts[DEFAULT_ACCOUNT_INDEX], 'owner set incorrectly');
-        testHelper.assertBigWad(order.exchangeableAmount, 8, 'exchangeableAmount');
-        testHelper.assertBigPrice(order.multiplyFactor, 1.3, 'multiplyFactor');
+        await testHelper.assertBigWad(order.exchangeableAmount, 8, 'exchangeableAmount');
+        return testHelper.assertBigPrice(order.multiplyFactor, 1.3, 'multiplyFactor');
       });
       it('AND the event emits the correct price, reserved commission and exchangeableAmount', async function() {
         const expectedReservedCommission = wadify(8 * 1.3 * DEFAULT_TOKEN_PRICE)
@@ -196,7 +196,7 @@ describe('Tests related to the insertion of a market order', function() {
         });
       });
       it('AND the orderbook length is updated accordingly', async function() {
-        testHelper.assertBig(await dex.sellOrdersLength(...pair), 1, 'sellOrdersLength');
+        return testHelper.assertBig(await dex.sellOrdersLength(...pair), 1, 'sellOrdersLength');
       });
     });
   });
@@ -228,7 +228,7 @@ describe('Tests related to the insertion of a market order', function() {
         await Promise.all(
           [...Array(10).keys()].map(async it => {
             const order = await dex.getSellOrderAtIndex(...pair, it);
-            testHelper.assertBigPrice(
+            return testHelper.assertBigPrice(
               order.multiplyFactor,
               it + 1,
               'sell market orders are not ordered, order price'
@@ -237,7 +237,7 @@ describe('Tests related to the insertion of a market order', function() {
         );
       });
       it('AND the orderbook length is updated accordingly', async function() {
-        testHelper.assertBig(
+        return testHelper.assertBig(
           await dex.sellOrdersLength(...pair),
           10,
           'sell orders length incorrect'
@@ -274,7 +274,7 @@ describe('Tests related to the insertion of a market order', function() {
         await Promise.all(
           [...Array(10).keys()].map(async it => {
             const order = await dex.getSellOrderAtIndex(...pair, it);
-            testHelper.assertBigPrice(
+            return testHelper.assertBigPrice(
               order.multiplyFactor,
               it + 1,
               'sell market orders are not ordered, order price'
@@ -283,7 +283,7 @@ describe('Tests related to the insertion of a market order', function() {
         );
       });
       it('AND the orderbook length is updated accordingly', async function() {
-        testHelper.assertBig(
+        return testHelper.assertBig(
           await dex.sellOrdersLength(...pair),
           10,
           'sell orders length incorrect'
@@ -319,7 +319,7 @@ describe('Tests related to the insertion of a market order', function() {
         await Promise.all(
           [...Array(10).keys()].map(async it => {
             const order = await dex.getBuyOrderAtIndex(...pair, it);
-            testHelper.assertBigPrice(
+            return testHelper.assertBigPrice(
               order.multiplyFactor,
               10 - it,
               'buy market orders are not ordered, order price'
@@ -328,7 +328,11 @@ describe('Tests related to the insertion of a market order', function() {
         );
       });
       it('AND the buy orderbook length is updated accordingly', async function() {
-        testHelper.assertBig(await dex.buyOrdersLength(...pair), 10, 'buy orders length incorrect');
+        return testHelper.assertBig(
+          await dex.buyOrdersLength(...pair),
+          10,
+          'buy orders length incorrect'
+        );
       });
     });
   });
@@ -361,7 +365,7 @@ describe('Tests related to the insertion of a market order', function() {
         await Promise.all(
           [...Array(10).keys()].map(async it => {
             const order = await dex.getBuyOrderAtIndex(...pair, it);
-            testHelper.assertBigPrice(
+            return testHelper.assertBigPrice(
               order.multiplyFactor,
               10 - it,
               'buy market orders are not ordered, order price'
@@ -370,7 +374,11 @@ describe('Tests related to the insertion of a market order', function() {
         );
       });
       it('AND the buy orderbook length is updated accordingly', async function() {
-        testHelper.assertBig(await dex.buyOrdersLength(...pair), 10, 'buy orders length incorrect');
+        return testHelper.assertBig(
+          await dex.buyOrdersLength(...pair),
+          10,
+          'buy orders length incorrect'
+        );
       });
     });
   });
@@ -396,7 +404,7 @@ describe('Tests related to the insertion of a market order', function() {
         await Promise.all(
           [...Array(10).keys()].map(async it => {
             const order = await dex.getSellOrderAtIndex(...pair, it);
-            testHelper.assertBigPrice(
+            return testHelper.assertBigPrice(
               order.multiplyFactor,
               1.4,
               'sell market orders are not ordered, order price'
@@ -405,7 +413,7 @@ describe('Tests related to the insertion of a market order', function() {
         );
       });
       it('AND the inserted sell orderbook length is updated accordingly', async function() {
-        testHelper.assertBig(
+        return testHelper.assertBig(
           await dex.sellOrdersLength(...pair),
           10,
           'sell orders length incorrect'
@@ -442,7 +450,7 @@ describe('Tests related to the insertion of a market order', function() {
         await Promise.all(
           [...Array(10).keys()].map(async it => {
             const order = await dex.getSellOrderAtIndex(...pair, it);
-            testHelper.assertBigPrice(
+            return testHelper.assertBigPrice(
               order.multiplyFactor,
               1.4,
               'sell market orders are not ordered, order price'
@@ -451,7 +459,7 @@ describe('Tests related to the insertion of a market order', function() {
         );
       });
       it('AND the orderbook length is updated accordingly', async function() {
-        testHelper.assertBig(
+        return testHelper.assertBig(
           await dex.sellOrdersLength(...pair),
           10,
           'sell orders length incorrect'
