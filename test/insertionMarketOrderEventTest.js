@@ -11,6 +11,7 @@ describe('Market Order insertion event tests', function() {
   let wadify;
   let pricefy;
   let assertNewOrderEvent;
+  let testToken;
 
   const initContractsAndAllowance = async accounts => {
     testHelper = testHelperBuilder();

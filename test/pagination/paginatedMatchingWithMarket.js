@@ -163,10 +163,14 @@ describe('Matching can be run in several pages', function() {
     before(initContractsAndAllowance(accounts));
     describe('GIVEN there are 2 buy and 2 sell orders which match 1v1', function() {
       before(async function() {
-        await dex.insertBuyMarketOrder({ from: buyer, priceMultiplier: 1 / MARKET_PRICE }); // id: 1
-        await dex.insertBuyMarketOrder({ from: buyer, priceMultiplier: 1 / MARKET_PRICE }); // id: 2
-        await dex.insertSellMarketOrder({ from: seller, priceMultiplier: 1 / MARKET_PRICE }); // id: 3
-        await dex.insertSellMarketOrder({ from: seller, priceMultiplier: 1 / MARKET_PRICE }); // id: 4
+        // id: 1
+        await dex.insertBuyMarketOrder({ from: buyer, priceMultiplier: 1 / MARKET_PRICE });
+        // id: 2
+        await dex.insertBuyMarketOrder({ from: buyer, priceMultiplier: 1 / MARKET_PRICE });
+        // id: 3
+        await dex.insertSellMarketOrder({ from: seller, priceMultiplier: 1 / MARKET_PRICE });
+        // id: 4
+        await dex.insertSellMarketOrder({ from: seller, priceMultiplier: 1 / MARKET_PRICE });
       });
 
       it('AND the pair is not running a tick', function() {
@@ -398,7 +402,7 @@ describe('Matching can be run in several pages', function() {
               testHelper.assertBig(buyOrderbookLength, 1);
               testHelper.assertBig(sellOrderbookLength, 1);
             });
-            it('AND the emergent price is 0 again, and lastClosingPrice doesnt change', function() {
+            it('AND the emergent price is 0 again, and lastClosingPrice does not change', function() {
               return assertTokenPairStatus({
                 emergentPrice: 0,
                 lastClosingPrice: DEFAULT_PRICE
@@ -462,7 +466,7 @@ describe('Matching can be run in several pages', function() {
   );
 
   contract(
-    'matching orders step by step: one pair matches partially, leaving one to match other doesnt due to price difference',
+    'matching orders step by step: one pair matches partially, leaving one to match other does not due to price difference',
     function(accounts) {
       const [, buyer, seller] = accounts;
       before(initContractsAndAllowance(accounts));
@@ -471,14 +475,14 @@ describe('Matching can be run in several pages', function() {
           await dex.insertBuyMarketOrder({
             priceMultiplier: 1 / MARKET_PRICE,
             from: buyer
-          }); // id: 1, matches completelly
+          }); // id: 1, matches completely
           // id: 2 matches partially
           await dex.insertSellMarketOrder({
             priceMultiplier: 1 / MARKET_PRICE,
             from: seller,
             amount: DEFAULT_AMOUNT * 2
           });
-          // id: 3 doesnt match with partial order 2
+          // id: 3 does not match with partial order 2
           await dex.insertBuyMarketOrder({
             priceMultiplier: 1 / MARKET_PRICE / 2,
             from: buyer
@@ -619,7 +623,7 @@ describe('Matching can be run in several pages', function() {
   ) {
     const [, buyer, seller] = accounts;
     before(initContractsAndAllowance(accounts));
-    describe('GIVEN there are one buy and one sell orders which dont match due to price difference', function() {
+    describe('GIVEN there are one buy and one sell orders which do not match due to price difference', function() {
       before(async function() {
         await dex.insertBuyMarketOrder({
           priceMultiplier: 0.99,
@@ -838,7 +842,7 @@ describe('Matching can be run in several pages', function() {
       });
     });
   });
-  // It is kind of a stress test so we dont want to run it every time
+  // It is kind of a stress test so we do not want to run it every time
   // because it may make the test to long to run
   contract(
     'The pagination make a tick able to finish no matter how many orders there are to be processed, and its types',
@@ -957,7 +961,7 @@ describe('Matching can be run in several pages', function() {
                     Promise.resolve()
                   );
                 });
-                it('THEN the process ends succesfully and the contract  is receiving orders again', async function() {
+                it('THEN the process ends successfully and the contract  is receiving orders again', async function() {
                   await assertTickStage(testHelper.tickStages.RECEIVING_ORDERS);
                 });
               });

@@ -72,8 +72,10 @@ describe('Commissions tests - Market order should behave as a limit order if the
       before(async function() {
         await initContractsAndAllowance(accounts);
         // Assuming a base price of MARKET_PRICE
-        await dex.insertBuyMarketOrder({ amount: 15, priceMultiplier: 15 / MARKET_PRICE }); // orderId: 1
-        await dex.insertSellMarketOrder({ amount: 1, priceMultiplier: 15 / MARKET_PRICE }); // orderId: 2
+        // orderId: 1
+        await dex.insertBuyMarketOrder({ amount: 15, priceMultiplier: 15 / MARKET_PRICE });
+        // orderId: 2
+        await dex.insertSellMarketOrder({ amount: 1, priceMultiplier: 15 / MARKET_PRICE });
 
         await testHelper.assertBig(
           await dex.buyOrdersLength(base.address, secondary.address),
@@ -143,8 +145,10 @@ describe('Commissions tests - Market order should behave as a limit order if the
       before(async function() {
         await initContractsAndAllowance(accounts);
         // Assuming a base price of MARKET_PRICE
-        await dex.insertBuyMarketOrder({ amount: 17, priceMultiplier: 1 / MARKET_PRICE }); // orderId: 1
-        await dex.insertSellMarketOrder({ amount: 12, priceMultiplier: 1 / MARKET_PRICE }); // orderId: 2
+        // orderId: 1
+        await dex.insertBuyMarketOrder({ amount: 17, priceMultiplier: 1 / MARKET_PRICE });
+        // orderId: 2
+        await dex.insertSellMarketOrder({ amount: 12, priceMultiplier: 1 / MARKET_PRICE });
       });
       describe('WHEN instructed to match orders', function() {
         before(async function() {
@@ -183,7 +187,8 @@ describe('Commissions tests - Market order should behave as a limit order if the
 
       describe('AND WHEN instructed to match with a new order that fully matches the modified one', function() {
         before(async function() {
-          await dex.insertSellMarketOrder({ amount: 5, priceMultiplier: 1 / MARKET_PRICE }); // orderId: 3
+          // orderId: 3
+          await dex.insertSellMarketOrder({ amount: 5, priceMultiplier: 1 / MARKET_PRICE });
           txReceipt = await dex.matchOrders(
             base.address,
             secondary.address,
@@ -243,8 +248,11 @@ describe('Commissions tests - Market order should behave as a limit order if the
           secondary: otherSecondary,
           priceMultiplier: 1 / MARKET_PRICE
         }); // orderId: 2
-        await dex.insertBuyMarketOrder({ amount: 20, priceMultiplier: 1 / MARKET_PRICE }); // orderId: 3
-        await dex.insertSellMarketOrder({ amount: 20, priceMultiplier: 1 / MARKET_PRICE }); // orderId: 4
+
+        // orderId: 3
+        await dex.insertBuyMarketOrder({ amount: 20, priceMultiplier: 1 / MARKET_PRICE });
+        // orderId: 4
+        await dex.insertSellMarketOrder({ amount: 20, priceMultiplier: 1 / MARKET_PRICE });
       });
       describe('WHEN instructed to match orders', function() {
         before(async function() {
@@ -312,8 +320,10 @@ describe('Commissions tests - Market order should behave as a limit order if the
     describe('GIVEN there are two buy and sell order that fully match with different prices', function() {
       before(async function() {
         await initContractsAndAllowance(accounts);
-        await dex.insertBuyMarketOrder({ amount: 60, priceMultiplier: 20 / MARKET_PRICE }); // orderId: 1
-        await dex.insertSellMarketOrder({ amount: 3, priceMultiplier: 10 / MARKET_PRICE }); // orderId: 2
+        // orderId: 1
+        await dex.insertBuyMarketOrder({ amount: 60, priceMultiplier: 20 / MARKET_PRICE });
+        // orderId: 2
+        await dex.insertSellMarketOrder({ amount: 3, priceMultiplier: 10 / MARKET_PRICE });
       });
       describe('WHEN instructed to match orders', function() {
         before(async function() {
@@ -360,7 +370,8 @@ describe('Commissions tests - Market order should behave as a limit order if the
       describe('GIVEN there is a buy order', function() {
         before(async function() {
           await initContractsAndAllowance(accounts);
-          await dex.insertBuyMarketOrder({ amount: 17, priceMultiplier: 1 / MARKET_PRICE }); // orderId: 1
+          // orderId: 1
+          await dex.insertBuyMarketOrder({ amount: 17, priceMultiplier: 1 / MARKET_PRICE });
         });
         // Unskip when cancel is implemented
         describe.skip('WHEN the order is canceled', function() {
@@ -408,8 +419,10 @@ describe('Commissions tests - Market order should behave as a limit order if the
       describe('GIVEN there is a sell order that match partially', function() {
         before(async function() {
           await initContractsAndAllowance(accounts);
-          await dex.insertBuyMarketOrder({ amount: 12, priceMultiplier: 1 / MARKET_PRICE }); // orderId: 1
-          await dex.insertSellMarketOrder({ amount: 17, priceMultiplier: 1 / MARKET_PRICE }); // orderId: 2
+          // orderId: 1
+          await dex.insertBuyMarketOrder({ amount: 12, priceMultiplier: 1 / MARKET_PRICE });
+          // orderId: 1
+          await dex.insertSellMarketOrder({ amount: 17, priceMultiplier: 1 / MARKET_PRICE });
           await dex.matchOrders(
             base.address,
             secondary.address,
