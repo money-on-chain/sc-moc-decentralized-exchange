@@ -163,42 +163,42 @@ the previous to the one moved
   }
 
   /**
-@notice Process expired Orders for the given orderbook, returning funds to the owner while applying commission
-@dev iterates _steps times over the orderbook starting from _orderId and process any encountered expired order
-@param _baseToken Base token to identify the orderbook
-@param _secondaryToken Secondary token to identify the orderbook
-@param _isBuy true if buy order, needed to identify the orderbook
-@param _orderId Order id to start expiring process. If zero, will start from ordebook top.
-@param _previousOrderIdHint previous order id hint in the orderbook to _orderId, used as on optimization to search for.
-If zero, will start from ordebook top.
-@param _steps Number of iterations to look for expired orders to process. Use one, if just looking to process _orderId only
-*/
+    @notice Process expired Orders for the given orderbook, returning funds to the owner while applying commission
+    @dev iterates _steps times over the orderbook starting from _orderId and process any encountered expired order
+    @param _baseToken Base token to identify the orderbook
+    @param _secondaryToken Secondary token to identify the orderbook
+    @param _evaluateBuyOrders true if buy orders have to be processed, false if sell orders have to
+    @param _orderId Order id to start expiring process. If zero, will start from ordebook top.
+    @param _previousOrderIdHint previous order id hint in the orderbook to _orderId, used as on optimization to search for.
+    If zero, will start from ordebook top.
+    @param _steps Number of iterations to look for expired orders to process. Use one, if just looking to process _orderId only
+    */
   function processExpired(
     address _baseToken,
     address _secondaryToken,
-    bool _isBuy,
+    bool _evaluateBuyOrders,
     uint256 _orderId,
     uint256 _previousOrderIdHint,
     uint256 _steps
   ) external whenNotPaused {
     MoCExchangeLib.Pair storage pair = getTokenPair(_baseToken, _secondaryToken);
-    MoCExchangeLib.processExpired(pair, commissionManager, _isBuy, _orderId, _previousOrderIdHint, _steps);
+    MoCExchangeLib.processExpired(pair, commissionManager, _evaluateBuyOrders, _orderId, _previousOrderIdHint, _steps);
   }
 
-    /**
-@notice Process expired Orders for the given orderbook, returning funds to the owner while applying commission
-@dev iterates _steps times over the orderbook starting from _orderId and process any encountered expired order
-@param _baseToken Base token to identify the orderbook
-@param _secondaryToken Secondary token to identify the orderbook
-@param _isBuy true if buy order, needed to identify the orderbook
-*/
+  /**
+    @notice Process expired Orders for the given orderbook, returning funds to the owner while applying commission
+    @dev iterates _steps times over the orderbook starting from _orderId and process any encountered expired order
+    @param _baseToken Base token to identify the orderbook
+    @param _secondaryToken Secondary token to identify the orderbook
+    @param _evaluateBuyOrders true if buy orders have to be evaluated, false if sell orders have to
+  */
   function areOrdersToExpire(
     address _baseToken,
     address _secondaryToken,
-    bool _isBuy
+    bool _evaluateBuyOrders
   ) external view returns (bool) {
     MoCExchangeLib.Pair storage pair = getTokenPair(_baseToken, _secondaryToken);
-    MoCExchangeLib.areOrdersToExpire(pair, _isBuy);
+    return MoCExchangeLib.areOrdersToExpire(pair, _evaluateBuyOrders);
   }
 
   /**
