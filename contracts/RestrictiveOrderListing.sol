@@ -126,7 +126,7 @@ contract RestrictiveOrderListing is OrderListing {
     0 is considered as no hint and the smart contract must iterate
     INSERT_FIRST is considered a hint to be put at the start
   */
-  function insertBuyOrderAfter(
+  function insertBuyLimitOrderAfter(
     address _baseToken,
     address _secondaryToken,
     uint256 _amount,
@@ -134,7 +134,7 @@ contract RestrictiveOrderListing is OrderListing {
     uint64 _lifespan,
     uint256 _previousOrderIdHint
   ) public isValidAmount(_baseToken, _amount, _baseToken) isValidLifespan(_lifespan) isValidPrice(_price) {
-    OrderListing.insertBuyOrderAfter(_baseToken, _secondaryToken, _amount, _price, _lifespan, _previousOrderIdHint);
+    OrderListing.insertBuyLimitOrderAfter(_baseToken, _secondaryToken, _amount, _price, _lifespan, _previousOrderIdHint);
   }
 
   /**
@@ -177,7 +177,7 @@ contract RestrictiveOrderListing is OrderListing {
     0 is considered as no hint and the smart contract must iterate
     INSERT_FIRST is considered a hint to be put at the start
    */
-  function insertSellOrderAfter(
+  function insertSellLimitOrderAfter(
     address _baseToken,
     address _secondaryToken,
     uint256 _amount,
@@ -185,7 +185,7 @@ contract RestrictiveOrderListing is OrderListing {
     uint64 _lifespan,
     uint256 _previousOrderIdHint
   ) public isValidAmount(_secondaryToken, _amount, _baseToken) isValidLifespan(_lifespan) isValidPrice(_price) {
-    OrderListing.insertSellOrderAfter(_baseToken, _secondaryToken, _amount, _price, _lifespan, _previousOrderIdHint);
+    OrderListing.insertSellLimitOrderAfter(_baseToken, _secondaryToken, _amount, _price, _lifespan, _previousOrderIdHint);
   }
 
   // Leave a gap betweeen inherited contracts variables in order to be

@@ -23,7 +23,7 @@ const createNewPair = (dex, governor) =>
     );
     if (price && user) {
       await Promise.all([
-        dex.insertBuyOrder(
+        dex.insertBuyLimitOrder(
           baseToken.address,
           secondaryToken.address,
           wadify(1),
@@ -33,7 +33,7 @@ const createNewPair = (dex, governor) =>
             from: user
           }
         ),
-        dex.insertSellOrder(
+        dex.insertSellLimitOrder(
           baseToken.address,
           secondaryToken.address,
           wadify(1),
@@ -49,7 +49,7 @@ const createNewPair = (dex, governor) =>
 
 const assertLastClosingPrice = async function(dex, base, secondary, expectedClosingPrice) {
   const { lastClosingPrice } = await dex.getTokenPairStatus.call(base.address, secondary.address);
-  testHelper.assertBigPrice(lastClosingPrice, expectedClosingPrice, 'Last closing price');
+  return testHelper.assertBigPrice(lastClosingPrice, expectedClosingPrice, 'Last closing price');
 };
 
 describe('Last closing price tests', function() {
@@ -132,10 +132,10 @@ describe('Last closing price tests', function() {
             })
           ]);
           await dex.createNewPair(doc, secondary, DEFAULT_INITIAL_PRICE);
-          await dex.insertBuyOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
+          await dex.insertBuyLimitOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
             from: user
           });
-          await dex.insertSellOrder(doc.address, secondary.address, wadify(1), pricefy(3), 5, {
+          await dex.insertSellLimitOrder(doc.address, secondary.address, wadify(1), pricefy(3), 5, {
             from: user
           });
           ({ emergentPrice } = await dex.getTokenPairStatus.call(doc.address, secondary.address));
@@ -148,7 +148,7 @@ describe('Last closing price tests', function() {
         describe('AND there is a token pair with orders that do not match', function() {
           describe('WHEN running the matching process', function() {
             it('THEN emergentPrice is zero', function() {
-              testHelper.assertBig(emergentPrice, 0, 'Last closing price');
+              return testHelper.assertBig(emergentPrice, 0, 'Last closing price');
             });
             it('THEN the last closing price for the pair should be the same', async function() {
               await assertLastClosingPrice(dex, doc, secondary, DEFAULT_INITIAL_PRICE);

@@ -111,11 +111,16 @@ const assertOrder = m => (order, expected) => {
     reservedCommission: { assert: m.assertBigWad },
     price: { assert: m.assertBigPrice }
   };
-  Object.keys(asserters).forEach(function(field) {
-    if (expected[field]) {
-      asserters[field].assert(order[field], expected[field], `order ${field} is incorrect`);
-    }
-  });
+  return Promise.all(
+    Object.keys(asserters).map(async function(field) {
+      if (expected[field])
+        return asserters[field].assert(
+          order[field],
+          expected[field],
+          `order ${field} is incorrect`
+        );
+    })
+  );
 };
 
 const assertNewOrderEvent = function(wadify, pricefy, eventName) {

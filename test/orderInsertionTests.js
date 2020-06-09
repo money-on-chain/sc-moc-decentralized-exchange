@@ -52,15 +52,15 @@ describe('Tests related to the insertion of an order', function() {
       return initContractsAndAllowance(accounts);
     });
     it('WHEN inserting a buy order', async function() {
-      insertionBuyReceipt = await dex.insertBuyOrder(...pair, wadify(10), pricefy(1), 5, {
+      insertionBuyReceipt = await dex.insertBuyLimitOrder(...pair, wadify(10), pricefy(1), 5, {
         from: accounts[DEFAULT_ACCOUNT_INDEX]
       });
     });
     it('THEN the order is inserted', async function() {
       const order = await dex.getBuyOrderAtIndex(...pair, 0);
       expect(order.owner).to.be.equals(accounts[DEFAULT_ACCOUNT_INDEX], 'owner set incorrectly');
-      testHelper.assertBigWad(order.exchangeableAmount, 10, 'amount');
-      testHelper.assertBigPrice(order.price, 1, 'price');
+      await testHelper.assertBigWad(order.exchangeableAmount, 10, 'amount');
+      return testHelper.assertBigPrice(order.price, 1, 'price');
     });
     it('AND the event emits the correct reserved commission and exchangeableAmount', async function() {
       const expectedReservedCommission = wadify(10)
@@ -74,32 +74,32 @@ describe('Tests related to the insertion of an order', function() {
     });
 
     it('AND the orderbook length is updated accordingly', async function() {
-      testHelper.assertBig(await dex.buyOrdersLength(...pair), 1);
+      return testHelper.assertBig(await dex.buyOrdersLength(...pair), 1);
     });
     describe('WHEN inserting a sell order', function() {
       before(async function() {
-        insertionSellReceipt = await dex.insertSellOrder(...pair, wadify(10), pricefy(1), 5, {
+        insertionSellReceipt = await dex.insertSellLimitOrder(...pair, wadify(10), pricefy(1), 5, {
           from: accounts[DEFAULT_ACCOUNT_INDEX]
         });
       });
       it('THEN the order is inserted', async function() {
         const order = await dex.getSellOrderAtIndex(...pair, 0);
         expect(order.owner).to.be.equals(accounts[DEFAULT_ACCOUNT_INDEX], 'owner set incorrectly');
-        testHelper.assertBigWad(order.exchangeableAmount, 10, 'amount');
-        testHelper.assertBigPrice(order.price, 1, 'price');
+        await testHelper.assertBigWad(order.exchangeableAmount, 10, 'amount');
+        return testHelper.assertBigPrice(order.price, 1, 'price');
       });
       it('AND the event emits the correct reserved commission and exchangeableAmount', async function() {
         const expectedReservedCommission = wadify(10)
           .mul(new BN(DEFAULT_COMMISSION_RATE))
           .div(RATE_PRECISION_BN);
         const expectedExchangeableAmount = wadify(10).sub(expectedReservedCommission);
-        expectEvent.inLogs(insertionSellReceipt.logs, 'NewOrderInserted', {
+        return expectEvent.inLogs(insertionSellReceipt.logs, 'NewOrderInserted', {
           reservedCommission: expectedReservedCommission,
           exchangeableAmount: expectedExchangeableAmount
         });
       });
       it('AND the orderbook length is updated accordingly', async function() {
-        testHelper.assertBig(await dex.sellOrdersLength(...pair), 1, 'sellOrdersLength');
+        return testHelper.assertBig(await dex.sellOrdersLength(...pair), 1, 'sellOrdersLength');
       });
     });
   });
@@ -114,35 +114,41 @@ describe('Tests related to the insertion of an order', function() {
     });
     describe('WHEN inserting a buy order', function() {
       before(async function() {
-        insertionBuyReceipt = await dex.insertBuyOrder(...pair, wadify(10), pricefy(1), 5, {
+        insertionBuyReceipt = await dex.insertBuyLimitOrder(...pair, wadify(10), pricefy(1), 5, {
           from: accounts[DEFAULT_ACCOUNT_INDEX]
         });
       });
       it('THEN the order is inserted', async function() {
         const order = await dex.getBuyOrderAtIndex(...pair, 0);
         expect(order.owner).to.be.equals(accounts[DEFAULT_ACCOUNT_INDEX], 'owner set incorrectly');
-        testHelper.assertBigWad(order.exchangeableAmount, 9.9, 'amount');
-        testHelper.assertBigPrice(order.price, 1, 'price');
+        await testHelper.assertBigWad(order.exchangeableAmount, 9.9, 'amount');
+        return testHelper.assertBigPrice(order.price, 1, 'price');
       });
       it('AND the event emits the correct reserved commission and exchangeableAmount', async function() {
         const expectedReservedCommission = wadify(10)
           .mul(new BN(commission.commissionRate))
           .div(RATE_PRECISION_BN);
         const expectedExchangeableAmount = wadify(10).sub(expectedReservedCommission);
-        expectEvent.inLogs(insertionBuyReceipt.logs, 'NewOrderInserted', {
+        return expectEvent.inLogs(insertionBuyReceipt.logs, 'NewOrderInserted', {
           reservedCommission: expectedReservedCommission,
           exchangeableAmount: expectedExchangeableAmount
         });
       });
 
       it('AND the orderbook length is updated accordingly', async function() {
-        testHelper.assertBig(await dex.buyOrdersLength(...pair), 1);
+        return testHelper.assertBig(await dex.buyOrdersLength(...pair), 1);
       });
       describe('WHEN inserting a sell order', function() {
         before(async function() {
-          insertionSellReceipt = await dex.insertSellOrder(...pair, wadify(10), pricefy(1), 5, {
-            from: accounts[DEFAULT_ACCOUNT_INDEX]
-          });
+          insertionSellReceipt = await dex.insertSellLimitOrder(
+            ...pair,
+            wadify(10),
+            pricefy(1),
+            5,
+            {
+              from: accounts[DEFAULT_ACCOUNT_INDEX]
+            }
+          );
         });
         it('THEN the order is inserted', async function() {
           const order = await dex.getSellOrderAtIndex(...pair, 0);
@@ -150,15 +156,15 @@ describe('Tests related to the insertion of an order', function() {
             accounts[DEFAULT_ACCOUNT_INDEX],
             'owner set incorrectly'
           );
-          testHelper.assertBigWad(order.exchangeableAmount, 9.9, 'amount');
-          testHelper.assertBigPrice(order.price, 1, 'price');
+          await testHelper.assertBigWad(order.exchangeableAmount, 9.9, 'amount');
+          return testHelper.assertBigPrice(order.price, 1, 'price');
         });
         it('AND the event emits the correct reserved commission and exchangeableAmount', async function() {
           const expectedReservedCommission = wadify(10)
             .mul(new BN(commission.commissionRate))
             .div(RATE_PRECISION_BN);
           const expectedExchangeableAmount = wadify(10).sub(expectedReservedCommission);
-          expectEvent.inLogs(insertionSellReceipt.logs, 'NewOrderInserted', {
+          return expectEvent.inLogs(insertionSellReceipt.logs, 'NewOrderInserted', {
             reservedCommission: expectedReservedCommission,
             exchangeableAmount: expectedExchangeableAmount
           });
@@ -181,7 +187,7 @@ describe('Tests related to the insertion of an order', function() {
         for (i = 0; i < 10; i++) {
           // intentionally sequential
           // eslint-disable-next-line
-          await dex.insertSellOrder(...pair, wadify(10), pricefy(10 - i), 5, {
+          await dex.insertSellLimitOrder(...pair, wadify(10), pricefy(10 - i), 5, {
             from: accounts[DEFAULT_ACCOUNT_INDEX]
           });
         }
@@ -190,7 +196,11 @@ describe('Tests related to the insertion of an order', function() {
         await Promise.all(
           [...Array(10).keys()].map(async it => {
             const order = await dex.getSellOrderAtIndex(...pair, it);
-            testHelper.assertBigPrice(order.price, it + 1, 'orders are not ordered, order price');
+            return testHelper.assertBigPrice(
+              order.price,
+              it + 1,
+              'orders are not ordered, order price'
+            );
           })
         );
       });
@@ -201,7 +211,7 @@ describe('Tests related to the insertion of an order', function() {
         for (i = 0; i < 10; i++) {
           // intentionally sequential
           // eslint-disable-next-line
-          await dex.insertBuyOrder(...pair, wadify(10), pricefy(1 + i), 5, {
+          await dex.insertBuyLimitOrder(...pair, wadify(10), pricefy(1 + i), 5, {
             from: accounts[DEFAULT_ACCOUNT_INDEX]
           });
         }
@@ -210,7 +220,11 @@ describe('Tests related to the insertion of an order', function() {
         await Promise.all(
           [...Array(10).keys()].map(async it => {
             const order = await dex.getBuyOrderAtIndex(...pair, it);
-            testHelper.assertBigPrice(order.price, 10 - it, 'orders are not ordered, order price');
+            return testHelper.assertBigPrice(
+              order.price,
+              10 - it,
+              'orders are not ordered, order price'
+            );
           })
         );
       });

@@ -59,6 +59,9 @@ describe('specific market order insertion tests', function() {
           testHelper.assertBigWad(order.exchangeableAmount, 2, 'exchangeable amount');
           testHelper.assertBigPrice(order.multiplyFactor, 1.1, 'multiply factor');
         });
+        it('AND the orderbook has 1 order', async function() {
+          testHelper.assertBig(await dex.buyOrdersLength(...pair), 1, 'buyOrdersLength');
+        });
       });
     });
   });
