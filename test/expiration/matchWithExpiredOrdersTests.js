@@ -29,6 +29,7 @@ const insertLimitOrder = ({ type, accounts, accountIndex, ...props }) =>
     return dex[insertFn](base.address, secondary.address, amount, price, expiresInTick, { from });
   };
 
+/* TODO: Add insertMarket test
 const insertMarketOrder = ({ type, accounts, accountIndex, ...props }) =>
   function() {
     const amount = wadify(props.amount || 10);
@@ -47,6 +48,7 @@ const insertMarketOrder = ({ type, accounts, accountIndex, ...props }) =>
       }
     );
   };
+*/
 
 const assertOrderBookLength = ({ type, expectedLength = 0 }) =>
   async function() {
