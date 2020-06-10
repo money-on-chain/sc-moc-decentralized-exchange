@@ -61,7 +61,7 @@ const initContractsAndAllowance = async accounts => {
   await testHelper.setBalancesAndAllowances({ accounts });
 };
 
-describe('Commissions tests - Market order should behave as a limit order if the price does not change ', function() {
+describe('Commissions tests - Market order should behave as a market order if the price does not change ', function() {
   before(function() {
     testHelper = testHelperBuilder();
     ({ wadify, assertBuyerMatch, assertSellerMatch, DEFAULT_ACCOUNT_INDEX } = testHelper);
@@ -363,7 +363,6 @@ describe('Commissions tests - Market order should behave as a limit order if the
     });
   });
 
-  // Cancel is not implemented yet
   contract(
     'Dex: Commission 10%, cancelation penalty 25%, new buy order canceled',
     async accounts => {
@@ -373,8 +372,7 @@ describe('Commissions tests - Market order should behave as a limit order if the
           // orderId: 1
           await dex.insertBuyMarketOrder({ amount: 17, priceMultiplier: 1 / MARKET_PRICE });
         });
-        // Unskip when cancel is implemented
-        describe.skip('WHEN the order is canceled', function() {
+        describe('WHEN the order is canceled', function() {
           before(async function() {
             txReceipt = await dex.cancelBuyOrder(base.address, secondary.address, 1, 0, {
               from: accounts[DEFAULT_ACCOUNT_INDEX]
@@ -429,7 +427,7 @@ describe('Commissions tests - Market order should behave as a limit order if the
             testHelper.DEFAULT_STEPS_FOR_MATCHING
           );
         });
-        describe.skip('WHEN the sell order is canceled', function() {
+        describe('WHEN the sell order is canceled', function() {
           before(async function() {
             txReceipt = await dex.cancelSellOrder(base.address, secondary.address, 2, 0, {
               from: accounts[DEFAULT_ACCOUNT_INDEX]

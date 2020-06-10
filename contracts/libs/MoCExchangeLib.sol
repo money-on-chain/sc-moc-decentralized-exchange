@@ -626,10 +626,15 @@ library MoCExchangeLib {
   */
   function removeOrder(Data storage self, Order storage _toRemove, uint256 _startFromId) public {
     if (isFirstOfOrderbook(self, _toRemove)) {
-      // If first order, re-assing the linked list start to next
+      // If first limit order, re-assing the linked list start to next
       self.firstId = _toRemove.next;
-    } else {
-      (bool found, Order storage previousOrder) = findPreviousOrder(self, _toRemove.id, _startFromId);
+    } 
+    else if (isFirstOfMarketOrderbook(self, _toRemove)){
+      // If first market order, re-assing the linked list start to next
+      self.firstMarketOrderId = _toRemove.next;      
+    }
+    else {
+      (bool found, Order storage previousOrder) = findPreviousOrder(self, _toRemove, _startFromId);
       require(found, "Previous order not found");
 
       if (isLastOfOrderbook(_toRemove)) {
@@ -852,23 +857,24 @@ library MoCExchangeLib {
   /**
     @dev Iterates though self Order collection starting from _startFromId until finding order with id _targetId
     @param self collection where to look for
-    @param _targetId Order it for wich to find the previous
+    @param _toRemove Order to remove
     @param _startFromId hint id to start iterating from, if zero, will search from begining
     @return true if found
     @return the Orders starage pointer, should not be used if not found
   */
-  function findPreviousOrder(Data storage self, uint256 _targetId, uint256 _startFromId)
+  function findPreviousOrder(Data storage self, Order storage _toRemove, uint256 _startFromId)
     public
     view
     returns (bool found, Order storage prevOrder)
   {
-    uint256 startFromId = _startFromId == 0 ? self.firstId : _startFromId;
+    uint256 firstId = (_toRemove.orderType == OrderType.LIMIT_ORDER) ? self.firstId : self.firstMarketOrderId;
+    uint256 startFromId = _startFromId == 0 ? firstId : _startFromId;
     Order storage pivotOrder = get(self, startFromId);
-    found = pivotOrder.next == _targetId;
+    found = pivotOrder.next == _toRemove.id;
 
     while (!found && !isLastOfOrderbook(pivotOrder)) {
       pivotOrder = get(self, pivotOrder.next);
-      found = pivotOrder.next == _targetId;
+      found = pivotOrder.next == _toRemove.id;
     }
     return (found, pivotOrder);
   }
