@@ -17,6 +17,7 @@ let testHelper;
 let wadify;
 let gov;
 let DEFAULT_ACCOUNT_INDEX;
+let pair;
 const MARKET_PRICE = 2;
 
 const assertDexCommissionBalances = ({ expectedBaseTokenBalance, expectedSecondaryTokenBalance }) =>
@@ -58,6 +59,7 @@ const initContractsAndAllowance = async accounts => {
   ]);
   dex = testHelper.decorateGovernedSetters(dex);
   dex = testHelper.decorateOrderInsertions(dex, accounts, { base, secondary });
+  pair = [base.address, secondary.address];
   await testHelper.setBalancesAndAllowances({ accounts });
 };
 
@@ -372,13 +374,15 @@ describe('Commissions tests - Market order should behave as a market order if th
           // orderId: 1
           await dex.insertBuyMarketOrder({ amount: 17, priceMultiplier: 1 / MARKET_PRICE });
         });
+        it('AND the buy orderbook length is updated accordingly', async function() {
+          return testHelper.assertBig(await dex.buyOrdersLength(...pair), 1, 'buyOrdersLength');
+        });
         describe('WHEN the order is canceled', function() {
           before(async function() {
             txReceipt = await dex.cancelBuyOrder(base.address, secondary.address, 1, 0, {
               from: accounts[DEFAULT_ACCOUNT_INDEX]
             });
           });
-
           it('THEN the order cancelled event is emitted', function() {
             expectEvent.inLogs(txReceipt.logs, 'OrderCancelled', {
               id: '1',
@@ -406,6 +410,9 @@ describe('Commissions tests - Market order should behave as a market order if th
               expectedSecondaryTokenBalance: 0
             })
           );
+          it('AND the buy orderbook length is updated accordingly', async function() {
+            return testHelper.assertBig(await dex.buyOrdersLength(...pair), 0, 'buyOrdersLength');
+          });
         });
       });
     }
@@ -425,6 +432,20 @@ describe('Commissions tests - Market order should behave as a market order if th
             base.address,
             secondary.address,
             testHelper.DEFAULT_STEPS_FOR_MATCHING
+          );
+        });
+        it('THEN the orderbook contains sell orders', async function() {
+          return testHelper.assertBig(
+            await dex.sellOrdersLength(base.address, secondary.address),
+            1,
+            'sellOrdersLength'
+          );
+        });
+        it('THEN the buy orderbook is empty', async function() {
+          return testHelper.assertBig(
+            await dex.buyOrdersLength(base.address, secondary.address),
+            0,
+            'sellOrdersLength'
           );
         });
         describe('WHEN the sell order is canceled', function() {
@@ -461,6 +482,13 @@ describe('Commissions tests - Market order should behave as a market order if th
               expectedSecondaryTokenBalance: 1.325
             })
           );
+          it('THEN the sell orderbooks empty', async function() {
+            return testHelper.assertBig(
+              await dex.sellOrdersLength(base.address, secondary.address),
+              0,
+              'sellOrdersLength'
+            );
+          });
         });
       });
     }

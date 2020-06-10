@@ -17,6 +17,7 @@ let testHelper;
 let wadify;
 let gov;
 let DEFAULT_ACCOUNT_INDEX;
+let pair;
 
 const assertDexCommissionBalances = ({ expectedBaseTokenBalance, expectedSecondaryTokenBalance }) =>
   function() {
@@ -57,6 +58,7 @@ const initContractsAndAllowance = async accounts => {
   ]);
   dex = testHelper.decorateGovernedSetters(dex);
   dex = testHelper.decorateOrderInsertions(dex, accounts, { base, secondary });
+  pair = [base.address, secondary.address];
   await testHelper.setBalancesAndAllowances({ accounts });
 };
 
@@ -311,6 +313,9 @@ describe('Commissions tests', function() {
           await initContractsAndAllowance(accounts);
           await dex.insertBuyLimitOrder({ amount: 17 }); // orderId: 1
         });
+        it('AND the buy orderbook length is updated accordingly', async function() {
+          return testHelper.assertBig(await dex.buyOrdersLength(...pair), 1, 'buyOrdersLength');
+        });
         describe('WHEN the order is canceled', function() {
           before(async function() {
             txReceipt = await dex.cancelBuyOrder(base.address, secondary.address, 1, 0, {
@@ -342,6 +347,9 @@ describe('Commissions tests', function() {
               expectedSecondaryTokenBalance: 0
             })
           );
+          it('AND the buy orderbook length is updated accordingly', async function() {
+            return testHelper.assertBig(await dex.buyOrdersLength(...pair), 0, 'buyOrdersLength');
+          });
         });
       });
     }
@@ -360,6 +368,9 @@ describe('Commissions tests', function() {
             secondary.address,
             testHelper.DEFAULT_STEPS_FOR_MATCHING
           );
+        });
+        it('AND the sell orderbook length is updated accordingly', async function() {
+          return testHelper.assertBig(await dex.sellOrdersLength(...pair), 1, 'sellOrdersLength');
         });
         describe('WHEN the sell order is canceled', function() {
           before(async function() {
@@ -392,6 +403,9 @@ describe('Commissions tests', function() {
               expectedSecondaryTokenBalance: 1.325
             })
           );
+          it('AND the sell orderbook length is updated accordingly', async function() {
+            return testHelper.assertBig(await dex.sellOrdersLength(...pair), 0, 'sellOrdersLength');
+          });
         });
       });
     }
