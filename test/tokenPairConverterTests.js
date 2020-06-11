@@ -23,6 +23,7 @@ describe('Token Pair Converter Test', function() {
       await dex.addTokenPair(
         base().address,
         secondary().address,
+        priceProvider.address,
         pricePrecisionToUse,
         toBNWithPrecision(lastClosingPrice, pricePrecisionToUse),
         governor
@@ -40,12 +41,13 @@ describe('Token Pair Converter Test', function() {
         owner
       });
       const OwnerBurnableToken = await testHelper.getOwnerBurnableToken();
-      [dex, commonBase, someToken, otherToken, governor] = await Promise.all([
+      [dex, commonBase, someToken, otherToken, governor, priceProvider] = await Promise.all([
         testHelper.getDex(),
         testHelper.getBase(),
         OwnerBurnableToken.new(),
         OwnerBurnableToken.new(),
-        testHelper.getGovernor()
+        testHelper.getGovernor(),
+        testHelper.getTokenPriceProviderFake().new()
       ]);
       invalidTokenAddress = governor.address;
       dex = testHelper.decorateGovernedSetters(dex, governor);

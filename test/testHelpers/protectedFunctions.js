@@ -11,11 +11,12 @@ const ExpirationPenaltyRateChanger = artifacts.require('ExpirationPenaltyRateCha
 const TokenPairDisabler = artifacts.require('TokenPairDisabler');
 const TokenPairEnabler = artifacts.require('TokenPairEnabler');
 
-const addTokenPair = dex => async (baseToken, secondaryToken, precision, price, governor) => {
+const addTokenPair = dex => async (baseToken, secondaryToken, priceProvider, precision, price, governor) => {
   const changer = await AddTokenPairChanger.new(
     dex.address,
     [baseToken],
     [secondaryToken],
+    [priceProvider],
     [precision],
     [price]
   );

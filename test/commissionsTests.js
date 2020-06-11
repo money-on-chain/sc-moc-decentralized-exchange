@@ -188,9 +188,13 @@ describe('Commissions tests', function() {
     describe('GIVEN there are orders for 2 different token pairs', function() {
       before(async function() {
         await initContractsAndAllowance(accounts);
+        //set initial price
+        const priceProvider = await testHelper.getTokenPriceProviderFake().new();
+        await priceProvider.poke(testHelper.DEFAULT_PRICE_PRECISION.toString());
         await dex.addTokenPair(
           base.address,
           otherSecondary.address,
+          priceProvider.address,
           testHelper.DEFAULT_PRICE_PRECISION.toString(),
           testHelper.DEFAULT_PRICE_PRECISION.toString(),
           gov

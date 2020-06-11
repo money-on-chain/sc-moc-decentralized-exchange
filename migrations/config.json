@@ -30,7 +30,30 @@
       "RifToken": {
         "address": "0x19F64674D8A5B4E652319F5e239eFd3bc969A1fE"
       }
-    }
+    }, 
+    "existingPriceProviders": [
+      {
+        "baseToken": "DocToken",
+        "secondaryToken": "BproToken",
+        "priceProvider": {
+          "address": "0x..."
+        }
+      },
+      {
+        "baseToken": "DocToken",
+        "secondaryToken": "WRBTC",
+        "priceProvider": {
+          "address": "0x..."
+        }
+      },
+      {
+        "baseToken": "DocToken",
+        "secondaryToken": "TestToken",
+        "priceProvider": {
+          "address": "0x..."
+        }
+      }
+    ]
   },
   "development": {
     "deployGovernance": true,
