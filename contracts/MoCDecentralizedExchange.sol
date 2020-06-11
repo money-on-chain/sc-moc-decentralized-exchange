@@ -345,18 +345,20 @@ associated pair with the groupId.
 
 @param _baseToken Address of the base token of the pair
 @param _secondaryToken Address of the secondary token of the pair
+@param _priceProvider Address of the oracle price provider
 @param _priceComparisonPrecision Precision to be used in the pair price
 @param _initialPrice Price used initially until a new tick with matching orders is run
 */
   function addTokenPair(
     address _baseToken,
     address _secondaryToken,
+    address _priceProvider,
     uint256 _priceComparisonPrecision,
     uint256 _initialPrice
   ) public {
     // The TokenPairListing, called by TokenPairConverter, validates the caller is an
     // authorized changer
-    TokenPairConverter.addTokenPair(_baseToken, _secondaryToken, _priceComparisonPrecision, _initialPrice);
+    TokenPairConverter.addTokenPair(_baseToken, _secondaryToken, _priceProvider, _priceComparisonPrecision, _initialPrice);
     bytes32 groupId = getGroupIdForPair(_baseToken, _secondaryToken);
     bytes32[] memory taskList = new bytes32[](uint256(TaskTypes.length));
     taskList[uint256(TaskTypes.SIMULATION)] = getTaskId(groupId, TaskTypes.SIMULATION);
