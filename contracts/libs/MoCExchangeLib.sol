@@ -4,6 +4,7 @@ import "openzeppelin-eth/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-eth/contracts/math/SafeMath.sol";
 import "openzeppelin-eth/contracts/math/Math.sol";
 import "../CommissionManager.sol";
+import "../interface/IPriceProvider.sol";
 
 import {SafeTransfer} from "./SafeTransfer.sol";
 import {TickState} from "./TickState.sol";
@@ -156,6 +157,7 @@ library MoCExchangeLib {
   struct Pair {
     Token baseToken;
     Token secondaryToken;
+    IPriceProvider priceProvider;
     TickState.Data tickState;
     TickPaginationMemory pageMemory;
     TickStage tickStage;

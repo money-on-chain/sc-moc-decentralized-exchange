@@ -12,6 +12,7 @@ contract AddTokenPairChanger is ChangeContract {
   MoCDecentralizedExchange public dex;
   address[] public baseTokens;
   address[] public secondaryTokens;
+  address[] public priceProviders;
   uint256[] public precisions;
   uint256[] public prices;
 
@@ -28,16 +29,18 @@ contract AddTokenPairChanger is ChangeContract {
     MoCDecentralizedExchange _dex,
     address[] memory _baseTokens,
     address[] memory _secondaryTokens,
+    address[] memory _priceProviders,
     uint256[] memory _precisions,
     uint256[] memory _prices
   ) public {
     require(
-      _baseTokens.length == _secondaryTokens.length && _baseTokens.length == _precisions.length,
+      _baseTokens.length == _secondaryTokens.length && _baseTokens.length == _precisions.length && _baseTokens.length == _priceProviders.length,
       "All three arrays must have the same length"
     );
     dex = _dex;
     baseTokens = _baseTokens;
     secondaryTokens = _secondaryTokens;
+    priceProviders = _priceProviders;
     precisions = _precisions;
     prices = _prices;
   }
@@ -48,7 +51,7 @@ contract AddTokenPairChanger is ChangeContract {
   function execute() external {
     uint256 i;
     for (i = 0; i < baseTokens.length; i++) {
-      dex.addTokenPair(baseTokens[i], secondaryTokens[i], precisions[i], prices[i]);
+      dex.addTokenPair(baseTokens[i], secondaryTokens[i], priceProviders[i], precisions[i], prices[i]);
     }
   }
 }

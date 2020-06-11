@@ -7,11 +7,13 @@ import {MoCExchangeLib} from "./libs/MoCExchangeLib.sol";
 import {TickState} from "./libs/TickState.sol";
 import "./libs/MoCExchangeLib.sol";
 import "./ConfigurableTick.sol";
+import "./interface/IPriceProvider.sol";
 
 contract EventfulTokenPairListing {
   event TokenPairDisabled(address baseToken, address secondaryToken);
   event TokenPairEnabled(address baseToken, address secondaryToken);
 }
+
 
 contract TokenPairListing is ConfigurableTick, EventfulTokenPairListing {
   using MoCExchangeLib for MoCExchangeLib.Data;
@@ -125,6 +127,7 @@ or its inverse must not be listed already
     tokenPairs[pairIndex] = MoCExchangeLib.Pair(
       MoCExchangeLib.Token(MoCExchangeLib.Data(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, true), IERC20(_baseToken)),
       MoCExchangeLib.Token(MoCExchangeLib.Data(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false), IERC20(_secondaryToken)),
+      IPriceProvider(_priceProvider),
       // initialize TickState with the given Tick number and an nextTickBlock of blocksForTick after the current one
       TickState.Data(SafeMath.add(block.number, tickConfig.minBlocksForTick), 0, 0, 1),
       MoCExchangeLib.TickPaginationMemory(
@@ -133,11 +136,7 @@ or its inverse must not be listed already
         new uint256[](0),
         0,
         MoCExchangeLib.Order(MoCExchangeLib.OrderType.LIMIT_ORDER, 0, 0, 0, 0, 0, 0, address(0), 0),
-        MoCExchangeLib.Order(MoCExchangeLib.OrderType.LIMIT_ORDER, 0, 0, 0, 0, 0, 0, address(0), 0),
-        0,
-        0,
-        0,
-        0
+        MoCExchangeLib.Order(MoCExchangeLib.OrderType.LIMIT_ORDER, 0, 0, 0, 0, 0, 0, address(0), 0)
       ),
       MoCExchangeLib.TickStage.RECEIVING_ORDERS,
       _priceComparisonPrecision,
