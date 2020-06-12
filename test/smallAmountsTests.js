@@ -244,7 +244,7 @@ describe('small amounts test', function() {
             await testHelper.assertBigPrice(order.price, MARKET_PRICE);
             await testHelper.assertAddresses(order.owner, accounts[DEFAULT_ACCOUNT_INDEX]);
             await testHelper.assertBig(order.next, 0);
-            return testHelper.assertBigWad(order.exchangeableAmount, (3 - 0.0001) * MARKET_PRICE); // Half of its consumed
+            return testHelper.assertBigWad(order.exchangeableAmount, (3 - 0.0001) * MARKET_PRICE);
           });
         });
       });

@@ -40,7 +40,11 @@ start_ganache() {
     mkdir -p "$NODO_DIRECTORY"
   fi
 
-  node_modules/.bin/ganache-cli --db "$NODO_DIRECTORY" --gasLimit 0xfffffffffff "${accounts[@]}" -i 1564754684494 --port $GANACHE_PORT
+  if [ "$TESTING" = true ]; then
+    node_modules/.bin/ganache-cli --gasLimit 0xfffffffffff --port "$GANACHE_PORT" -i 1564754684494 --accounts 10 --defaultBalanceEther 100000000000000000
+  else
+    node_modules/.bin/ganache-cli --db "$NODO_DIRECTORY" --gasLimit 0xfffffffffff "${accounts[@]}" -i 1564754684494 --port $GANACHE_PORT
+  fi
 
   ganache_pid=$!
 }

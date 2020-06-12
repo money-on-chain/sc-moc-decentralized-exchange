@@ -226,6 +226,66 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
   }
 
   /**
+    @notice Inserts a market order at start in the buy orderbook of a given pair with a hint;
+    the pair should not be disabled; the contract should not be paused. Takes the funds
+    with a transferFrom
+    @param _baseToken the base token of the pair
+    @param _secondaryToken the secondary token of the pair
+    @param _amount The quantity of tokens sent
+    @param _multiplyFactor Maximum price to be paid [base/secondary]
+    @param _lifespan After _lifespan ticks the order will be expired and no longer matched, must be lower or equal than the maximum
+    @param _isBuy true if it is a buy market order
+    0 is considered as no hint and the smart contract must iterate
+  */
+  function insertMarketOrder(
+    address _baseToken,
+    address _secondaryToken,
+    uint256 _amount,
+    uint256 _multiplyFactor,
+    uint64 _lifespan,
+    bool _isBuy
+  ) public whenNotPaused {
+    insertMarketOrderAfter(_baseToken, _secondaryToken, _amount, _multiplyFactor, INSERT_FIRST, _lifespan, _isBuy);
+  }
+
+  /**
+    @notice Inserts a market order in the buy orderbook of a given pair with a hint;
+    the pair should not be disabled; the contract should not be paused. Takes the funds
+    with a transferFrom
+    @param _baseToken the base token of the pair
+    @param _secondaryToken the secondary token of the pair
+    @param _amount The quantity of tokens sent
+    @param _multiplyFactor Maximum price to be paid [base/secondary]
+    @param _previousOrderIdHint Order that comes immediately before the new order;
+    @param _lifespan After _lifespan ticks the order will be expired and no longer matched, must be lower or equal than the maximum
+    @param _isBuy true if it is a buy market order
+    0 is considered as no hint and the smart contract must iterate
+    INSERT_FIRST is considered a hint to be put at the start
+  */
+  function insertMarketOrderAfter(
+    address _baseToken,
+    address _secondaryToken,
+    uint256 _amount,
+    uint256 _multiplyFactor,
+    uint256 _previousOrderIdHint,
+    uint64 _lifespan,
+    bool _isBuy
+  ) public whenNotPaused {
+    MoCExchangeLib.Pair storage pair = getTokenPair(_baseToken, _secondaryToken);
+    uint256 initialFee = commissionManager.calculateInitialFee(_amount);
+    pair.doInsertMarketOrder(
+      nextId(),
+      _amount.sub(initialFee),
+      initialFee,
+      _multiplyFactor,
+      _lifespan,
+      _previousOrderIdHint,
+      msg.sender,
+      _isBuy
+    );
+  }
+
+  /**
     @notice returns the corresponding user amount. Emits the CancelOrder event
     @param _pair Token Pair involved in the canceled Order
     @param _orderId Order id to cancel
@@ -361,66 +421,6 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
       msg.sender,
       address(this),
       false
-    );
-  }
-
-  /**
-    @notice Inserts a market order at start in the buy orderbook of a given pair with a hint;
-    the pair should not be disabled; the contract should not be paused. Takes the funds
-    with a transferFrom
-    @param _baseToken the base token of the pair
-    @param _secondaryToken the secondary token of the pair
-    @param _amount The quantity of tokens sent
-    @param _multiplyFactor Maximum price to be paid [base/secondary]
-    @param _lifespan After _lifespan ticks the order will be expired and no longer matched, must be lower or equal than the maximum
-    @param _isBuy true if it is a buy market order
-    0 is considered as no hint and the smart contract must iterate
-  */
-  function insertMarketOrder(
-    address _baseToken,
-    address _secondaryToken,
-    uint256 _amount,
-    uint256 _multiplyFactor,
-    uint64 _lifespan,
-    bool _isBuy
-  ) public whenNotPaused {
-    insertMarketOrderAfter(_baseToken, _secondaryToken, _amount, _multiplyFactor, INSERT_FIRST, _lifespan, _isBuy);
-  }
-
-  /**
-    @notice Inserts a market order in the buy orderbook of a given pair with a hint;
-    the pair should not be disabled; the contract should not be paused. Takes the funds
-    with a transferFrom
-    @param _baseToken the base token of the pair
-    @param _secondaryToken the secondary token of the pair
-    @param _amount The quantity of tokens sent
-    @param _multiplyFactor Maximum price to be paid [base/secondary]
-    @param _previousOrderIdHint Order that comes immediately before the new order;
-    @param _lifespan After _lifespan ticks the order will be expired and no longer matched, must be lower or equal than the maximum
-    @param _isBuy true if it is a buy market order
-    0 is considered as no hint and the smart contract must iterate
-    INSERT_FIRST is considered a hint to be put at the start
-  */
-  function insertMarketOrderAfter(
-    address _baseToken,
-    address _secondaryToken,
-    uint256 _amount,
-    uint256 _multiplyFactor,
-    uint256 _previousOrderIdHint,
-    uint64 _lifespan,
-    bool _isBuy
-  ) public whenNotPaused {
-    MoCExchangeLib.Pair storage pair = getTokenPair(_baseToken, _secondaryToken);
-    uint256 initialFee = commissionManager.calculateInitialFee(_amount);
-    pair.doInsertMarketOrder(
-      nextId(),
-      _amount.sub(initialFee),
-      initialFee,
-      _multiplyFactor,
-      _lifespan,
-      _previousOrderIdHint,
-      msg.sender,
-      _isBuy
     );
   }
 

@@ -16,6 +16,7 @@ describe('multiple tokens tests - emergent price', function() {
   let DEFAULT_PRICE_PRECISION;
   let DEFAULT_MAX_BLOCKS_FOR_TICK;
   let testHelper;
+  const MARKET_PRICE = 2;
 
   before(async function() {
     testHelper = testHelperBuilder();
@@ -87,6 +88,111 @@ describe('multiple tokens tests - emergent price', function() {
     ]);
   };
 
+  contract('The matching should mix LO and MO correctly', function(accounts) {
+    const [, buyer, seller] = accounts;
+    before('GIVEN the user has balance and allowance on all the tokens', async function() {
+      await initContractsAndAllowance(accounts);
+    });
+    describe('AND there is one buy limit order, one sell limit order and one sell market order which is less competitive, AND every one of it should match', function() {
+      before(async function() {
+        await dex.addTokenPair(
+          doc.address,
+          secondary.address,
+          DEFAULT_PRICE_PRECISION.toString(),
+          DEFAULT_PRICE_PRECISION.toString(),
+          governor
+        );
+        await dex.insertBuyLimitOrder(
+          doc.address,
+          secondary.address,
+          wadify(20), // buy 2 secondary
+          pricefy(10),
+          10,
+          {
+            from: buyer
+          }
+        );
+
+        await dex.insertSellLimitOrder(
+          doc.address,
+          secondary.address,
+          wadify(1), // sell 1 secondary
+          pricefy(1),
+          10,
+          {
+            from: buyer
+          }
+        );
+        await dex.insertMarketOrder(
+          doc.address,
+          secondary.address,
+          wadify(1),
+          pricefy(10 / MARKET_PRICE), // Results in a price of 10
+          10,
+          false,
+          {
+            from: seller
+          }
+        );
+      });
+      it('WHEN calling getEmergentPrice, THEN the emergent prices is the average of the buy price and the market one', async function() {
+        await testHelper.assertBigPrice(getEmergentPriceValue(doc.address, secondary.address), 10);
+      });
+    });
+  });
+
+  contract('The matching should mix LO and MO correctly', function(accounts) {
+    const [, buyer, seller] = accounts;
+    before('GIVEN the user has balance and allowance on all the tokens', async function() {
+      await initContractsAndAllowance(accounts);
+    });
+    describe('AND there is one buy limit order, one sell market order and one sell limit order which is less competitive, AND every one of it should match', function() {
+      before(async function() {
+        await dex.addTokenPair(
+          doc.address,
+          secondary.address,
+          DEFAULT_PRICE_PRECISION.toString(),
+          DEFAULT_PRICE_PRECISION.toString(),
+          governor
+        );
+        await dex.insertBuyLimitOrder(
+          doc.address,
+          secondary.address,
+          wadify(20), // buy 2 secondary
+          pricefy(10),
+          10,
+          {
+            from: buyer
+          }
+        );
+
+        await dex.insertSellLimitOrder(
+          doc.address,
+          secondary.address,
+          wadify(1), // sell 1 secondary
+          pricefy(10),
+          10,
+          {
+            from: buyer
+          }
+        );
+        await dex.insertMarketOrder(
+          doc.address,
+          secondary.address,
+          wadify(1),
+          pricefy(1 / MARKET_PRICE), // Results in a price of 1
+          10,
+          false,
+          {
+            from: seller
+          }
+        );
+      });
+      it('WHEN calling getEmergentPrice, THEN the emergent prices is the average of the limit orders', async function() {
+        await testHelper.assertBigPrice(getEmergentPriceValue(doc.address, secondary.address), 10);
+      });
+    });
+  });
   contract('The matching should be independent for two token pairs using MO', function(accounts) {
     const [, buyer, seller] = accounts;
     before('GIVEN the user has balance and allowance on all the tokens', async function() {
@@ -320,8 +426,16 @@ describe('multiple tokens tests - emergent price', function() {
             );
           });
           it('THEN that pair is matched', async function() {
-            await testHelper.assertBig(dex.buyOrdersLength(doc.address, secondary.address), 0);
-            await testHelper.assertBig(dex.sellOrdersLength(doc.address, secondary.address), 0);
+            await testHelper.assertBig(
+              dex.sellOrdersLength(doc.address, secondary.address),
+              0,
+              'sell orderbook length error'
+            );
+            await testHelper.assertBig(
+              dex.buyOrdersLength(doc.address, secondary.address),
+              0,
+              'buy orderbook length error'
+            );
           });
           it('AND the other pair is not matched', async function() {
             await testHelper.assertBigPrice(
