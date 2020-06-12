@@ -8,12 +8,10 @@ import {TickState} from "./libs/TickState.sol";
 import "./libs/MoCExchangeLib.sol";
 import "./ConfigurableTick.sol";
 
-
 contract EventfulTokenPairListing {
   event TokenPairDisabled(address baseToken, address secondaryToken);
   event TokenPairEnabled(address baseToken, address secondaryToken);
 }
-
 
 contract TokenPairListing is ConfigurableTick, EventfulTokenPairListing {
   using MoCExchangeLib for MoCExchangeLib.Data;
@@ -135,7 +133,11 @@ or its inverse must not be listed already
         new uint256[](0),
         0,
         MoCExchangeLib.Order(MoCExchangeLib.OrderType.LIMIT_ORDER, 0, 0, 0, 0, 0, 0, address(0), 0),
-        MoCExchangeLib.Order(MoCExchangeLib.OrderType.LIMIT_ORDER, 0, 0, 0, 0, 0, 0, address(0), 0)
+        MoCExchangeLib.Order(MoCExchangeLib.OrderType.LIMIT_ORDER, 0, 0, 0, 0, 0, 0, address(0), 0),
+        0,
+        0,
+        0,
+        0
       ),
       MoCExchangeLib.TickStage.RECEIVING_ORDERS,
       _priceComparisonPrecision,

@@ -17,6 +17,7 @@ let base;
 let secondary;
 let report;
 let pair;
+const MARKET_PRICE = 2;
 
 const setContractsAndBalances = async function(accounts) {
   await testHelper.createContracts({
@@ -252,6 +253,91 @@ describe('volume tests and gas cost report generation, using a 1% commission rat
               gas: 6.8e6
             })).receipt.gasUsed;
           });
+          it('THEN both orderbooks are empty', assertLengths());
+        });
+      });
+    });
+  });
+
+  describe('match n orders of each type(mo, lo) against 1 order', function() {
+    [
+      {
+        description: '10 sells against 1 buy',
+        totalOrdersByType: 5
+      },
+      {
+        description: '12 sells against 1 buy',
+        totalOrdersByType: 6
+      },
+      {
+        description: '15 sells against 1 buy',
+        totalOrdersByType: 7
+      },
+      {
+        description: '16 sells against 1 buy',
+        totalOrdersByType: 8
+      }
+    ].forEach(({ description, totalOrdersByType }) => {
+      contract(description, function(accounts) {
+        let logObject;
+        before(async function() {
+          await setContractsAndBalances(accounts);
+          let receipts = [];
+          report.testCases[description] = {};
+          logObject = report.testCases[description];
+          const from = accounts[DEFAULT_ACCOUNT_INDEX];
+          // this creates an orderbook with totalOrdersByType sell limit orders
+          // that match against a single buy order
+          for (let i = 0; i < totalOrdersByType; i++) {
+            receipts = [
+              // intentionally sequential
+              // eslint-disable-next-line no-await-in-loop
+              (await dex.insertSellLimitOrder(...pair, wadify(1), pricefy(1), 5, { from })).receipt,
+              ...receipts
+            ];
+          }
+          // this adds the totalOrdersByType sell marketOrder
+          for (let i = 0; i < totalOrdersByType; i++) {
+            receipts = [
+              // intentionally sequential
+              // eslint-disable-next-line no-await-in-loop
+              (await dex.insertMarketOrder(
+                ...pair,
+                wadify(1),
+                pricefy(1 / MARKET_PRICE),
+                5,
+                false,
+                { from }
+              )).receipt,
+              ...receipts
+            ];
+          }
+          logObject.sellOrdersInsertion = receipts.reduce((sum, curr) => curr.gasUsed + sum, 0);
+          logObject.buyOrdersInsertion = (await dex.insertBuyLimitOrder(
+            ...pair,
+            wadify(totalOrdersByType * 2),
+            pricefy(1),
+            5,
+            {
+              from
+            }
+          )).receipt.gasUsed;
+          logObject.insertionAvg =
+            logObject.sellOrdersInsertion +
+            logObject.buyOrdersInsertion / (totalOrdersByType * 2 + 1);
+        });
+        it(
+          `GIVEN there are ${totalOrdersByType} sell orders of each type and one buy order`,
+          assertLengths(1, totalOrdersByType * 2)
+        );
+        describe('WHEN matching orders', function() {
+          before(async function() {
+            // Use a ridicoulously big amount of steps to ensure to be completing the steps
+            logObject.match = (await dex.matchOrders(...pair, 3000, {
+              gas: 6.8e6
+            })).receipt.gasUsed;
+          });
+
           it('THEN both orderbooks are empty', assertLengths());
         });
       });

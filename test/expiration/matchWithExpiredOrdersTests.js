@@ -11,6 +11,8 @@ let base;
 let secondary;
 let insertBuyLimitOrder;
 let insertSellLimitOrder;
+let insertBuyMarketOrder;
+let insertSellMarketOrder;
 let assertSellAccountOrderSequence;
 let assertBuySellMatchEvents;
 let assertExpiredOrderProcessed;
@@ -18,6 +20,7 @@ let txReceipt;
 let testHelper;
 let wadify;
 let pricefy;
+const MARKET_PRICE = 2;
 
 const insertLimitOrder = ({ type, accounts, accountIndex, ...props }) =>
   function() {
@@ -32,7 +35,8 @@ const insertLimitOrder = ({ type, accounts, accountIndex, ...props }) =>
 const insertMarketOrder = ({ type, accounts, accountIndex, ...props }) =>
   function() {
     const amount = wadify(props.amount || 10);
-    const price = pricefy(props.price || 1);
+    const price = pricefy((props.price || 1) / MARKET_PRICE);
+
     const expiresInTick = props.expiresInTick || 5;
     const from = props.from || accounts[accountIndex];
     return dex.insertMarketOrder(
@@ -85,6 +89,8 @@ const initContractsAndAllowance = async accounts => {
 
   insertBuyLimitOrder = props => insertLimitOrder({ accounts, type: 'buy', ...props })();
   insertSellLimitOrder = props => insertLimitOrder({ accounts, type: 'sell', ...props })();
+  insertBuyMarketOrder = props => insertMarketOrder({ accounts, type: 'buy', ...props })();
+  insertSellMarketOrder = props => insertMarketOrder({ accounts, type: 'sell', ...props })();
   /**
    * Verifies that the given account a owner of the order placed in correct position
    */
@@ -207,13 +213,13 @@ describe('Match with expired orders tests', function() {
       before(async function() {
         await initContractsAndAllowance(accounts);
         await insertBuyLimitOrder({ accountIndex: 1 });
-        await insertBuyLimitOrder({ accountIndex: 1 });
-        await insertSellLimitOrder({ accountIndex: 2 }); // Will be expired and processed
+        await insertBuyMarketOrder({ accountIndex: 1 });
+        await insertSellMarketOrder({ accountIndex: 2 }); // Will be expired and processed
         await insertSellLimitOrder({ accountIndex: 3 });
         await insertSellLimitOrder({ accountIndex: 4 }); // Will be expired and processed
-        await insertSellLimitOrder({ accountIndex: 5 });
-        await insertSellLimitOrder({ accountIndex: 6 }); // Will be expired
-        await insertSellLimitOrder({ accountIndex: 1 }); // valid but no matching
+        await insertSellMarketOrder({ accountIndex: 5 });
+        await insertSellMarketOrder({ accountIndex: 6 }); // Will be expired
+        await insertSellMarketOrder({ accountIndex: 1 }); // valid but no matching
         await dex.editOrder(base.address, secondary.address, '3', false, '1');
         await dex.editOrder(base.address, secondary.address, '5', false, '1');
         await dex.editOrder(base.address, secondary.address, '7', false, '1');

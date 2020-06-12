@@ -26,6 +26,14 @@ const MARKET_PRICE = 2;
 const filterEvents = (tx, eventName) =>
   tx.logs.filter(it => it.event === eventName).map(it => it.args);
 
+const mapOrderExpectation = ({ id, owner, exchangeableAmount, reservedCommission, price }) => ({
+  id,
+  owner,
+  exchangeableAmount,
+  reservedCommission,
+  multiplyFactor: price / MARKET_PRICE
+});
+
 const makeOrderExpectation = order => ({
   id: order.id,
   owner: order.owner,
@@ -34,8 +42,9 @@ const makeOrderExpectation = order => ({
   price: order.price
 });
 
-const getExpectation = order =>
-  order.expectation ? order.expectation : makeOrderExpectation(order);
+const getLimitExpectation = order => order.expectation || makeOrderExpectation(order);
+
+const getMarketExpectation = order => mapOrderExpectation(getLimitExpectation(order));
 
 const insertSellLimitOrder = (
   baseTokenAddress,
@@ -144,7 +153,9 @@ const orderBookMatcherGeneric = (
   insertSellOrder,
   insertBuyOrder,
   expectInsertionSellEvent,
-  expectInsertionBuyEvent
+  expectInsertionBuyEvent,
+  getExpectationBuy,
+  getExpectationSell
 ) => (getMocHelper, scenario) => {
   contract(scenario.description, function(accounts) {
     // eslint-disable-next-line mocha/no-top-level-hooks
@@ -314,7 +325,7 @@ const orderBookMatcherGeneric = (
             );
             return testHelper.assertOrder(
               order,
-              getExpectation(scenario.remainingSellOrders.orders[index])
+              getExpectationSell(scenario.remainingSellOrders.orders[index])
             );
           })
         );
@@ -349,7 +360,7 @@ const orderBookMatcherGeneric = (
             );
             return testHelper.assertOrder(
               order,
-              getExpectation(scenario.remainingBuyOrders.orders[index])
+              getExpectationBuy(scenario.remainingBuyOrders.orders[index])
             );
           })
         );
@@ -386,21 +397,27 @@ const orderBookMatcherMarket = orderBookMatcherGeneric(
   insertSellMarketOrder,
   insertBuyMarketOrder,
   expectInsertionEventMarket(false),
-  expectInsertionEventMarket(true)
+  expectInsertionEventMarket(true),
+  getMarketExpectation,
+  getMarketExpectation
 );
 
 const orderBookMatcherLimit = orderBookMatcherGeneric(
   insertSellLimitOrder,
   insertBuyLimitOrder,
   expectInsertionEventLimit(false),
-  expectInsertionEventLimit(true)
+  expectInsertionEventLimit(true),
+  getLimitExpectation,
+  getLimitExpectation
 );
 
 const orderBookMatcherCombined = orderBookMatcherGeneric(
   insertSellMarketOrder,
   insertBuyLimitOrder,
   expectInsertionEventMarket(false),
-  expectInsertionEventLimit(true)
+  expectInsertionEventLimit(true),
+  getLimitExpectation,
+  getMarketExpectation
 );
 
 const orderBookMatcherBothTypes = (getMocHelper, scenario) => {
