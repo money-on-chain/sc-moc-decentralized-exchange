@@ -18,6 +18,7 @@ let newBase;
 let newSecondary;
 let user;
 let commissionManager;
+let priceProviderSecondary;
 
 const testHelper = testHelperBuilder();
 const { wadify, pricefy } = testHelper;
@@ -57,6 +58,7 @@ const setContracts = async function() {
     testHelper.getGovernor(),
     testHelper.getStopper()
   ]);
+  priceProviderSecondary = await testHelper.getTokenPriceProviderFake().new();
 };
 const initializeDex = async function(temporaryOwner, beneficiaryAddress) {
   await setContracts();
@@ -119,6 +121,7 @@ describe('token listing tests', function() {
       await dex.addTokenPair(
         doc.address,
         secondary.address,
+        priceProviderSecondary.address,
         DEFAULT_PRICE_PRECISION,
         DEFAULT_PRICE_PRECISION,
         governor
@@ -159,16 +162,19 @@ describe('token listing tests', function() {
   contract('listing two token pair and then inserting an order: happy path', function(accounts) {
     newBase = secondary;
     newSecondary = thirdToken;
+    let priceProviderNewBaseNewSec;
     before(async function() {
       await initializeDex(accounts[0], accounts[1]);
       user = accounts[testHelper.DEFAULT_ACCOUNT_INDEX];
       newBase = secondary;
       newSecondary = thirdToken;
+      priceProviderNewBaseNewSec = await testHelper.getTokenPriceProviderFake().new();
     });
     it('GIVEN there is a token pair listed', async function() {
       await dex.addTokenPair(
         doc.address,
         secondary.address,
+        priceProviderSecondary.address,
         DEFAULT_PRICE_PRECISION,
         DEFAULT_PRICE_PRECISION,
         governor
@@ -178,6 +184,7 @@ describe('token listing tests', function() {
       await dex.addTokenPair(
         newBase.address,
         newSecondary.address,
+        priceProviderNewBaseNewSec.address,
         DEFAULT_PRICE_PRECISION,
         DEFAULT_PRICE_PRECISION,
         governor
@@ -241,6 +248,7 @@ describe('token listing tests', function() {
           dex.addTokenPair(
             wrbtc.address,
             secondary.address,
+            priceProviderSecondary.address,
             DEFAULT_PRICE_PRECISION,
             DEFAULT_PRICE_PRECISION,
             governor
@@ -252,6 +260,7 @@ describe('token listing tests', function() {
         await dex.addTokenPair(
           doc.address,
           wrbtc.address,
+          priceProviderSecondary.address,
           DEFAULT_PRICE_PRECISION,
           DEFAULT_PRICE_PRECISION,
           governor
@@ -261,6 +270,7 @@ describe('token listing tests', function() {
         await dex.addTokenPair(
           doc.address,
           secondary.address,
+          priceProviderSecondary.address,
           DEFAULT_PRICE_PRECISION,
           DEFAULT_PRICE_PRECISION,
           governor
@@ -270,6 +280,7 @@ describe('token listing tests', function() {
         await dex.addTokenPair(
           wrbtc.address,
           secondary.address,
+          priceProviderSecondary.address,
           DEFAULT_PRICE_PRECISION,
           DEFAULT_PRICE_PRECISION,
           governor
@@ -289,6 +300,7 @@ describe('token listing tests', function() {
           dex.addTokenPair(
             doc.address,
             doc.address,
+            priceProviderSecondary.address,
             DEFAULT_PRICE_PRECISION,
             DEFAULT_PRICE_PRECISION,
             governor
@@ -307,6 +319,7 @@ describe('token listing tests', function() {
           dex.addTokenPair(
             doc.address,
             secondary.address,
+            priceProviderSecondary.address,
             DEFAULT_PRICE_PRECISION,
             DEFAULT_PRICE_PRECISION,
             governor
@@ -331,6 +344,7 @@ describe('token listing tests', function() {
         await dex.addTokenPair(
           doc.address,
           secondary.address,
+          priceProviderSecondary.address,
           DEFAULT_PRICE_PRECISION,
           DEFAULT_PRICE_PRECISION,
           governor
@@ -374,6 +388,7 @@ describe('token listing tests', function() {
           dex.addTokenPair(
             doc.address,
             secondary.address,
+            priceProviderSecondary.address,
             (10 ** 5).toString(),
             (10 ** 5).toString(),
             governor
@@ -387,6 +402,7 @@ describe('token listing tests', function() {
           dex.addTokenPair(
             secondary.address,
             doc.address,
+            priceProviderSecondary.address,
             (10 ** 5).toString(),
             (10 ** 5).toString(),
             governor

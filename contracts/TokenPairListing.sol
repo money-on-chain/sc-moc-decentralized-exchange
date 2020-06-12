@@ -118,6 +118,7 @@ or its inverse must not be listed already
   function addTokenPair(
     address _baseToken,
     address _secondaryToken,
+    address _priceProvider,
     uint256 _priceComparisonPrecision,
     uint256 _initialPrice
   ) public onlyAuthorizedChanger() isNewPairValid(_baseToken, _secondaryToken) {
@@ -136,7 +137,11 @@ or its inverse must not be listed already
         new uint256[](0),
         0,
         MoCExchangeLib.Order(MoCExchangeLib.OrderType.LIMIT_ORDER, 0, 0, 0, 0, 0, 0, address(0), 0),
-        MoCExchangeLib.Order(MoCExchangeLib.OrderType.LIMIT_ORDER, 0, 0, 0, 0, 0, 0, address(0), 0)
+        MoCExchangeLib.Order(MoCExchangeLib.OrderType.LIMIT_ORDER, 0, 0, 0, 0, 0, 0, address(0), 0),
+        0,
+        0,
+        0,
+        0
       ),
       MoCExchangeLib.TickStage.RECEIVING_ORDERS,
       _priceComparisonPrecision,

@@ -9,9 +9,11 @@ const createTokenPair = async function(
   governor,
   { base, secondary, lastClosingPrice, pricePrecision }
 ) {
+  await priceProvider.poke(pricePrecision ? (10 ** pricePrecision).toString() : DEFAULT_PRICE_PRECISION.toString());
   await dex.addTokenPair(
     base.address,
     secondary.address,
+    priceProvider.address,
     pricePrecision ? (10 ** pricePrecision).toString() : DEFAULT_PRICE_PRECISION.toString(),
     lastClosingPrice,
     governor
@@ -59,12 +61,13 @@ describe('FEATURE: Min amount for order', function() {
             owner: accounts[0]
           });
           const OwnerBurnableToken = await testHelper.getOwnerBurnableToken();
-          [dex, commonBase, someToken, otherToken, governor] = await Promise.all([
+          [dex, commonBase, someToken, otherToken, governor, priceProvider] = await Promise.all([
             testHelper.getDex(),
             testHelper.getBase(),
             OwnerBurnableToken.new(),
             OwnerBurnableToken.new(),
-            testHelper.getGovernor()
+            testHelper.getGovernor(),
+            testHelper.getTokenPriceProviderFake().new()
           ]);
           dex = testHelper.decorateGovernedSetters(dex, governor);
 

@@ -15,6 +15,8 @@ let DEFAULT_PRICE_PRECISION;
 let DEFAULT_MAX_BLOCKS_FOR_TICK;
 let DEFAULT_ACCOUNT_INDEX;
 let testHelper;
+let priceProviderSecondary;
+let priceProviderOtherSecondary;
 
 const setContracts = async function(accounts) {
   testHelper = testHelperBuilder();
@@ -44,6 +46,10 @@ const setContracts = async function(accounts) {
     OwnerBurnableToken.new(),
     testHelper.getGovernor()
   ]);
+
+  priceProviderSecondary = await testHelper.getTokenPriceProviderFake().new();
+  priceProviderOtherSecondary = await testHelper.getTokenPriceProviderFake().new();
+
   getEmergentPriceValue = async (baseAddress, secondaryAddress) =>
     (await dex.getEmergentPrice.call(baseAddress, secondaryAddress)).emergentPrice;
   dex = await testHelper.decorateGovernedSetters(dex);
@@ -100,6 +106,7 @@ describe('multiple tokens tests', function() {
       await dex.addTokenPair(
         doc.address,
         secondary.address,
+        priceProviderSecondary.address,
         (10 ** 4).toString(),
         (10 ** 4).toString(),
         governor
@@ -115,6 +122,7 @@ describe('multiple tokens tests', function() {
       await dex.addTokenPair(
         doc.address,
         otherSecondary.address,
+        priceProviderOtherSecondary.address,
         (10 ** 4).toString(),
         (10 ** 4).toString(),
         governor
@@ -185,6 +193,7 @@ describe('multiple tokens tests', function() {
         await dex.addTokenPair(
           doc.address,
           secondary.address,
+          priceProviderSecondary.address,
           DEFAULT_PRICE_PRECISION.toString(),
           DEFAULT_PRICE_PRECISION.toString(),
           governor
@@ -199,6 +208,7 @@ describe('multiple tokens tests', function() {
         await dex.addTokenPair(
           doc.address,
           otherSecondary.address,
+          priceProviderOtherSecondary.address,
           DEFAULT_PRICE_PRECISION.toString(),
           DEFAULT_PRICE_PRECISION.toString(),
           governor
@@ -324,6 +334,7 @@ describe('multiple tokens tests', function() {
         await dex.addTokenPair(
           doc.address,
           secondary.address,
+          priceProviderSecondary.address,
           scenario.comparisonPrecision,
           scenario.comparisonPrecision,
           governor
@@ -354,6 +365,7 @@ describe('multiple tokens tests', function() {
         await dex.addTokenPair(
           doc.address,
           otherBase.address,
+          priceProviderOtherSecondary.address,
           DEFAULT_PRICE_PRECISION.toString(),
           DEFAULT_PRICE_PRECISION.toString(),
           governor
@@ -361,6 +373,7 @@ describe('multiple tokens tests', function() {
         await dex.addTokenPair(
           otherBase.address,
           otherSecondary.address,
+          priceProviderOtherSecondary.address,
           scenario.alternateComparisonPrecision,
           scenario.alternateComparisonPrecision,
           governor

@@ -17,7 +17,6 @@ let testHelper;
 let wadify;
 let gov;
 let DEFAULT_ACCOUNT_INDEX;
-let pair;
 
 const assertDexCommissionBalances = ({ expectedBaseTokenBalance, expectedSecondaryTokenBalance }) =>
   function() {
@@ -48,14 +47,17 @@ const initContractsAndAllowance = async accounts => {
     minBlocksForTick: 1
   });
 
-  [dex, commissionManager, base, secondary, otherSecondary, gov] = await Promise.all([
-    testHelper.getDex(),
-    testHelper.getCommissionManager(),
-    testHelper.getBase(),
-    testHelper.getSecondary(),
-    testHelper.getOwnerBurnableToken().new(),
-    testHelper.getGovernor()
-  ]);
+  [dex, commissionManager, base, secondary, otherSecondary, gov, priceProvider] = await Promise.all(
+    [
+      testHelper.getDex(),
+      testHelper.getCommissionManager(),
+      testHelper.getBase(),
+      testHelper.getSecondary(),
+      testHelper.getOwnerBurnableToken().new(),
+      testHelper.getGovernor(),
+      testHelper.getTokenPriceProviderFake().new()
+    ]
+  );
   dex = testHelper.decorateGovernedSetters(dex);
   dex = testHelper.decorateOrderInsertions(dex, accounts, { base, secondary });
   pair = [base.address, secondary.address];
