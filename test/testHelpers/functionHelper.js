@@ -100,15 +100,15 @@ const orderArrayToObj = order => ({
   next: order[6]
 });
 
-const getSellOrderAtIndex = dex => async (baseAddress, secondaryAddress, index) => {
-  const order = await dex.getSellOrderAtIndex(baseAddress, secondaryAddress, index);
+const getOrderAtIndex = async (dex, baseAddress, secondaryAddress, index, isBuy) => {
+  const order = await dex.getOrderAtIndex(baseAddress, secondaryAddress, index, isBuy);
   return orderArrayToObj(order);
 };
+const getSellOrderAtIndex = dex => async (baseAddress, secondaryAddress, index) =>
+  getOrderAtIndex(dex, baseAddress, secondaryAddress, index, false);
 
-const getBuyOrderAtIndex = dex => async (baseAddress, secondaryAddress, index) => {
-  const order = await dex.getBuyOrderAtIndex(baseAddress, secondaryAddress, index);
-  return orderArrayToObj(order);
-};
+const getBuyOrderAtIndex = dex => async (baseAddress, secondaryAddress, index) =>
+  getOrderAtIndex(dex, baseAddress, secondaryAddress, index, true);
 
 const decorateGetOrderAtIndex = dex =>
   Object.assign({}, dex, {

@@ -981,6 +981,10 @@ library MoCExchangeLib {
     else if (_limitOrder.id == 0 && _marketOrder.id != 0){
       return _marketOrder;
     }
+    //There is a limit order and a market order.
+    //The price to compare MO with LO is computed: multiplyFactor * current market price.
+    //LOs have priority to  be processed in case of same price.
+    //Descending orderbooks => Buy Orders
     else {
       uint256 currentMOPrice = priceOfMarketOrders(_marketOrder.multiplyFactor);
       if (_limitOrder.price == currentMOPrice || priceGoesBefore(_orderbook, _limitOrder.price, currentMOPrice)){
@@ -1589,6 +1593,47 @@ If zero, will start from ordebook top.
     require(hasProcess, "No expired order found");
   }
 
+   /**
+    @notice Checks if there is any order to expire in an orderbook of a pair
+    @dev iterates _steps times over the orderbook starting from _orderId and process any encountered expired order
+    @param _pair Pair of tokens to be evaluated
+    @param _evaluateBuyOrders true if buy orders have to be evaluated, false if sell orderrs have to
+    */
+  function areOrdersToExpire(
+    Pair storage _pair,
+    bool _evaluateBuyOrders
+  ) public view returns (bool) {
+    MoCExchangeLib.Token storage token = _evaluateBuyOrders ? _pair.baseToken : _pair.secondaryToken;
+    return
+      areOrdersToExpire(_pair.tickState.number, token.orderbook, first(token.orderbook)) ||
+      areOrdersToExpire(_pair.tickState.number, token.orderbook, firstMarketOrder(token.orderbook));
+  }
+
+
+   /**
+    @notice Checks if there is any order to expire in any orderbook given an initial order
+    @dev iterates _steps times over the orderbook starting from _firstOrderToEvaluate and returns true on the first expired order
+    @param _tickNumber Number of the current tick
+    @param _orderbook Orderbook where the tokens
+    @param _firstOrderToEvaluate the initial order that will be evaluated, all of the following will be evaluated too
+    */
+  function areOrdersToExpire(
+    uint128 _tickNumber,
+    MoCExchangeLib.Data storage _orderbook,
+    MoCExchangeLib.Order storage _firstOrderToEvaluate
+  ) internal view returns (bool) {
+    MoCExchangeLib.Order storage toEvaluate = _firstOrderToEvaluate;
+
+    uint256 nextOrderId;
+    while (toEvaluate.id != 0) {
+      if (isExpired(toEvaluate, _tickNumber))
+        return true;
+      nextOrderId = toEvaluate.next;
+      toEvaluate = get(_orderbook, nextOrderId);
+    }
+    return false;
+  }
+
   /**
     @notice returns funds to the owner, paying commission in the process and emits ExpiredOrderProcessed event
     @param _commissionManager commission manager.
@@ -1691,7 +1736,7 @@ If zero, will start from ordebook top.
       sell.exchangeableAmount,
       _self.priceComparisonPrecision
     );
-//
+
     executeMatch(_commissionManager, _self, buy, sell, limitingAmount, _self.pageMemory.emergentPrice);
     if (matchType == MatchType.DOUBLE_FILL) {
       onOrderFullMatched(_commissionManager, _self.baseToken, buy, _self.tickState.number, _self.pageMemory.lastBuyMatch.id);
