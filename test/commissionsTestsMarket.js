@@ -49,15 +49,17 @@ const initContractsAndAllowance = async accounts => {
     minBlocksForTick: 1
   });
 
-  [dex, commissionManager, base, secondary, otherSecondary, gov, priceProvider] = await Promise.all([
-    testHelper.getDex(),
-    testHelper.getCommissionManager(),
-    testHelper.getBase(),
-    testHelper.getSecondary(),
-    testHelper.getOwnerBurnableToken().new(),
-    testHelper.getGovernor(),
-    testHelper.getTokenPriceProviderFake().new()
-  ]);
+  [dex, commissionManager, base, secondary, otherSecondary, gov, priceProvider] = await Promise.all(
+    [
+      testHelper.getDex(),
+      testHelper.getCommissionManager(),
+      testHelper.getBase(),
+      testHelper.getSecondary(),
+      testHelper.getOwnerBurnableToken().new(),
+      testHelper.getGovernor(),
+      testHelper.getTokenPriceProviderFake().new()
+    ]
+  );
   dex = testHelper.decorateGovernedSetters(dex);
   dex = testHelper.decorateOrderInsertions(dex, accounts, { base, secondary });
   pair = [base.address, secondary.address];
@@ -229,7 +231,7 @@ describe('Commissions tests - Market order should behave as a market order if th
     describe('GIVEN there are orders for 2 different token pairs', function() {
       before(async function() {
         await initContractsAndAllowance(accounts);
-        //set initial price
+        // set initial price
         await priceProvider.poke(testHelper.DEFAULT_PRICE_PRECISION.toString());
         await dex.addTokenPair(
           base.address,

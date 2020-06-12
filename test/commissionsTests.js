@@ -17,7 +17,6 @@ let testHelper;
 let wadify;
 let gov;
 let DEFAULT_ACCOUNT_INDEX;
-let pair;
 
 const assertDexCommissionBalances = ({ expectedBaseTokenBalance, expectedSecondaryTokenBalance }) =>
   function() {
@@ -48,14 +47,17 @@ const initContractsAndAllowance = async accounts => {
     minBlocksForTick: 1
   });
 
-  [dex, commissionManager, base, secondary, otherSecondary, gov] = await Promise.all([
-    testHelper.getDex(),
-    testHelper.getCommissionManager(),
-    testHelper.getBase(),
-    testHelper.getSecondary(),
-    testHelper.getOwnerBurnableToken().new(),
-    testHelper.getGovernor()
-  ]);
+  [dex, commissionManager, base, secondary, otherSecondary, gov, priceProvider] = await Promise.all(
+    [
+      testHelper.getDex(),
+      testHelper.getCommissionManager(),
+      testHelper.getBase(),
+      testHelper.getSecondary(),
+      testHelper.getOwnerBurnableToken().new(),
+      testHelper.getGovernor(),
+      testHelper.getTokenPriceProviderFake().new()
+    ]
+  );
   dex = testHelper.decorateGovernedSetters(dex);
   dex = testHelper.decorateOrderInsertions(dex, accounts, { base, secondary });
   pair = [base.address, secondary.address];
@@ -188,7 +190,7 @@ describe('Commissions tests', function() {
     describe('GIVEN there are orders for 2 different token pairs', function() {
       before(async function() {
         await initContractsAndAllowance(accounts);
-        //set initial price
+        // set initial price
         const priceProvider = await testHelper.getTokenPriceProviderFake().new();
         await priceProvider.poke(testHelper.DEFAULT_PRICE_PRECISION.toString());
         await dex.addTokenPair(

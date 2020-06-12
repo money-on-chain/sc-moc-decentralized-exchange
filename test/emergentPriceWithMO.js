@@ -16,6 +16,8 @@ describe('multiple tokens tests - emergent price', function() {
   let DEFAULT_PRICE_PRECISION;
   let DEFAULT_MAX_BLOCKS_FOR_TICK;
   let testHelper;
+  let priceProviderSecondary;
+  let priceProviderOtherSecondary;
   const MARKET_PRICE = 2;
 
   before(async function() {
@@ -41,6 +43,8 @@ describe('multiple tokens tests - emergent price', function() {
       OwnerBurnableToken.new(),
       testHelper.getGovernor()
     ]);
+    priceProviderSecondary = await testHelper.getTokenPriceProviderFake().new();
+    priceProviderOtherSecondary = await testHelper.getTokenPriceProviderFake().new();
     getEmergentPriceValue = async (baseAddress, secondaryAddress) =>
       (await dex.getEmergentPrice.call(baseAddress, secondaryAddress)).emergentPrice;
     dex = await testHelper.decorateGovernedSetters(dex);
@@ -95,9 +99,12 @@ describe('multiple tokens tests - emergent price', function() {
     });
     describe('AND there is one buy limit order, one sell limit order and one sell market order which is less competitive, AND every one of it should match', function() {
       before(async function() {
+        await priceProviderSecondary.poke(DEFAULT_PRICE_PRECISION.toString());
+
         await dex.addTokenPair(
           doc.address,
           secondary.address,
+          priceProviderSecondary.address,
           DEFAULT_PRICE_PRECISION.toString(),
           DEFAULT_PRICE_PRECISION.toString(),
           governor
@@ -148,9 +155,11 @@ describe('multiple tokens tests - emergent price', function() {
     });
     describe('AND there is one buy limit order, one sell market order and one sell limit order which is less competitive, AND every one of it should match', function() {
       before(async function() {
+        await priceProviderSecondary.poke(DEFAULT_PRICE_PRECISION.toString());
         await dex.addTokenPair(
           doc.address,
           secondary.address,
+          priceProviderSecondary.address,
           DEFAULT_PRICE_PRECISION.toString(),
           DEFAULT_PRICE_PRECISION.toString(),
           governor
@@ -202,9 +211,12 @@ describe('multiple tokens tests - emergent price', function() {
       const multiplyFactor01 = 1;
       const multiplyFactor02 = 2;
       before(async function() {
+        await priceProviderSecondary.poke(DEFAULT_PRICE_PRECISION.toString());
+
         await dex.addTokenPair(
           doc.address,
           secondary.address,
+          priceProviderSecondary.address,
           DEFAULT_PRICE_PRECISION.toString(),
           DEFAULT_PRICE_PRECISION.toString(),
           governor
@@ -231,9 +243,11 @@ describe('multiple tokens tests - emergent price', function() {
             from: seller
           }
         );
+        await priceProviderSecondary.poke(DEFAULT_PRICE_PRECISION.toString());
         await dex.addTokenPair(
           doc.address,
           otherSecondary.address,
+          priceProviderSecondary.address,
           DEFAULT_PRICE_PRECISION.toString(),
           DEFAULT_PRICE_PRECISION.toString(),
           governor
@@ -318,9 +332,12 @@ describe('multiple tokens tests - emergent price', function() {
       const averagePrice1 = (buyLOPrice1 + HARDCODED_PRICE * multiplyFactor01) / 2;
       const averagePrice2 = (sellLOPrice2 + HARDCODED_PRICE * multiplyFactor02) / 2;
       before(async function() {
+        await priceProviderSecondary.poke(DEFAULT_PRICE_PRECISION.toString());
+
         await dex.addTokenPair(
           doc.address,
           secondary.address,
+          priceProviderSecondary.address,
           DEFAULT_PRICE_PRECISION.toString(),
           DEFAULT_PRICE_PRECISION.toString(),
           governor
@@ -350,10 +367,12 @@ describe('multiple tokens tests - emergent price', function() {
         );
 
         // doc-other secondary
+        await priceProviderOtherSecondary.poke(DEFAULT_PRICE_PRECISION.toString());
 
         await dex.addTokenPair(
           doc.address,
           otherSecondary.address,
+          priceProviderOtherSecondary.address,
           DEFAULT_PRICE_PRECISION.toString(),
           DEFAULT_PRICE_PRECISION.toString(),
           governor

@@ -95,7 +95,9 @@ const utilsBuilder = artifacts => {
 
   const addTokenPairs = async (tokenPairsToAdd, dex, governor) => {
     // Get the pairs params in a list of the params each
-    const [baseTokens, secondaryTokens, priceProviders, precisions, prices] = unzip(tokenPairsToAdd);
+    const [baseTokens, secondaryTokens, priceProviders, precisions, prices] = unzip(
+      tokenPairsToAdd
+    );
 
     // Deploy the changer contract with the given params
     const addTokenPair = await AddTokenPairChanger.new(

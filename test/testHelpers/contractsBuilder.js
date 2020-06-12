@@ -44,7 +44,7 @@ const Governor = artifacts.require('Governor');
 const Stopper = artifacts.require('Stopper');
 const OwnerBurnableToken = artifacts.require('OwnerBurnableToken');
 const CommissionManager = artifacts.require('CommissionManager');
-const TokenPriceProviderFake = artifacts.require('TokenPriceProviderFake'); 
+const TokenPriceProviderFake = artifacts.require('TokenPriceProviderFake');
 
 const getBaseToken = () => DocToken;
 const getSecondaryToken = () => this.using.secondaryToken || BProToken;
@@ -114,7 +114,7 @@ const createContracts = async ({
     getStopper()
   ]);
 
-  const priceProviderFake = getTokenPriceProviderFake().deployed();
+  const priceProviderFake = await getTokenPriceProviderFake().new();
 
   const { commissionRate, cancelationPenaltyRate, expirationPenaltyRate } = commission || {};
 
@@ -148,8 +148,8 @@ const createContracts = async ({
 
   if (tokenPair) {
     const { pricePrecision, initialPrice } = tokenPair;
-    //set initial price
-    await priceProvider.poke(initialPrice || DEFAULT_PRICE_PRECISION.toString());
+    // set initial price
+    await priceProviderFake.poke(initialPrice || DEFAULT_PRICE_PRECISION.toString());
     await addTokenPair(dex)(
       base.address,
       secondary.address,

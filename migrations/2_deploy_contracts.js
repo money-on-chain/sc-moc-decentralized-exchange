@@ -110,7 +110,7 @@ module.exports = async function(deployer, currentNetwork, [owner]) {
         WRBTC.deployed(),
         TestToken.deployed()
       ]);
-  //TODO: MARKET ORDERS: ADD READING CONFIG FILE TO LOAD PRICE PROVIDER BY TOKEN PAIR
+  // TODO: MARKET ORDERS: ADD READING CONFIG FILE TO LOAD PRICE PROVIDER BY TOKEN PAIR
 
   console.log('Getting governance contracts');
   const [governor, stopper, proxyAdmin, upgradeDelegator] = await getGovernanceContracts(
@@ -193,7 +193,7 @@ module.exports = async function(deployer, currentNetwork, [owner]) {
 
   const { haveToAddTokenPairs } = config;
 
-  //TODO: ADD READING FROM config.json 
+  // TODO: ADD READING FROM config.json
   const docBproPriceProvider = await TokenPriceProviderFake.new();
   const docTestTokenPricProvider = await TokenPriceProviderFake.new();
   const docWrbtcPricProvider = await TokenPriceProviderFake.new();
@@ -201,7 +201,13 @@ module.exports = async function(deployer, currentNetwork, [owner]) {
   const wrbtcTestTokenPricProvider = await TokenPriceProviderFake.new();
 
   const tokenPairsToAdd = [
-    [doc.address, bpro.address, docBproPriceProvider.address, DEFAULT_PRICE_PRECISION_STRING, DEFAULT_PRICE_PRECISION_STRING],
+    [
+      doc.address,
+      bpro.address,
+      docBproPriceProvider.address,
+      DEFAULT_PRICE_PRECISION_STRING,
+      DEFAULT_PRICE_PRECISION_STRING
+    ],
     [
       doc.address,
       testToken.address,
@@ -209,8 +215,20 @@ module.exports = async function(deployer, currentNetwork, [owner]) {
       DEFAULT_PRICE_PRECISION_STRING,
       DEFAULT_PRICE_PRECISION_STRING
     ],
-    [doc.address, wrbtc.address, docWrbtcPricProvider.address, DEFAULT_PRICE_PRECISION_STRING, DEFAULT_PRICE_PRECISION_STRING],
-    [wrbtc.address, bpro.address, wrbtcBproPricProvider.address, DEFAULT_PRICE_PRECISION_STRING, DEFAULT_PRICE_PRECISION_STRING],
+    [
+      doc.address,
+      wrbtc.address,
+      docWrbtcPricProvider.address,
+      DEFAULT_PRICE_PRECISION_STRING,
+      DEFAULT_PRICE_PRECISION_STRING
+    ],
+    [
+      wrbtc.address,
+      bpro.address,
+      wrbtcBproPricProvider.address,
+      DEFAULT_PRICE_PRECISION_STRING,
+      DEFAULT_PRICE_PRECISION_STRING
+    ],
     [
       wrbtc.address,
       testToken.address,
