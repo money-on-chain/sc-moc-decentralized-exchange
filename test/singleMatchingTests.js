@@ -4,7 +4,7 @@ const _ = require('lodash');
 const { orderBookMatcherBothTypes } = require('./testHelpers/orderBookMatcher');
 const testHelperBuilder = require('./testHelpers/testHelper');
 
-describe('Dex: Single matching tests', function() {
+describe.only('Dex: Single matching tests', function() {
   let testHelper;
   before(function() {
     testHelper = testHelperBuilder();
@@ -169,7 +169,7 @@ describe('Dex: Single matching tests', function() {
     },
     {
       description:
-        'single match, sell order filled, sell.price < matchPrice < buy.price. The correct lockingAmount is substracted from the sell order',
+        'single match, buy order filled, sell.price < matchPrice < buy.price. The correct lockingAmount is substracted from the sell order',
       buyOrders: {
         description: 'GIVEN there is a buy order',
         orders: [{ lockingAmount: 100, price: 20 }]
@@ -308,6 +308,61 @@ describe('Dex: Single matching tests', function() {
         description: 'AND the buy orderbook still has an order',
         orders: [{ id: 1, lockedAmount: 10, price: 1 }]
       }
+    },
+    {
+      description: 'single match, buy orders filled, small price difference',
+      config: {
+        commissionRate: 0 // no commission
+      },
+      accounts: {
+        1: { baseBalance: 20, baseAllowance: 20, secondaryBalance: 20, secondaryAllowance: 20 },
+        2: { baseBalance: 20, baseAllowance: 20, secondaryBalance: 20, secondaryAllowance: 20 }
+      },
+      buyOrders: {
+        description: 'GIVEN there is a buy order',
+        orders: [{ lockingAmount: 200, price: 2.02, accountIndex: 1, commission: 0 }]
+      },
+      sellOrders: {
+        description: 'AND a sell order at the same price',
+        orders: [{ lockingAmount: 10000, price: 1.98, accountIndex: 2, commission: 0 }]
+      },
+      buyerMatches: {
+        description: 'THEN the buyer has no change',
+        matches: [
+          {
+            orderId: 1,
+            amountSent: 200,
+            change: 100000000000,
+            received: 99.0099009900990099009900990099,
+            commission: 0,
+            matchPrice: 2,
+            filled: true
+          }
+        ]
+      },
+      sellerMatches: {
+        description: 'AND the seller has no surplus',
+        matches: [
+          {
+            orderId: 2,
+            amountSent: 99.0099009900990099009900990099,
+            commission: 0,
+            received: 200,
+            surplus: 900.9900990099009900990099099,
+            remainingAmount: 1000 - 99.0099009900990099009900990099,
+            matchPrice: 2
+          }
+        ]
+      },
+      remainingSellOrders: {
+        description: 'AND the sell orderbook still has an order',
+        orders: [{ id: 2, lockedAmount: 2.5, price: 1.98 }]
+      },
+      remainingBuyOrders: {
+        description: 'AND the buy orderbook is empty',
+        orders: []
+      },
+      expectedAccounts: [{ balance: 20, allowance: 20 }, { balance: 20, allowance: 20 }]
     }
   ].forEach(matcher);
 });

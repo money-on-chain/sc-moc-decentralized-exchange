@@ -125,7 +125,7 @@ const insertBuyMarketOrder = (
 const expectInsertionEventMarket = isBuy => (
   receipt,
   { baseTokenAddress, secondaryTokenAddress, price, commission, lockingAmount }
-) => {
+) =>
   expectEvent.inTransaction(receipt.tx, MoCDecentralizedExchange, 'NewOrderInserted', {
     baseTokenAddress,
     secondaryTokenAddress,
@@ -134,8 +134,6 @@ const expectInsertionEventMarket = isBuy => (
     price: pricefy(price / MARKET_PRICE), // This field is actually the priceMultiplier
     isBuy
   });
-};
-
 const expectInsertionEventLimit = isBuy => (
   receipt,
   { baseTokenAddress, secondaryTokenAddress, price, commission, lockingAmount }

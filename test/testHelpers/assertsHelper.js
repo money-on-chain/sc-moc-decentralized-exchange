@@ -72,7 +72,7 @@ const convertFieldsIntoContractPrecision = (wadify, pricefy) => ({
     orderId: orderId.toString()
   };
   if (matchPrice) Object.assign(withPrecision, { matchPrice: pricefy(matchPrice) });
-  if (filled) Object.assign(withPrecision, { remainingAmount: pricefy(0) });
+  if (filled) Object.assign(withPrecision, { remainingAmount: wadify(0) });
 
   return args
     ? Object.keys(args).reduce(
