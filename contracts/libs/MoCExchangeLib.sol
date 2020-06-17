@@ -166,6 +166,7 @@ library MoCExchangeLib {
     bool disabled;
     uint256 emaPrice;
     uint256 smoothingFactor;
+    uint256 spotPrice;
   }
 
   /**

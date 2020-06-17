@@ -148,7 +148,8 @@ or its inverse must not be listed already
       _initialPrice,
       false,
       _initialPrice,
-      SMOOTHING_FACTOR
+      SMOOTHING_FACTOR,
+      _initialPrice
     );
   }
 
