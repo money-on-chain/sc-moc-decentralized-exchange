@@ -205,9 +205,10 @@ library MoCExchangeLib {
     uint256 lastPendingMarketOrderToPopId;
     uint256 amountOfPendingOrders;
     uint256 amountOfPendingMarketOrders;
+    uint256 marketPrice;
     bool orderDescending;
   }
-
+  
   /**
     @notice Struct representing a single order
     @dev The next attribute is a reference to the next order in the structure this order.
@@ -915,7 +916,6 @@ library MoCExchangeLib {
     Returns the ID of the next valid order. It can be MO or LO.
     @notice returns the next valid Order for the given _orderbook
     @dev gets the next Order, if not valid, recursivelly calls itself until finding the first valid or reaching the end.
-    @param _marketPrice The market price
     @param _orderbook where the _orderId is from
     @param _tickNumber for current tick
     @param _limitOrderId id of the order from with obtain the next one, zero if beginging
@@ -923,12 +923,12 @@ library MoCExchangeLib {
     @return next valid Order, id = 0 if no valid order found
    */
   function getNextValidOrder(
-    uint256 _marketPrice,
     Data storage _orderbook,
     uint64 _tickNumber,
     uint256 _limitOrderId,
     uint256 _marketOrderId
   ) public view returns (Order storage, uint256, uint256) {
+    uint256 _marketPrice = _orderbook.marketPrice;
     Order storage nextLO = getNextValidLimitOrder(_orderbook, _tickNumber, _limitOrderId);
     Order storage nextMO = getNextValidMarketOrder(_orderbook, _tickNumber, _marketOrderId);
     Order storage nextOrder = mostCompetitiveOrder(_marketPrice, _orderbook, nextLO, nextMO);
@@ -1300,8 +1300,8 @@ library MoCExchangeLib {
     MoCExchangeLib.Data storage buyOrderbook = _self.baseToken.orderbook;
     MoCExchangeLib.Data storage sellOrderbook = _self.secondaryToken.orderbook;
 
-    (buy, lastBuyLimitOrderId, lastBuyMarketOrderId) = getNextValidOrder(marketPrice, buyOrderbook, tickNumber, 0, 0);
-    (sell, lastSellLimitOrderId,lastSellMarketOrderId) = getNextValidOrder(marketPrice, sellOrderbook, tickNumber, 0, 0);
+    (buy, lastBuyLimitOrderId, lastBuyMarketOrderId) = getNextValidOrder(buyOrderbook, tickNumber, 0, 0);
+    (sell, lastSellLimitOrderId,lastSellMarketOrderId) = getNextValidOrder(sellOrderbook, tickNumber, 0, 0);
 
     while (shouldMatchMemory(_self, buy, sell)) {
       lastBuyMatch = buy;
@@ -1313,15 +1313,15 @@ library MoCExchangeLib {
         pricePrecision);
 
       if (matchType == MatchType.DOUBLE_FILL) {
-        (buy, lastBuyLimitOrderId, lastBuyMarketOrderId) = getNextValidOrder(marketPrice, buyOrderbook, tickNumber, lastBuyLimitOrderId, lastBuyMarketOrderId);
-        (sell, lastSellLimitOrderId,lastSellMarketOrderId) = getNextValidOrder(marketPrice, sellOrderbook, tickNumber, lastSellLimitOrderId, lastSellMarketOrderId);
+        (buy, lastBuyLimitOrderId, lastBuyMarketOrderId) = getNextValidOrder(buyOrderbook, tickNumber, lastBuyLimitOrderId, lastBuyMarketOrderId);
+        (sell, lastSellLimitOrderId,lastSellMarketOrderId) = getNextValidOrder(sellOrderbook, tickNumber, lastSellLimitOrderId, lastSellMarketOrderId);
       } else if (matchType == MatchType.BUYER_FILL) {
-        (buy, lastBuyLimitOrderId, lastBuyMarketOrderId) = getNextValidOrder(marketPrice, buyOrderbook, tickNumber, lastBuyLimitOrderId, lastBuyMarketOrderId);
+        (buy, lastBuyLimitOrderId, lastBuyMarketOrderId) = getNextValidOrder(buyOrderbook, tickNumber, lastBuyLimitOrderId, lastBuyMarketOrderId);
         sell.exchangeableAmount = sell.exchangeableAmount.sub(limitingAmount);
       } else if (matchType == MatchType.SELLER_FILL) {
 
         uint256 buyerExpectedSend = convertToBase(limitingAmount, getOrderPrice(_self, buy), pricePrecision);
-        (sell, lastSellLimitOrderId,lastSellMarketOrderId) = getNextValidOrder(marketPrice, sellOrderbook, tickNumber, lastSellLimitOrderId, lastSellMarketOrderId);
+        (sell, lastSellLimitOrderId,lastSellMarketOrderId) = getNextValidOrder(sellOrderbook, tickNumber, lastSellLimitOrderId, lastSellMarketOrderId);
 
         buy.exchangeableAmount = buy.exchangeableAmount.sub(buyerExpectedSend);
       } else {
@@ -1692,14 +1692,16 @@ If zero, will start from ordebook top.
   function onSimulationStart(Pair storage _pair) public {
     _pair.tickStage = TickStage.RUNNING_SIMULATION;
     _pair.marketPrice = getMarketPrice(_pair);
+    _pair.baseToken.orderbook.marketPrice = getMarketPrice(_pair);
+    _pair.secondaryToken.orderbook.marketPrice = getMarketPrice(_pair);
     (
       _pair.pageMemory.lastBuyMatch,
       _pair.pageMemory.lastBuyLimitOrderId,
-      _pair.pageMemory.lastBuyMarketOrderId) = getNextValidOrder(_pair.marketPrice, _pair.baseToken.orderbook,  _pair.tickState.number, 0, 0);
+      _pair.pageMemory.lastBuyMarketOrderId) = getNextValidOrder(_pair.baseToken.orderbook,  _pair.tickState.number, 0, 0);
     (
       _pair.pageMemory.lastSellMatch,
       _pair.pageMemory.lastSellLimitOrderId,
-      _pair.pageMemory.lastSellMarketOrderId) = getNextValidOrder(_pair.marketPrice, _pair.secondaryToken.orderbook,  _pair.tickState.number, 0, 0);
+      _pair.pageMemory.lastSellMarketOrderId) = getNextValidOrder(_pair.secondaryToken.orderbook,  _pair.tickState.number, 0, 0);
   }
 
   /**
@@ -1807,15 +1809,15 @@ If zero, will start from ordebook top.
     if (matchType == MatchType.DOUBLE_FILL) {
       // the asignments from getNextValidOrder set the references
       // to point to the "real" orders
-      (buy, lastBuyLimitOrderId, lastBuyMarketOrderId) = getNextValidOrder(marketPrice, buyOrderbook, tickNumber, lastBuyLimitOrderId, lastBuyMarketOrderId);
-      (sell, lastSellLimitOrderId,lastSellMarketOrderId) = getNextValidOrder(marketPrice, sellOrderbook, tickNumber, lastSellLimitOrderId, lastSellMarketOrderId);
+      (buy, lastBuyLimitOrderId, lastBuyMarketOrderId) = getNextValidOrder(buyOrderbook, tickNumber, lastBuyLimitOrderId, lastBuyMarketOrderId);
+      (sell, lastSellLimitOrderId,lastSellMarketOrderId) = getNextValidOrder(sellOrderbook, tickNumber, lastSellLimitOrderId, lastSellMarketOrderId);
 
     } else if (matchType == MatchType.BUYER_FILL) {
-      (buy, lastBuyLimitOrderId, lastBuyMarketOrderId) = getNextValidOrder(marketPrice, buyOrderbook, tickNumber, lastBuyLimitOrderId, lastBuyMarketOrderId);
+      (buy, lastBuyLimitOrderId, lastBuyMarketOrderId) = getNextValidOrder(buyOrderbook, tickNumber, lastBuyLimitOrderId, lastBuyMarketOrderId);
       sell.exchangeableAmount = sell.exchangeableAmount.sub(limitingAmount);
 
     } else if (matchType == MatchType.SELLER_FILL) {
-      (sell, lastSellLimitOrderId,lastSellMarketOrderId) = getNextValidOrder(marketPrice, sellOrderbook, tickNumber, lastSellLimitOrderId, lastSellMarketOrderId);
+      (sell, lastSellLimitOrderId,lastSellMarketOrderId) = getNextValidOrder(sellOrderbook, tickNumber, lastSellLimitOrderId, lastSellMarketOrderId);
       uint256 buyerExpectedSend = convertToBase(limitingAmount, orderPrice, pricePrecision);
       buy.exchangeableAmount = buy.exchangeableAmount.sub(buyerExpectedSend);
 
