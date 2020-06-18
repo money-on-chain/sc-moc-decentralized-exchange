@@ -4,6 +4,7 @@
  */
 const { expectEvent } = require('openzeppelin-test-helpers');
 const testHelperBuilder = require('./testHelpers/testHelper');
+const TokenPriceProviderFake = artifacts.require('TokenPriceProviderFake');
 
 let dex;
 let commissionManager;
@@ -18,6 +19,7 @@ let wadify;
 let gov;
 let DEFAULT_ACCOUNT_INDEX;
 let pair;
+let docBproPriceProvider;
 const MARKET_PRICE = 2;
 
 const assertDexCommissionBalances = ({ expectedBaseTokenBalance, expectedSecondaryTokenBalance }) =>
@@ -62,6 +64,12 @@ const initContractsAndAllowance = async accounts => {
   dex = testHelper.decorateOrderInsertions(dex, accounts, { base, secondary });
   pair = [base.address, secondary.address];
   await testHelper.setBalancesAndAllowances({ accounts });
+  await priceProvider.poke(wadify(MARKET_PRICE));
+  
+  const docBproPriceProviderAddress = await dex.getPriceProvider(base.address, secondary.address);
+  docBproPriceProvider = await TokenPriceProviderFake.at(docBproPriceProviderAddress);
+  await docBproPriceProvider.poke(wadify(MARKET_PRICE));
+  const marketPrice = await dex.getMarketPrice(base.address, secondary.address);
 };
 
 describe('Commissions tests - Market order should behave as a market order if the price does not change ', function() {
@@ -94,6 +102,7 @@ describe('Commissions tests - Market order should behave as a market order if th
       });
       describe('WHEN instructed to match orders', function() {
         before(async function() {
+          //set initial price
           txReceipt = await dex.matchOrders(
             base.address,
             secondary.address,
@@ -230,7 +239,7 @@ describe('Commissions tests - Market order should behave as a market order if th
       before(async function() {
         await initContractsAndAllowance(accounts);
         //set initial price
-        await priceProvider.poke(testHelper.DEFAULT_PRICE_PRECISION.toString());
+        await priceProvider.poke(wadify(MARKET_PRICE));
         await dex.addTokenPair(
           base.address,
           otherSecondary.address,

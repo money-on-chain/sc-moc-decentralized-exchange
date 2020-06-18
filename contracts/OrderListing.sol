@@ -424,6 +424,11 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     );
   }
 
+  function getPriceProvider(address _baseToken, address _secondaryToken) external view returns (address) {
+    MoCExchangeLib.Pair storage pair = tokenPair(_baseToken, _secondaryToken);
+    return address(pair.priceProvider);
+  }
+
   // Leave a gap betweeen inherited contracts variables in order to be
   // able to add more variables in them later
   uint256[50] private upgradeGap;

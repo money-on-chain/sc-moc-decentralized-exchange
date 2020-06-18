@@ -299,6 +299,7 @@ and disabled first
     return getTickStage(_baseToken, _secondaryToken) != MoCExchangeLib.TickStage.RECEIVING_ORDERS;
   }
 
+
   /**
 @notice Calculates closing price as if the tick closes at this moment
 @return emergentPrice: AVG price of the last matched Orders
@@ -320,6 +321,16 @@ and disabled first
     if (!pair.isValid()) return (0, 0, 0, 0);
 
     return pair.getEmergentPrice();
+  }
+
+  /**
+  @notice Get the current market price
+  @param _baseToken Address of the base token of the pair
+  @param _secondaryToken Address of the secondary token of the pair
+  */
+  function getMarketPrice(address _baseToken, address _secondaryToken) public view returns (uint256) {
+    MoCExchangeLib.Pair storage pair = tokenPair(_baseToken, _secondaryToken);
+    return MoCExchangeLib.getMarketPrice(pair);
   }
 
   /**

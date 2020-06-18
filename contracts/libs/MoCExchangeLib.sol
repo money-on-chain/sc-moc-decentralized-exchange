@@ -2044,9 +2044,10 @@ If zero, will start from ordebook top.
    * @notice Get the current market price calling PriceProvider
    * @param _pair The pair of tokens
    */
-  function getMarketPrice(Pair storage _pair) private view returns(uint256) {
+  function getMarketPrice(Pair storage _pair) public view returns(uint256) {
     uint256 initialPrice = _pair.marketPrice;
     (bytes32 binaryPrice, bool success) = _pair.priceProvider.peek();
+    require(success, "NO TENGO EL PRECIO GATIN");
     return success ? uint256(binaryPrice) : initialPrice;
   }
 }
