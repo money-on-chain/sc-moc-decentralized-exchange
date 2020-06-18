@@ -31,29 +31,38 @@
         "address": "0x19F64674D8A5B4E652319F5e239eFd3bc969A1fE"
       }
     }, 
-    "existingPriceProviders": [
+    "existingPriceProviders": {
+      "priceProvider1":
       {
         "baseToken": "DocToken",
         "secondaryToken": "BproToken",
-        "priceProvider": {
-          "address": "0x..."
-        }
+        "address": "0x..."
       },
-      {
-        "baseToken": "DocToken",
-        "secondaryToken": "WRBTC",
-        "priceProvider": {
-          "address": "0x..."
-        }
-      },
+      "priceProvider2":
       {
         "baseToken": "DocToken",
         "secondaryToken": "TestToken",
-        "priceProvider": {
-          "address": "0x..."
-        }
-      }
-    ]
+        "address": "0x..."
+      },
+      "priceProvider3":
+      {
+        "baseToken": "DocToken",
+        "secondaryToken": "WRBTC",
+        "address": "0x..."
+      },
+      "priceProvider4":
+      {
+        "baseToken": "WRBTC",
+        "secondaryToken": "BproToken",
+        "address": "0x..."
+      },
+      "priceProvider5":
+      {
+        "baseToken": "RifToken",
+        "secondaryToken": "TestToken",
+        "address": "0x..."
+      }      
+    }
   },
   "development": {
     "deployGovernance": true,

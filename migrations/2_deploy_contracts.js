@@ -110,7 +110,6 @@ module.exports = async function(deployer, currentNetwork, [owner]) {
         WRBTC.deployed(),
         TestToken.deployed()
       ]);
-  // TODO: MARKET ORDERS: ADD READING CONFIG FILE TO LOAD PRICE PROVIDER BY TOKEN PAIR
 
   console.log('Getting governance contracts');
   const [governor, stopper, proxyAdmin, upgradeDelegator] = await getGovernanceContracts(
@@ -192,7 +191,8 @@ module.exports = async function(deployer, currentNetwork, [owner]) {
   // https://www.trufflesuite.com/docs/truffle/getting-started/running-migrations
 
   const { haveToAddTokenPairs } = config;
-
+  const { existingPriceProviders } = config;
+  
   // TODO: ADD READING FROM config.json
   const docBproPriceProvider = await TokenPriceProviderFake.new();
   const docTestTokenPricProvider = await TokenPriceProviderFake.new();
