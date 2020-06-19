@@ -192,7 +192,7 @@ module.exports = async function(deployer, currentNetwork, [owner]) {
 
   const { haveToAddTokenPairs } = config;
   const { existingPriceProviders } = config;
-  
+
   // TODO: ADD READING FROM config.json
   const docBproPriceProvider = await TokenPriceProviderFake.new();
   const docTestTokenPricProvider = await TokenPriceProviderFake.new();
