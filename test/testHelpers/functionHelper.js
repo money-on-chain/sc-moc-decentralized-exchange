@@ -1,6 +1,8 @@
 const chunk = require('lodash/chunk');
 const { BN, expectEvent } = require('openzeppelin-test-helpers');
 const BigNumber = require('bignumber.js');
+const TokenPriceProviderFake = artifacts.require('TokenPriceProviderFake');
+
 const {
   DEFAULT_PRICE,
   DEFAULT_AMOUNT,
@@ -110,6 +112,18 @@ const getSellOrderAtIndex = dex => async (baseAddress, secondaryAddress, index) 
 const getBuyOrderAtIndex = dex => async (baseAddress, secondaryAddress, index) =>
   getOrderAtIndex(dex, baseAddress, secondaryAddress, index, true);
 
+const setOracleMarketPrice = async (dex, baseAddress, secondaryAddress, newPrice) => {
+  const priceProvider = await getPriceProvider(dex, baseAddress, secondaryAddress);
+  await priceProvider.poke(wadify(newPrice));
+}
+
+const getPriceProvider = async (dex, baseAddress, secondaryAddress) => {
+  const dexInstance = dex || (await this.getDex());
+  const priceProviderAddress = await dexInstance.getPriceProvider(baseAddress, secondaryAddress);
+  const priceProvider = await TokenPriceProviderFake.at(priceProviderAddress);
+  return priceProvider;
+}
+
 const decorateGetOrderAtIndex = dex =>
   Object.assign({}, dex, {
     getBuyOrderAtIndex: getBuyOrderAtIndex(dex),
@@ -200,5 +214,7 @@ module.exports = {
   DEFAULT_BALANCES_AND_ALLOWANCES,
   decorateGetOrderAtIndex,
   decorateOrderInsertions,
-  executeBatched
+  executeBatched,
+  setOracleMarketPrice,
+  getPriceProvider
 };

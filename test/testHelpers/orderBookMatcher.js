@@ -178,7 +178,6 @@ const orderBookMatcherGeneric = (
         testHelper.getSecondaryToken(),
         testHelper.getMoCDex()
       ];
-
       ({
         wadify,
         pricefy,
@@ -192,6 +191,7 @@ const orderBookMatcherGeneric = (
         testHelper.getBase(),
         testHelper.getSecondary()
       ]);
+      await testHelper.setOracleMarketPrice(dex, baseToken.address, secondaryToken.address, MARKET_PRICE);
       dex = await testHelper.decorateGetOrderAtIndex(dex);
       if (!scenario.accounts) {
         // it's easier to set the accounts here instead of

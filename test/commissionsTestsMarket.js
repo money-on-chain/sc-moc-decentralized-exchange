@@ -5,8 +5,6 @@
 const { expectEvent } = require('openzeppelin-test-helpers');
 const testHelperBuilder = require('./testHelpers/testHelper');
 
-const TokenPriceProviderFake = artifacts.require('TokenPriceProviderFake');
-
 let dex;
 let commissionManager;
 let base;
@@ -68,11 +66,8 @@ const initContractsAndAllowance = async accounts => {
   pair = [base.address, secondary.address];
   await testHelper.setBalancesAndAllowances({ accounts });
   await priceProvider.poke(wadify(MARKET_PRICE));
-
-  const docBproPriceProviderAddress = await dex.getPriceProvider(base.address, secondary.address);
-  docBproPriceProvider = await TokenPriceProviderFake.at(docBproPriceProviderAddress);
-  await docBproPriceProvider.poke(wadify(MARKET_PRICE));
-  const marketPrice = await dex.getMarketPrice(base.address, secondary.address);
+  
+  await testHelper.setOracleMarketPrice(dex, base.address, secondary.address, MARKET_PRICE);
 };
 
 describe('Commissions tests - Market order should behave as a market order if the price does not change ', function() {

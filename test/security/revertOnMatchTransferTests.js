@@ -105,7 +105,7 @@ const expectedScenario = {
   }
 };
 
-describe('Security: ERC20 Transfer revert', function() {
+describe.skip('Security: ERC20 Transfer revert', function() {
   this.timeout(5000);
   const getTestHelper = accounts => async () => {
     const testHelper = testHelperBuilder();
@@ -125,7 +125,10 @@ describe('Security: ERC20 Transfer revert', function() {
   contract('Dex: GIVEN a user gets black-listed from secondary Token', function(accounts) {
     const getTestHelperAndBlackList = async () => {
       const testHelper = await getTestHelper(accounts)();
+      const dex = await testHelper.getDex();
       const secondary = await testHelper.getSecondary();
+      const base = await testHelper.getBase();
+      await testHelper.setOracleMarketPrice(dex, doc.address, secondary.address, 1);
       await secondary.blacklist(accounts[2]);
       return testHelper;
     };
