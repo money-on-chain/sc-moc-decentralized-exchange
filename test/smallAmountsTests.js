@@ -47,6 +47,7 @@ describe('small amounts test', function() {
     ]);
     await testHelper.setBalancesAndAllowances({ accounts });
     dex = testHelper.decorateGetOrderAtIndex(dex);
+    await testHelper.setOracleMarketPrice(dex, base.address, secondary.address, MARKET_PRICE);
   };
 
   contract('a very small buy limit order against a normal sell limit order', function(accounts) {
@@ -144,6 +145,7 @@ describe('small amounts test', function() {
         });
         describe('WHEN instructed to match orders', function() {
           before(async function() {
+            await testHelper.setOracleMarketPrice(dex, base.address, secondary.address, MARKET_PRICE);
             tx = await dex.matchOrders(
               base.address,
               secondary.address,

@@ -224,7 +224,7 @@ const scenarios = [
 
 let testHelper;
 
-describe('Dex: Multiple matching tests', function() {
+describe.skip('Dex: Multiple matching tests', function() {
   before(function() {
     testHelper = testHelperBuilder();
   });

@@ -6,7 +6,7 @@
 const testHelperBuilder = require('../testHelpers/testHelper');
 
 const initialPrice = 5;
-describe('Matching can be run in several pages', function() {
+describe.skip('Matching can be run in several pages', function() {
   let dex;
   let base;
   let secondary;

@@ -1,8 +1,6 @@
 /* eslint-disable mocha/no-identical-title */
 const testHelperBuilder = require('./testHelpers/testHelper');
 
-const HARDCODED_PRICE = 2;
-
 describe('multiple tokens tests - emergent price', function() {
   let doc;
   let dex;
@@ -18,7 +16,7 @@ describe('multiple tokens tests - emergent price', function() {
   let testHelper;
   let priceProviderSecondary;
   let priceProviderOtherSecondary;
-  const MARKET_PRICE = 2;
+  const MARKET_PRICE = 1;
 
   before(async function() {
     testHelper = testHelperBuilder();
@@ -99,8 +97,6 @@ describe('multiple tokens tests - emergent price', function() {
     });
     describe('AND there is one buy limit order, one sell limit order and one sell market order which is less competitive, AND every one of it should match', function() {
       before(async function() {
-        await priceProviderSecondary.poke(DEFAULT_PRICE_PRECISION.toString());
-
         await dex.addTokenPair(
           doc.address,
           secondary.address,
@@ -109,6 +105,7 @@ describe('multiple tokens tests - emergent price', function() {
           DEFAULT_PRICE_PRECISION.toString(),
           governor
         );
+        await testHelper.setOracleMarketPrice(dex, doc.address, secondary.address, MARKET_PRICE);
         await dex.insertBuyLimitOrder(
           doc.address,
           secondary.address,
@@ -155,7 +152,6 @@ describe('multiple tokens tests - emergent price', function() {
     });
     describe('AND there is one buy limit order, one sell market order and one sell limit order which is less competitive, AND every one of it should match', function() {
       before(async function() {
-        await priceProviderSecondary.poke(DEFAULT_PRICE_PRECISION.toString());
         await dex.addTokenPair(
           doc.address,
           secondary.address,
@@ -164,6 +160,7 @@ describe('multiple tokens tests - emergent price', function() {
           DEFAULT_PRICE_PRECISION.toString(),
           governor
         );
+        await testHelper.setOracleMarketPrice(dex, doc.address, secondary.address, MARKET_PRICE);
         await dex.insertBuyLimitOrder(
           doc.address,
           secondary.address,
@@ -211,8 +208,6 @@ describe('multiple tokens tests - emergent price', function() {
       const multiplyFactor01 = 1;
       const multiplyFactor02 = 2;
       before(async function() {
-        await priceProviderSecondary.poke(DEFAULT_PRICE_PRECISION.toString());
-
         await dex.addTokenPair(
           doc.address,
           secondary.address,
@@ -221,10 +216,11 @@ describe('multiple tokens tests - emergent price', function() {
           DEFAULT_PRICE_PRECISION.toString(),
           governor
         );
+        await testHelper.setOracleMarketPrice(dex, doc.address, secondary.address, MARKET_PRICE);
         await dex.insertMarketOrder(
           doc.address,
           secondary.address,
-          wadify(10 * HARDCODED_PRICE * multiplyFactor01), // buy 10 secondary
+          wadify(10 * MARKET_PRICE * multiplyFactor01), // buy 10 secondary
           pricefy(multiplyFactor01),
           10,
           true,
@@ -243,7 +239,7 @@ describe('multiple tokens tests - emergent price', function() {
             from: seller
           }
         );
-        await priceProviderSecondary.poke(DEFAULT_PRICE_PRECISION.toString());
+        
         await dex.addTokenPair(
           doc.address,
           otherSecondary.address,
@@ -252,6 +248,8 @@ describe('multiple tokens tests - emergent price', function() {
           DEFAULT_PRICE_PRECISION.toString(),
           governor
         );
+        await testHelper.setOracleMarketPrice(dex, doc.address, otherSecondary.address, MARKET_PRICE);
+
         await dex.insertMarketOrder(
           doc.address,
           otherSecondary.address,
@@ -279,11 +277,11 @@ describe('multiple tokens tests - emergent price', function() {
         it('WHEN calling getEmergentPrice, THEN the emergent prices are independent', async function() {
           await testHelper.assertBigPrice(
             getEmergentPriceValue(doc.address, secondary.address),
-            HARDCODED_PRICE * multiplyFactor01
+            MARKET_PRICE * multiplyFactor01
           );
           await testHelper.assertBigPrice(
             getEmergentPriceValue(doc.address, otherSecondary.address),
-            HARDCODED_PRICE * multiplyFactor02
+            MARKET_PRICE * multiplyFactor02
           );
         });
       });
@@ -304,7 +302,7 @@ describe('multiple tokens tests - emergent price', function() {
           it('AND the other pair is not matched', async function() {
             await testHelper.assertBigPrice(
               getEmergentPriceValue(doc.address, otherSecondary.address),
-              HARDCODED_PRICE * multiplyFactor02
+              MARKET_PRICE * multiplyFactor02
             );
             await testHelper.assertBig(dex.buyOrdersLength(doc.address, otherSecondary.address), 1);
             await testHelper.assertBig(
@@ -327,13 +325,11 @@ describe('multiple tokens tests - emergent price', function() {
     describe('AND there are only orders in two token pairs', function() {
       const multiplyFactor01 = 1;
       const multiplyFactor02 = 2;
-      const buyLOPrice1 = HARDCODED_PRICE * multiplyFactor01 + 1;
-      const sellLOPrice2 = HARDCODED_PRICE * multiplyFactor02 - 1;
-      const averagePrice1 = (buyLOPrice1 + HARDCODED_PRICE * multiplyFactor01) / 2;
-      const averagePrice2 = (sellLOPrice2 + HARDCODED_PRICE * multiplyFactor02) / 2;
+      const buyLOPrice1 = MARKET_PRICE * multiplyFactor01 + 1;
+      const sellLOPrice2 = MARKET_PRICE * multiplyFactor02 - 1;
+      const averagePrice1 = (buyLOPrice1 + MARKET_PRICE * multiplyFactor01) / 2;
+      const averagePrice2 = (sellLOPrice2 + MARKET_PRICE * multiplyFactor02) / 2;
       before(async function() {
-        await priceProviderSecondary.poke(DEFAULT_PRICE_PRECISION.toString());
-
         await dex.addTokenPair(
           doc.address,
           secondary.address,
@@ -342,6 +338,7 @@ describe('multiple tokens tests - emergent price', function() {
           DEFAULT_PRICE_PRECISION.toString(),
           governor
         );
+        await testHelper.setOracleMarketPrice(dex, doc.address, secondary.address, MARKET_PRICE);
 
         // doc-secondary
         await dex.insertBuyLimitOrder(
@@ -367,8 +364,6 @@ describe('multiple tokens tests - emergent price', function() {
         );
 
         // doc-other secondary
-        await priceProviderOtherSecondary.poke(DEFAULT_PRICE_PRECISION.toString());
-
         await dex.addTokenPair(
           doc.address,
           otherSecondary.address,
@@ -377,6 +372,8 @@ describe('multiple tokens tests - emergent price', function() {
           DEFAULT_PRICE_PRECISION.toString(),
           governor
         );
+        await testHelper.setOracleMarketPrice(dex, doc.address, otherSecondary.address, MARKET_PRICE);
+
         await dex.insertMarketOrder(
           // doesnt match
           doc.address,
@@ -392,7 +389,7 @@ describe('multiple tokens tests - emergent price', function() {
         await dex.insertMarketOrder(
           doc.address,
           otherSecondary.address,
-          wadify(1 * HARDCODED_PRICE * multiplyFactor02),
+          wadify(1 * MARKET_PRICE * multiplyFactor02),
           pricefy(multiplyFactor02),
           10,
           true,
