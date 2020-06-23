@@ -2041,12 +2041,12 @@ If zero, will start from ordebook top.
   }
 
   /**
-   * @notice Get the current market price calling PriceProvider
+   * @notice Gets the current market price calling PriceProvider. The price is updated on each tick
+   * @dev Calls the PriceProvider to get the market price. If it fails, the closing price of the last tick is used.
    * @param _pair The pair of tokens
    */
   function getMarketPrice(Pair storage _pair) public view returns(uint256) {
-    uint256 initialPrice = _pair.marketPrice;
     (bytes32 binaryPrice, bool success) = _pair.priceProvider.peek();
-    return success ? uint256(binaryPrice) : initialPrice;
+    return success ? uint256(binaryPrice) : _pair.lastClosingPrice;
   }
 }

@@ -324,7 +324,8 @@ and disabled first
   }
 
   /**
-  @notice Get the current market price
+  @notice Gets the market price token of the token pair
+  @dev Calls the PriceProvider to get the market price. If it fails, the closing price of the last tick is used.
   @param _baseToken Address of the base token of the pair
   @param _secondaryToken Address of the secondary token of the pair
   */
