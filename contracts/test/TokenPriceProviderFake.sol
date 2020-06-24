@@ -7,7 +7,7 @@ contract TokenPriceProviderFake is IPriceProvider {
   bool has;
 
   constructor() public {
-    tokenPrice = bytes32(uint(2 * 10 ** 18));
+    tokenPrice = bytes32(uint256(2 * 10**18));
     has = true;
   }
 
@@ -17,5 +17,9 @@ contract TokenPriceProviderFake is IPriceProvider {
 
   function poke(uint256 _tokenPrice) external {
     tokenPrice = bytes32(_tokenPrice);
+  }
+
+  function pokeValidity(bool _has) external {
+    has = _has;
   }
 }

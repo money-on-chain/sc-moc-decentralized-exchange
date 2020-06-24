@@ -5,7 +5,6 @@ import "openzeppelin-eth/contracts/math/Math.sol";
 import "./RestrictiveOrderListing.sol";
 import "partial-execution/contracts/PartialExecution.sol";
 
-
 contract EventfulExchange {
   /**
 @dev Cloned from MoCExchangeLib.sol or the event it is not recognized and emitted from that lib
@@ -107,7 +106,6 @@ contract EventfulExchange {
     uint256 closingPrice
   );
 }
-
 
 contract MoCDecentralizedExchange is EventfulExchange, RestrictiveOrderListing, PartialExecution {
   using SafeMath for uint256;
@@ -236,6 +234,16 @@ the previous to the one moved
   }
 
   /**
+    @notice Getter for every value related to a pair
+    @param _baseToken Address of the base token of the pair
+    @param _secondaryToken Address of the secondary token of the pair
+    @return lastClosingPrice - the last price from a successful matching
+  */
+  function getLastClosingPrice(address _baseToken, address _secondaryToken) external view returns (uint256 lastClosingPrice) {
+    (, , , lastClosingPrice, , , ) = getStatus(_baseToken, _secondaryToken);
+  }
+
+  /**
 @notice Cancel a buy order;
 tick must not be running; the contract must not be paused; the caller should be the order owner
 @param _baseToken Address of the base token of the pair
@@ -298,7 +306,6 @@ and disabled first
   function tickIsRunning(address _baseToken, address _secondaryToken) public view returns (bool) {
     return getTickStage(_baseToken, _secondaryToken) != MoCExchangeLib.TickStage.RECEIVING_ORDERS;
   }
-
 
   /**
 @notice Calculates closing price as if the tick closes at this moment
