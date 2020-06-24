@@ -120,6 +120,8 @@ const initContractsAndAllowance = async accounts => {
       transferEventArgs
     );
   };
+
+  await testHelper.setOracleMarketPrice(dex, base.address, secondary.address, MARKET_PRICE);
 };
 
 describe('Match with expired orders tests', function() {

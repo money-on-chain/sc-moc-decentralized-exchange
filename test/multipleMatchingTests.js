@@ -20,7 +20,7 @@ const scenarios = [
       orders: [{ lockingAmount: 15, price: 10, commission: 0.15 }] // orderId: 3
     },
     buyerMatches: {
-      description: 'AND the first buyer matches with 30 change, the secondwithout change',
+      description: 'AND the first buyer matches with 30 change, the second without change',
       matches: [
         {
           orderId: 2,

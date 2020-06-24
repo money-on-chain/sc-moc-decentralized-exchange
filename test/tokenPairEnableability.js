@@ -12,15 +12,17 @@ let testHelper;
 let wadify;
 let pricefy;
 let DEFAULT_PRICE_PRECISION;
+let priceProvider;
 
 const initializeDex = async function() {
   testHelper = testHelperBuilder();
   ({ wadify, pricefy, DEFAULT_PRICE_PRECISION } = testHelper);
-  [dex, base, secondary, governor] = await Promise.all([
+  [dex, base, secondary, governor, priceProvider] = await Promise.all([
     testHelper.getDex(),
     testHelper.getBase(),
     testHelper.getSecondary(),
-    testHelper.getGovernor()
+    testHelper.getGovernor(),
+    testHelper.getTokenPriceProviderFake().new()
   ]);
   dex = testHelper.decorateGovernedSetters(dex);
 };
@@ -165,6 +167,7 @@ describe('token enable/disable tests', function() {
   });
 
   contract('GIVEN there is 1 token pair listed and it is disabled ', function(accounts) {
+    // eslint-disable-next-line mocha/no-sibling-hooks
     before(async function() {
       await initializeDex();
       user = accounts[testHelper.DEFAULT_ACCOUNT_INDEX];
@@ -241,6 +244,7 @@ describe('token enable/disable tests', function() {
     function(accounts) {
       let newBase;
       let newSecondary;
+      // eslint-disable-next-line mocha/no-sibling-hooks
       before(async function() {
         await initializeDex();
         user = accounts[testHelper.DEFAULT_ACCOUNT_INDEX];
@@ -256,6 +260,7 @@ describe('token enable/disable tests', function() {
         await dex.addTokenPair(
           newBase.address,
           newSecondary.address,
+          priceProvider.address,
           DEFAULT_PRICE_PRECISION.toString(),
           DEFAULT_PRICE_PRECISION.toString(),
           governor

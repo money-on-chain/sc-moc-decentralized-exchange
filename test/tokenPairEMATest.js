@@ -94,6 +94,7 @@ describe('Token pair EMA Price tests', function() {
     contract(
       'GIVEN that there are three buy orders and three sell orders where there is matching price is not 1',
       function(accounts) {
+        // eslint-disable-next-line mocha/no-sibling-hooks
         before(async function() {
           await initContractsAndOrders(accounts, 2)();
           await dex.matchOrders(base.address, secondary.address, 10000);

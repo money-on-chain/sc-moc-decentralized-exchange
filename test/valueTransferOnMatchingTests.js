@@ -110,6 +110,7 @@ describe('value is transferred to the users when matching', function() {
   contract('matching orders 1v1, price difference, some change, some surplus', function(accounts) {
     const [, buyer, seller] = accounts;
     let tx;
+    // eslint-disable-next-line mocha/no-sibling-hooks
     before(
       initContractsAndAllowance(
         {
@@ -192,6 +193,7 @@ describe('value is transferred to the users when matching', function() {
     async function(accounts) {
       let tx;
       const [, buyer, seller] = accounts;
+      // eslint-disable-next-line mocha/no-sibling-hooks
       before(
         initContractsAndAllowance(
           {
@@ -279,6 +281,7 @@ describe('value is transferred to the users when matching', function() {
     async function(accounts) {
       let tx;
       const [, buyer, seller] = accounts;
+      // eslint-disable-next-line mocha/no-sibling-hooks
       before(
         initContractsAndAllowance(
           {

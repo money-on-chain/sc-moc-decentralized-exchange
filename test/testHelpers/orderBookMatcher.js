@@ -178,7 +178,6 @@ const orderBookMatcherGeneric = (
         testHelper.getSecondaryToken(),
         testHelper.getMoCDex()
       ];
-
       ({
         wadify,
         pricefy,
@@ -192,6 +191,12 @@ const orderBookMatcherGeneric = (
         testHelper.getBase(),
         testHelper.getSecondary()
       ]);
+      await testHelper.setOracleMarketPrice(
+        dex,
+        baseToken.address,
+        secondaryToken.address,
+        MARKET_PRICE
+      );
       dex = await testHelper.decorateGetOrderAtIndex(dex);
       if (!scenario.accounts) {
         // it's easier to set the accounts here instead of
@@ -304,7 +309,7 @@ const orderBookMatcherGeneric = (
         const tickEndEvents = filterEvents(transaction, 'TickEnd');
         expect(tickEndEvents).to.have.lengthOf(1, 'wrong amount of events of end of tick');
         const [event] = tickEndEvents;
-        testHelper.assertTickEnd(transaction, event, scenario.tickEnd.matches);
+        return testHelper.assertTickEnd(transaction, event, scenario.tickEnd.matches);
       });
     }
 

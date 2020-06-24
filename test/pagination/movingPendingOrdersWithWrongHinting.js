@@ -109,6 +109,7 @@ describe('Depletion of the Pending Queue in the after match with wrong hints', f
     'SCENARIO: 1 pending order with a hint pointing to the first place; same price',
     function(accounts) {
       const [, , seller] = accounts;
+      // eslint-disable-next-line mocha/no-sibling-hooks
       before(initContractsAndAllowance(accounts));
       givenTheTickIsRunning(accounts, function() {
         describe('AND there is a sell order pending with the same price as the open one', function() {
@@ -131,6 +132,7 @@ describe('Depletion of the Pending Queue in the after match with wrong hints', f
     'SCENARIO: 1 pending sell order with a hint pointing to the first place; higher price',
     function(accounts) {
       const [, , seller] = accounts;
+      // eslint-disable-next-line mocha/no-sibling-hooks
       before(initContractsAndAllowance(accounts));
       givenTheTickIsRunning(accounts, function() {
         describe('AND there is a sell order pending with a higher price', function() {
@@ -158,6 +160,7 @@ describe('Depletion of the Pending Queue in the after match with wrong hints', f
     'SCENARIO: 2 pending sell orders with a hint pointing to a place between two orders; too low position',
     function(accounts) {
       const [, , seller] = accounts;
+      // eslint-disable-next-line mocha/no-sibling-hooks
       before(initContractsAndAllowance(accounts));
       givenTheTickIsRunning(accounts, function() {
         describe('AND there are two a sell order pending with the same price as the open one ', function() {
@@ -184,6 +187,7 @@ describe('Depletion of the Pending Queue in the after match with wrong hints', f
     'SCENARIO: 1 pending order with a hint pointing to the last place with lower price; too high position',
     function(accounts) {
       const [, , seller] = accounts;
+      // eslint-disable-next-line mocha/no-sibling-hooks
       before(initContractsAndAllowance(accounts));
       givenTheTickIsRunning(accounts, function() {
         describe('AND there is a sell order pending with a lower price', function() {
