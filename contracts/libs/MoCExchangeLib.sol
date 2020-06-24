@@ -1317,7 +1317,8 @@ library MoCExchangeLib {
     );
   }
   /**
-    @dev iterates over the pair orderbook, simulating the match to obtain potencial closing price
+    @notice Gets the ids of the last sell and buy matching orders.
+    @dev iterates over the pair orderbook, simulating the match to obtain potencial closing price after.
     @return emergentPrice: AVG price of the last matched Orders
     @return lastBuyMatchId Id of the last Buy order to match
     @return lastBuyMatchAmount Amount of the last Buy order to match
@@ -1944,7 +1945,7 @@ If zero, will start from ordebook top.
     Pair storage _pair,
     Token storage _token
   ) private {
-    // TODO refactor; this code is repeated in popAndGetNewToponOrderFullMatched
+    // TODO refactor; this code is repeated in popAndGetNewTop
 
     //just pop the most competitive order
 
