@@ -16,8 +16,8 @@ let txReceipt;
 let testHelper;
 let wadify;
 let gov;
-let DEFAULT_ACCOUNT_INDEX;
 let pair;
+let DEFAULT_ACCOUNT_INDEX;
 
 const assertDexCommissionBalances = ({ expectedBaseTokenBalance, expectedSecondaryTokenBalance }) =>
   function() {
@@ -188,9 +188,12 @@ describe('Commissions tests', function() {
     describe('GIVEN there are orders for 2 different token pairs', function() {
       before(async function() {
         await initContractsAndAllowance(accounts);
+        // set initial price
+        const priceProvider = await testHelper.getTokenPriceProviderFake().new();
         await dex.addTokenPair(
           base.address,
           otherSecondary.address,
+          priceProvider.address,
           testHelper.DEFAULT_PRICE_PRECISION.toString(),
           testHelper.DEFAULT_PRICE_PRECISION.toString(),
           gov

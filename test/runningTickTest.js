@@ -80,6 +80,7 @@ describe('Running tick functions tests', function() {
           });
         });
         contract('GIVEN that there are two buy orders and two sell orders', function(accounts) {
+          // eslint-disable-next-line mocha/no-sibling-hooks
           before(initContractsAndOrders(accounts));
           describe(`AND that the specific preconditions to ${action} are fulfilled`, function() {
             if (fulfillPreconditions) before(fulfillPreconditions);

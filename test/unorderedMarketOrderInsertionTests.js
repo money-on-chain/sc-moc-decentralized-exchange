@@ -70,6 +70,7 @@ describe('Unordered market order insertion tests', function() {
   });
 
   contract('Unordered insertion of 10 buy orders', function(accounts) {
+    // eslint-disable-next-line mocha/no-sibling-hooks
     before(initContractsAndAllowance(accounts));
     describe('GIVEN ten buy orders are inserted in inverse order', function() {
       before(async function() {
@@ -108,6 +109,7 @@ describe('Unordered market order insertion tests', function() {
   });
 
   contract('Unordered insertion of 10 sell orders but only 5 different prices', function(accounts) {
+    // eslint-disable-next-line mocha/no-sibling-hooks
     before(initContractsAndAllowance(accounts));
     describe('GIVEN ten sell orders are inserted with 5 different prices', function() {
       before(async function() {
@@ -148,6 +150,7 @@ describe('Unordered market order insertion tests', function() {
   });
 
   contract('Unordered insertion of 10 buy orders but only 5 different prices', function(accounts) {
+    // eslint-disable-next-line mocha/no-sibling-hooks
     before(initContractsAndAllowance(accounts));
     describe('GIVEN ten buy orders are inserted with 5 different prices', function() {
       before(async function() {

@@ -47,6 +47,7 @@ describe('small amounts test', function() {
     ]);
     await testHelper.setBalancesAndAllowances({ accounts });
     dex = testHelper.decorateGetOrderAtIndex(dex);
+    await testHelper.setOracleMarketPrice(dex, base.address, secondary.address, MARKET_PRICE);
   };
 
   contract('a very small buy limit order against a normal sell limit order', function(accounts) {
@@ -110,6 +111,7 @@ describe('small amounts test', function() {
   });
 
   contract('a very small buy market order against a normal sell market order', function(accounts) {
+    // eslint-disable-next-line mocha/no-sibling-hooks
     before(initContractsAndAllowance(accounts));
     let tx;
     // Assumes a market price of MARKET_PRICE base/secondary
@@ -144,6 +146,12 @@ describe('small amounts test', function() {
         });
         describe('WHEN instructed to match orders', function() {
           before(async function() {
+            await testHelper.setOracleMarketPrice(
+              dex,
+              base.address,
+              secondary.address,
+              MARKET_PRICE
+            );
             tx = await dex.matchOrders(
               base.address,
               secondary.address,
@@ -181,6 +189,7 @@ describe('small amounts test', function() {
   });
 
   contract('a very small sell market order against a normal buy limit order', function(accounts) {
+    // eslint-disable-next-line mocha/no-sibling-hooks
     before(initContractsAndAllowance(accounts));
     let tx;
     describe('GIVEN there is a normal buy limit order', function() {

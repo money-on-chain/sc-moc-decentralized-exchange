@@ -5,6 +5,7 @@ const DEFAULT_INITIAL_PRICE = 10;
 let testHelper;
 let wadify;
 let pricefy;
+let priceProvider;
 
 const decorateDex = function(dex, governor) {
   return Object.assign({}, dex, {
@@ -17,6 +18,7 @@ const createNewPair = (dex, governor) =>
     await dex.addTokenPair(
       baseToken.address,
       secondaryToken.address,
+      priceProvider.address,
       pricefy(1),
       pricefy(lastClosingPrice),
       governor
@@ -68,12 +70,13 @@ describe('Last closing price tests', function() {
       maxBlocksForTick: 2,
       minBlocksForTick: 1
     });
-    [dex, doc, secondary, otherSecondary, governor] = await Promise.all([
+    [dex, doc, secondary, otherSecondary, governor, priceProvider] = await Promise.all([
       testHelper.getDex(),
       testHelper.getBase(),
       testHelper.getSecondary(),
       OwnerBurnableToken.new(),
-      testHelper.getGovernor()
+      testHelper.getGovernor(),
+      testHelper.getTokenPriceProviderFake().new()
     ]);
     dex = testHelper.decorateGovernedSetters(dex);
     dex = decorateDex(dex, governor);

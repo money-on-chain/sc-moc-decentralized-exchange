@@ -195,6 +195,7 @@ describe('Tick State test', function() {
       );
 
       contract('RULE: Running matching before nextBlockTick should revert', function() {
+        // eslint-disable-next-line mocha/no-sibling-hooks
         before(runMatching);
         it('WHEN calling matchOrders right after THEN it should revert', function() {
           return expectRevert(match(), ERROR_MSG_NEXT_TICK_BLOCK_NOT_REACHED);

@@ -7,11 +7,16 @@ let assertNewOrderEvent;
 const createTokenPair = async function(
   dex,
   governor,
+  priceProvider,
   { base, secondary, lastClosingPrice, pricePrecision }
 ) {
+  await priceProvider.poke(
+    pricePrecision ? (10 ** pricePrecision).toString() : DEFAULT_PRICE_PRECISION.toString()
+  );
   await dex.addTokenPair(
     base.address,
     secondary.address,
+    priceProvider.address,
     pricePrecision ? (10 ** pricePrecision).toString() : DEFAULT_PRICE_PRECISION.toString(),
     lastClosingPrice,
     governor
@@ -50,6 +55,7 @@ describe('FEATURE: Min amount for order', function() {
         let secondary;
         let doInsertLimitOrder;
         let pairAddresses;
+        let priceProvider;
 
         before(async function() {
           // create dex contract and necessary tokens
@@ -59,22 +65,23 @@ describe('FEATURE: Min amount for order', function() {
             owner: accounts[0]
           });
           const OwnerBurnableToken = await testHelper.getOwnerBurnableToken();
-          [dex, commonBase, someToken, otherToken, governor] = await Promise.all([
+          [dex, commonBase, someToken, otherToken, governor, priceProvider] = await Promise.all([
             testHelper.getDex(),
             testHelper.getBase(),
             OwnerBurnableToken.new(),
             OwnerBurnableToken.new(),
-            testHelper.getGovernor()
+            testHelper.getGovernor(),
+            testHelper.getTokenPriceProviderFake().new()
           ]);
           dex = testHelper.decorateGovernedSetters(dex, governor);
 
           // create two new token pairs
-          await createTokenPair(dex, governor, {
+          await createTokenPair(dex, governor, priceProvider, {
             base: commonBase,
             secondary: someToken,
             lastClosingPrice: pricefy(3)
           });
-          await createTokenPair(dex, governor, {
+          await createTokenPair(dex, governor, priceProvider, {
             base: someToken,
             secondary: otherToken,
             lastClosingPrice: pricefy(50)
