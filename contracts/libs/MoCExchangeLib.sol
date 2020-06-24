@@ -2063,7 +2063,6 @@ If zero, will start from ordebook top.
    * @param _pair The pair of tokens
    */
   function getMarketPrice(Pair storage _pair) public view returns(uint256) {
-
     (bytes32 binaryPrice, bool success) = _pair.priceProvider.peek();
     require(success, "Price not available");
     return uint256(binaryPrice);
