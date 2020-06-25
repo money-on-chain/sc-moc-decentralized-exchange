@@ -5,9 +5,9 @@ const {
 const { executeChange } = require('./networkHelper');
 
 const input = {
-  network: process.argv[4] || 'rskTestnet',
-  baseToken: process.argv[2],
-  secondaryToken: process.argv[3]
+  network: 'rskTestnet',
+  baseToken: '0x4EDe91faEE4e26104bFa8cDdb23e6cF480394439',
+  secondaryToken: '0xa72f49662748C994D80f5556Bf9cf2E9d33d1474'
 };
 
 if (!input.baseToken || !input.secondaryToken)
