@@ -30,38 +30,17 @@
       "RifToken": {
         "address": "0x19F64674D8A5B4E652319F5e239eFd3bc969A1fE"
       }
-    }, 
-    "existingPriceProviders": {
-      "priceProvider1":
-      {
-        "baseToken": "DocToken",
-        "secondaryToken": "BproToken",
-        "address": "0x..."
+    },
+    "externalPriceProvider": {
+      "DocToken": {
+        "BproToken": "",
+        "WRBTC": "",
+        "TestToken": ""
       },
-      "priceProvider2":
-      {
-        "baseToken": "DocToken",
-        "secondaryToken": "TestToken",
-        "address": "0x..."
-      },
-      "priceProvider3":
-      {
-        "baseToken": "DocToken",
-        "secondaryToken": "WRBTC",
-        "address": "0x..."
-      },
-      "priceProvider4":
-      {
-        "baseToken": "WRBTC",
-        "secondaryToken": "BproToken",
-        "address": "0x..."
-      },
-      "priceProvider5":
-      {
-        "baseToken": "RifToken",
-        "secondaryToken": "TestToken",
-        "address": "0x..."
-      }      
+      "WRBTC": {
+        "BproToken": "",
+        "TestToken": ""
+      }
     }
   },
   "development": {
@@ -76,7 +55,18 @@
       "0x8c61e1063E0b6f6C5123428935F34AfA2b5C2e95",
       "0xb1aF5b992251096AA6b12326CEb368Bcd333DDCe"
     ],
-    "beneficiaryAddress": "0xC2C22CeE68625D65105fE98a92B283b79845F609"
+    "beneficiaryAddress": "0xC2C22CeE68625D65105fE98a92B283b79845F609",
+    "externalPriceProvider": {
+      "DocToken": {
+        "BproToken": "",
+        "WRBTC": "",
+        "TestToken": ""
+      },
+      "WRBTC": {
+        "BproToken": "",
+        "TestToken": ""
+      }
+    }
   },
   "coverage": {
     "deployGovernance": true,
