@@ -226,11 +226,13 @@ the previous to the one moved
       uint256 lastClosingPrice,
       bool disabled,
       uint256 emaPrice,
-      uint256 smoothingFactor
+      uint256 smoothingFactor,
+      uint256 marketPrice
     )
   {
     (tickNumber, nextTickBlock, lastTickBlock, lastClosingPrice, disabled, emaPrice, smoothingFactor) = getStatus(_baseToken, _secondaryToken);
     (emergentPrice, lastBuyMatchId, lastBuyMatchAmount, lastSellMatchId) = getEmergentPrice(_baseToken, _secondaryToken);
+    marketPrice = getMarketPrice(_baseToken, _secondaryToken);
   }
 
   /**
