@@ -44,7 +44,10 @@ const decodeLog = async (web3, contractJson, eventName, tx) => {
 
 const deployContract = async (newContract, network, constructorArguments) => {
   const web3 = getWeb3(network);
+  console.log(`Getting accounts in ${network}`);
+
   const [owner] = await web3.eth.getAccounts();
+  console.log('Getting contracts constructor');
   const NewContractConstructor = await new web3.eth.Contract(newContract.abi);
   console.log('Deploying');
   const result = await NewContractConstructor.deploy({
