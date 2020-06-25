@@ -1318,10 +1318,8 @@ library MoCExchangeLib {
   }
   /**
     @notice Gets the ids of the last sell and buy matching orders.
-    @dev iterates over the pair orderbook, simulating the match to obtain potencial closing price after.
-    @return emergentPrice: AVG price of the last matched Orders
+    @dev iterates over the pair orderbook, simulating the match to obtain the final matching orders
     @return lastBuyMatchId Id of the last Buy order to match
-    @return lastBuyMatchAmount Amount of the last Buy order to match
     @return lastSellMatchId Id of the last Sell order to match
   */
   function getLastMatchingOrders(Pair storage _self)
@@ -1376,13 +1374,19 @@ library MoCExchangeLib {
     return (lastBuyMatch.id, lastSellMatch.id);
   }
 
+  /**
+    @dev iterates over the pair orderbook, simulating the match to obtain the emergent price
+    @return emergentPrice: AVG price of the last matched Orders
+    @return lastBuyMatchId Id of the last Buy order to match
+    @return lastBuyMatchAmount Amount of the last Buy order to match
+    @return lastSellMatchId Id of the last Sell order to match
+  */
   function getEmergentPrice(Pair storage _self)
     public
     view
     returns (uint256 emergentPrice, uint256 lastBuyMatchId, uint256 lastBuyMatchAmount, uint256 lastSellMatchId)
   {
 
-    //(Order memory lastBuyMatch, Order memory lastSellMatch) = getOrders(_self);
     (uint256 lastBuyMatchedId, uint256 lastSellMatchedId) = getLastMatchingOrders(_self);
     Order storage lastBuyMatch = get(_self.baseToken.orderbook, lastBuyMatchedId);
     Order storage lastSellMatch = get(_self.secondaryToken.orderbook, lastSellMatchedId);
@@ -1945,7 +1949,7 @@ If zero, will start from ordebook top.
     Pair storage _pair,
     Token storage _token
   ) private {
-    // TODO refactor; this code is repeated in popAndGetNewToponOrderFullMatched
+    // TODO refactor; this code is repeated in popAndGetNewTop
 
     //just pop the most competitive order
 

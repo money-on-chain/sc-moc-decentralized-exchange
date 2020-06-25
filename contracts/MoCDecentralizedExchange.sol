@@ -246,16 +246,6 @@ the previous to the one moved
   }
 
   /**
-    @notice Getter for every value related to a pair
-    @param _baseToken Address of the base token of the pair
-    @param _secondaryToken Address of the secondary token of the pair
-    @return lastClosingPrice - the last price from a successful matching
-  */
-  function getLastClosingPrice(address _baseToken, address _secondaryToken) external view returns (uint256 lastClosingPrice) {
-    (, , , lastClosingPrice, , , ) = getStatus(_baseToken, _secondaryToken);
-  }
-
-  /**
 @notice Cancel a buy order;
 tick must not be running; the contract must not be paused; the caller should be the order owner
 @param _baseToken Address of the base token of the pair
