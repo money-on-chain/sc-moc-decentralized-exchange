@@ -2,7 +2,6 @@ pragma solidity 0.5.8;
 
 import "../MoCDecentralizedExchange.sol";
 
-
 // This contract is a fake for testing porpouse, it is not mend to be deployed for use.
 contract MoCDexFake is MoCDecentralizedExchange {
   function editOrder(
@@ -47,7 +46,8 @@ contract MoCDexFake is MoCDecentralizedExchange {
       uint256 lastBuyMatchId,
       uint256 lastSellMatchId,
       uint256 lastBuyMatchAmount,
-      uint256 lastSellMatchAmount
+      uint256 lastSellMatchAmount,
+      uint256 marketPrice
     )
   {
     MoCExchangeLib.Pair storage pair = tokenPair(_baseToken, _secondaryToken);
@@ -59,7 +59,8 @@ contract MoCDexFake is MoCDecentralizedExchange {
       pageMemory.lastBuyMatch.id,
       pageMemory.lastSellMatch.id,
       pageMemory.lastBuyMatch.exchangeableAmount,
-      pageMemory.lastSellMatch.exchangeableAmount
+      pageMemory.lastSellMatch.exchangeableAmount,
+      pageMemory.marketPrice
     );
   }
 

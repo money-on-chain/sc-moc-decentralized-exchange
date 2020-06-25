@@ -18,6 +18,7 @@ let wadify;
 let gov;
 let DEFAULT_ACCOUNT_INDEX;
 let pair;
+let priceProvider;
 const MARKET_PRICE = 2;
 
 const assertDexCommissionBalances = ({ expectedBaseTokenBalance, expectedSecondaryTokenBalance }) =>
@@ -49,18 +50,24 @@ const initContractsAndAllowance = async accounts => {
     minBlocksForTick: 1
   });
 
-  [dex, commissionManager, base, secondary, otherSecondary, gov] = await Promise.all([
-    testHelper.getDex(),
-    testHelper.getCommissionManager(),
-    testHelper.getBase(),
-    testHelper.getSecondary(),
-    testHelper.getOwnerBurnableToken().new(),
-    testHelper.getGovernor()
-  ]);
+  [dex, commissionManager, base, secondary, otherSecondary, gov, priceProvider] = await Promise.all(
+    [
+      testHelper.getDex(),
+      testHelper.getCommissionManager(),
+      testHelper.getBase(),
+      testHelper.getSecondary(),
+      testHelper.getOwnerBurnableToken().new(),
+      testHelper.getGovernor(),
+      testHelper.getTokenPriceProviderFake().new()
+    ]
+  );
   dex = testHelper.decorateGovernedSetters(dex);
   dex = testHelper.decorateOrderInsertions(dex, accounts, { base, secondary });
   pair = [base.address, secondary.address];
   await testHelper.setBalancesAndAllowances({ accounts });
+  await priceProvider.poke(wadify(MARKET_PRICE));
+
+  await testHelper.setOracleMarketPrice(dex, base.address, secondary.address, MARKET_PRICE);
 };
 
 describe('Commissions tests - Market order should behave as a market order if the price does not change ', function() {
@@ -228,9 +235,12 @@ describe('Commissions tests - Market order should behave as a market order if th
     describe('GIVEN there are orders for 2 different token pairs', function() {
       before(async function() {
         await initContractsAndAllowance(accounts);
+        // set initial price
+        await priceProvider.poke(wadify(MARKET_PRICE));
         await dex.addTokenPair(
           base.address,
           otherSecondary.address,
+          priceProvider.address,
           testHelper.DEFAULT_PRICE_PRECISION.toString(),
           testHelper.DEFAULT_PRICE_PRECISION.toString(),
           gov

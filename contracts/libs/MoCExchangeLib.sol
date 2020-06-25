@@ -4,6 +4,7 @@ import "openzeppelin-eth/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-eth/contracts/math/SafeMath.sol";
 import "openzeppelin-eth/contracts/math/Math.sol";
 import "../CommissionManager.sol";
+import "../interface/IPriceProvider.sol";
 
 import {SafeTransfer} from "./SafeTransfer.sol";
 import {TickState} from "./TickState.sol";
@@ -156,6 +157,7 @@ library MoCExchangeLib {
   struct Pair {
     Token baseToken;
     Token secondaryToken;
+    IPriceProvider priceProvider;
     TickState.Data tickState;
     TickPaginationMemory pageMemory;
     TickStage tickStage;
@@ -181,6 +183,7 @@ library MoCExchangeLib {
     uint256 lastBuyMarketOrderId;
     uint256 lastSellLimitOrderId;
     uint256 lastSellMarketOrderId;
+    uint256 marketPrice;
   }
 
   /**
@@ -263,7 +266,6 @@ library MoCExchangeLib {
     @param _reservedCommission Commission reserved to be charged later
     @param _multiplyFactor Target price of the order[base/secondary]
     @param _expiresInTick Number of tick in which the order can no longer be matched
-    @param _isBuy True if it is a buy market order
   */
   function insertMarketOrder(
     Data storage self,
@@ -271,8 +273,7 @@ library MoCExchangeLib {
     uint256 _exchangeableAmount,
     uint256 _reservedCommission,
     uint256 _multiplyFactor,
-    uint64 _expiresInTick,
-    bool _isBuy
+    uint64 _expiresInTick
   ) public {
     insertMarketOrder(
       self,
@@ -281,7 +282,6 @@ library MoCExchangeLib {
       _reservedCommission,
       _multiplyFactor,
       _expiresInTick,
-      _isBuy,
       findPreviousMarketOrderToMultiplyFactor(self, _multiplyFactor)
     );
   }
@@ -345,7 +345,6 @@ library MoCExchangeLib {
     uint256 _reservedCommission,
     uint256 _multiplyFactor,
     uint64 _expiresInTick,
-    bool _isBuy,
     uint256 _intendedPreviousOrderId
   ) public {
     validatePreviousMarketOrder(self, _multiplyFactor, _intendedPreviousOrderId);
@@ -449,7 +448,6 @@ library MoCExchangeLib {
     @param _reservedCommission Commission reserved to be charged later
     @param _multiplyFactor Multiply factor to compute the the price of a market order
     @param _expiresInTick Number of tick in which the order can no longer be matched
-    @param _isBuy True if it is a buy market other, false otherwise
   */
   function insertMarketOrderAsPending(
     Data storage self,
@@ -458,8 +456,7 @@ library MoCExchangeLib {
     uint256 _exchangeableAmount,
     uint256 _reservedCommission,
     uint256 _multiplyFactor,
-    uint64 _expiresInTick,
-    bool _isBuy
+    uint64 _expiresInTick
   ) public {
     self.orders[_orderId] = Order(
       OrderType.MARKET_ORDER,
@@ -566,19 +563,19 @@ library MoCExchangeLib {
     @dev deleted first Order, replacin it wi the following one and shrinks the orderbook size
     @return new orderbook top (first)
    */
-  function popAndGetNewTop(Data storage self) internal returns (Order storage) {
-    Order storage orderToPop = mostCompetitiveOrder(self, first(self), firstMarketOrder(self));
+  function popAndGetNewTop(Pair storage _pair, Data storage self) internal returns (Order storage) {
+    Order storage orderToPop = mostCompetitiveOrder(_pair.pageMemory.marketPrice, self, first(self), firstMarketOrder(self));
     Order storage newTop = get(self, orderToPop.next);
     delete (self.orders[orderToPop.id]);
     if (newTop.orderType == OrderType.LIMIT_ORDER){
       self.firstId = newTop.id;
       decreaseQueuesLength(self, false);
-      return mostCompetitiveOrder(self, newTop, firstMarketOrder(self));
+      return mostCompetitiveOrder(_pair.pageMemory.marketPrice, self, newTop, firstMarketOrder(self));
     }
     else{
       self.firstMarketOrderId = newTop.id;
       decreaseQueuesLength(self, true);
-      return mostCompetitiveOrder(self, first(self), newTop);
+      return mostCompetitiveOrder(_pair.pageMemory.marketPrice, self, first(self), newTop);
     }
   }
 
@@ -628,10 +625,10 @@ library MoCExchangeLib {
     if (isFirstOfOrderbook(self, _toRemove)) {
       // If first limit order, re-assing the linked list start to next
       self.firstId = _toRemove.next;
-    } 
+    }
     else if (isFirstOfMarketOrderbook(self, _toRemove)){
       // If first market order, re-assing the linked list start to next
-      self.firstMarketOrderId = _toRemove.next;      
+      self.firstMarketOrderId = _toRemove.next;
     }
     else {
       (bool found, Order storage previousOrder) = findPreviousOrder(self, _toRemove, _startFromId);
@@ -909,28 +906,79 @@ library MoCExchangeLib {
   }
 
   /**
-    Returns the ID of the next valid order. It can be MO or LO.
+    Returns the next valid order. It can be MO or LO.
     @notice returns the next valid Order for the given _orderbook
     @dev gets the next Order, if not valid, recursivelly calls itself until finding the first valid or reaching the end.
-    @param _orderbook where the _orderId is from
-    @param _tickNumber for current tick
-    @param _limitOrderId id of the order from with obtain the next one, zero if beginging
-    @param _marketOrderId id of the order from with obtain the next one, zero if beginging
+
     @return next valid Order, id = 0 if no valid order found
    */
   function getNextValidOrder(
     Data storage _orderbook,
     uint64 _tickNumber,
     uint256 _limitOrderId,
-    uint256 _marketOrderId
+    uint256 _marketOrderId,
+    uint256 _marketPrice
   ) public view returns (Order storage, uint256, uint256) {
     Order storage nextLO = getNextValidLimitOrder(_orderbook, _tickNumber, _limitOrderId);
     Order storage nextMO = getNextValidMarketOrder(_orderbook, _tickNumber, _marketOrderId);
-    Order storage nextOrder = mostCompetitiveOrder(_orderbook, nextLO, nextMO);
+    Order storage nextOrder = mostCompetitiveOrder(_marketPrice, _orderbook, nextLO, nextMO);
     (uint256 newCurrentLimitOrderId, uint256 newCurrentMarketOrderId) = nextOrder.orderType == OrderType.LIMIT_ORDER ?
       (nextOrder.id, _marketOrderId) :
       (_limitOrderId, nextOrder.id);
-    return (mostCompetitiveOrder(_orderbook, nextLO, nextMO), newCurrentLimitOrderId, newCurrentMarketOrderId);
+    return (mostCompetitiveOrder(_marketPrice, _orderbook, nextLO, nextMO), newCurrentLimitOrderId, newCurrentMarketOrderId);
+  }
+
+  /**
+    Returns the next valid order. It can be MO or LO.
+    @notice returns the next valid Order for the given _orderbook
+    @dev gets the next Order, if not valid, recursivelly calls itself until finding the first valid or reaching the end.
+    @param _self the pair of tokens
+    @param _isBuy true to get a buy order, false otherwise.
+    @return next valid Order, id = 0 if no valid order found
+   */
+  function getNextValidOrder(
+    Pair storage _self,
+    bool _isBuy
+  ) public view returns (Order storage nextValidOrder, uint256 newCurrentLimitOrderId, uint256 newCurrentMarketOrderId) {
+    uint64 tickNumber = _self.tickState.number;
+    MoCExchangeLib.Data storage orderbook = _isBuy ? _self.baseToken.orderbook : _self.secondaryToken.orderbook;
+    uint256 limitOrderId = _isBuy ? _self.pageMemory.lastBuyLimitOrderId : _self.pageMemory.lastSellLimitOrderId;
+    uint256 marketOrderId = _isBuy ? _self.pageMemory.lastBuyMarketOrderId : _self.pageMemory.lastSellMarketOrderId;
+
+    return  getNextValidOrder(
+      orderbook,
+      tickNumber,
+      limitOrderId,
+      marketOrderId,
+      _self.pageMemory.marketPrice
+    );
+  }
+
+  /**
+    Returns the next valid order. It can be MO or LO.
+    @notice returns the next valid Order for the given _orderbook
+    @dev gets the next Order, if not valid, recursivelly calls itself until finding the first valid or reaching the end.
+    @param _self the pair of tokens
+    @param _isBuy true to get a buy order, false otherwise.
+    @param _limitOrderId previous id of LO.
+    @param _marketOrderId previous id of MO.
+    @return next valid Order, id = 0 if no valid order found
+   */
+  function getNextValidOrderEP(
+    Pair storage _self,
+    bool _isBuy,
+    uint256 _limitOrderId,
+    uint256 _marketOrderId
+  ) public view returns (Order storage nextValidOrder, uint256 newCurrentLimitOrderId, uint256 newCurrentMarketOrderId) {
+    MoCExchangeLib.Data storage orderbook = _isBuy ? _self.baseToken.orderbook : _self.secondaryToken.orderbook;
+
+    return  getNextValidOrder(
+      orderbook,
+      _self.tickState.number,
+      _limitOrderId,
+      _marketOrderId,
+      getMarketPrice(_self)
+    );
   }
 
   /**
@@ -965,34 +1013,36 @@ library MoCExchangeLib {
   /**
     @notice returns the most competitive order using curring market price.
     @dev LOs have higher priority to be processed because they have a TTL (lifespan).
+    @param _marketPrice The market price in base token
     @param _orderbook the orderbook
     @param _limitOrder The Limit Order to compare
     @param _marketOrder The Market Order to compare
     @return next valid Order, id = 0 if no valid order found
   */
   function mostCompetitiveOrder(
+    uint256 _marketPrice,
     Data storage _orderbook,
     Order storage _limitOrder,
     Order storage _marketOrder
     ) public view returns (Order storage) {
-    //Both are empty. Return first LO empty order
+    // Both are empty. Return first LO empty order
     if (_limitOrder.id == 0 && _marketOrder.id == 0){
       return _limitOrder;
     }
-    //There is only a Limit Order
+    // There is only a Limit Order
     else if (_limitOrder.id != 0 && _marketOrder.id == 0){
       return _limitOrder;
     }
-    //There is only a Market Order
+    // There is only a Market Order
     else if (_limitOrder.id == 0 && _marketOrder.id != 0){
       return _marketOrder;
     }
-    //There is a limit order and a market order.
-    //The price to compare MO with LO is computed: multiplyFactor * current market price.
-    //LOs have priority to  be processed in case of same price.
-    //Descending orderbooks => Buy Orders
+    // There is a limit order and a market order.
+    // The price to compare MO with LO is computed: multiplyFactor * current market price.
+    // LOs have priority to be processed in case of same price.
+    // Descending orderbooks => Buy Orders
     else {
-      uint256 currentMOPrice = priceOfMarketOrders(_marketOrder.multiplyFactor);
+      uint256 currentMOPrice = marketOrderSpotPrice(_marketPrice, _marketOrder.multiplyFactor);
       if (_limitOrder.price == currentMOPrice || priceGoesBefore(_orderbook, _limitOrder.price, currentMOPrice)){
         return _limitOrder;
       }
@@ -1176,13 +1226,13 @@ library MoCExchangeLib {
     uint64 expiresInTick = _self.tickState.number + _lifespan;
 
     if (goesToPendingQueue) {
-      insertMarketOrderAsPending(token.orderbook, _id, _sender, _exchangeableAmount, _reservedCommission, _multiplyFactor, expiresInTick, _isBuy);
+      insertMarketOrderAsPending(token.orderbook, _id, _sender, _exchangeableAmount, _reservedCommission, _multiplyFactor, expiresInTick);
       emit NewOrderAddedToPendingQueue(_id, 0);
     } else {
       if (_previousOrderIdHint == INSERT_FIRST) {
-        insertMarketOrder(token.orderbook, _id, _exchangeableAmount, _reservedCommission, _multiplyFactor, expiresInTick, _isBuy);
+        insertMarketOrder(token.orderbook, _id, _exchangeableAmount, _reservedCommission, _multiplyFactor, expiresInTick);
       } else {
-        insertMarketOrder(token.orderbook, _id, _exchangeableAmount, _reservedCommission,  _multiplyFactor, expiresInTick, _isBuy, _previousOrderIdHint);
+        insertMarketOrder(token.orderbook, _id, _exchangeableAmount, _reservedCommission,  _multiplyFactor, expiresInTick, _previousOrderIdHint);
       }
       emitNewOrderEvent(_id, _self, _sender, _exchangeableAmount, _reservedCommission, _multiplyFactor, expiresInTick, _isBuy, OrderType.MARKET_ORDER);
     }
@@ -1202,13 +1252,12 @@ library MoCExchangeLib {
 
   /**
     @notice Computes the prices of a market order
+    @param _marketPrice The market price
     @param _multiplyFactor multiplyFactor
     @return price
    */
-  function priceOfMarketOrders(uint256 _multiplyFactor) public pure returns (uint256) {
-    //TODO: get price from last tick or oracle
-    uint256 HARDCODED_PRICE = 2000000000000000000;
-    return _multiplyFactor.mul(HARDCODED_PRICE).div(RATE_PRECISION);
+  function marketOrderSpotPrice(uint256 _marketPrice, uint256 _multiplyFactor) private pure returns (uint256) {
+    return _multiplyFactor.mul(_marketPrice).div(RATE_PRECISION);
   }
 
   /**
@@ -1267,54 +1316,53 @@ library MoCExchangeLib {
       _orderType
     );
   }
-
   /**
-    @dev iterates over the pair orderbook, simulating the match to obtain potencial closing price
-    @return emergentPrice: AVG price of the last matched Orders
+    @notice Gets the ids of the last sell and buy matching orders.
+    @dev iterates over the pair orderbook, simulating the match to obtain the final matching orders
     @return lastBuyMatchId Id of the last Buy order to match
-    @return lastBuyMatchAmount Amount of the last Buy order to match
     @return lastSellMatchId Id of the last Sell order to match
   */
-  function getOrders(Pair storage _self)
+  function getLastMatchingOrders(Pair storage _self)
     internal
     view
-    returns (Order memory, Order memory)
+    returns (uint256, uint256)
   {
+
     Order memory lastBuyMatch;
     Order memory lastSellMatch;
+    uint256 marketPrice = getMarketPrice(_self);
     Order memory buy;
     Order memory sell;
+
     uint256 lastBuyLimitOrderId;
     uint256 lastBuyMarketOrderId;
     uint256 lastSellLimitOrderId;
     uint256 lastSellMarketOrderId;
-    uint64 tickNumber = _self.tickState.number;
+
     uint256 pricePrecision = _self.priceComparisonPrecision;
-    MoCExchangeLib.Data storage buyOrderbook = _self.baseToken.orderbook;
-    MoCExchangeLib.Data storage sellOrderbook = _self.secondaryToken.orderbook;
 
-    (buy, lastBuyLimitOrderId, lastBuyMarketOrderId) = getNextValidOrder(buyOrderbook, tickNumber, 0, 0);
-    (sell, lastSellLimitOrderId,lastSellMarketOrderId) = getNextValidOrder(sellOrderbook, tickNumber, 0, 0);
+    (buy, lastBuyLimitOrderId, lastBuyMarketOrderId) = getNextValidOrderEP(_self, true, lastBuyLimitOrderId, lastBuyMarketOrderId);
+    (sell, lastSellLimitOrderId, lastSellMarketOrderId) = getNextValidOrderEP(_self, false, lastSellLimitOrderId, lastSellMarketOrderId);
 
-    while (shouldMatchMemory(buy, sell)) {
+    while (shouldMatchMemory(marketPrice, buy, sell)) {
       lastBuyMatch = buy;
       lastSellMatch = sell;
       (uint256 limitingAmount, MatchType matchType) = compareIntents(
         buy.exchangeableAmount,
-        getOrderPrice(buy),
+        getOrderPrice(marketPrice, buy),
         sell.exchangeableAmount,
         pricePrecision);
 
       if (matchType == MatchType.DOUBLE_FILL) {
-        (buy, lastBuyLimitOrderId, lastBuyMarketOrderId) = getNextValidOrder(buyOrderbook, tickNumber, lastBuyLimitOrderId, lastBuyMarketOrderId);
-        (sell, lastSellLimitOrderId,lastSellMarketOrderId) = getNextValidOrder(sellOrderbook, tickNumber, lastSellLimitOrderId, lastSellMarketOrderId);
+        (buy, lastBuyLimitOrderId, lastBuyMarketOrderId) = getNextValidOrderEP(_self, true, lastBuyLimitOrderId, lastBuyMarketOrderId);
+        (sell, lastSellLimitOrderId,lastSellMarketOrderId) = getNextValidOrderEP(_self, false, lastSellLimitOrderId, lastSellMarketOrderId);
       } else if (matchType == MatchType.BUYER_FILL) {
-        (buy, lastBuyLimitOrderId, lastBuyMarketOrderId) = getNextValidOrder(buyOrderbook, tickNumber, lastBuyLimitOrderId, lastBuyMarketOrderId);
+        (buy, lastBuyLimitOrderId, lastBuyMarketOrderId) = getNextValidOrderEP(_self, true, lastBuyLimitOrderId, lastBuyMarketOrderId);
         sell.exchangeableAmount = sell.exchangeableAmount.sub(limitingAmount);
       } else if (matchType == MatchType.SELLER_FILL) {
-
-        uint256 buyerExpectedSend = convertToBase(limitingAmount, getOrderPrice(buy), pricePrecision);
-        (sell, lastSellLimitOrderId,lastSellMarketOrderId) = getNextValidOrder(sellOrderbook, tickNumber, lastSellLimitOrderId, lastSellMarketOrderId);
+        (sell, lastSellLimitOrderId, lastSellMarketOrderId) = getNextValidOrderEP(_self, false, lastSellLimitOrderId, lastSellMarketOrderId);
+        uint256 moPrice = getOrderPrice(marketPrice, buy);
+        uint256 buyerExpectedSend = convertToBase(limitingAmount, moPrice, pricePrecision);
 
         buy.exchangeableAmount = buy.exchangeableAmount.sub(buyerExpectedSend);
       } else {
@@ -1323,19 +1371,28 @@ library MoCExchangeLib {
       }
     }
 
-
-    return (lastBuyMatch, lastSellMatch);
+    return (lastBuyMatch.id, lastSellMatch.id);
   }
 
+  /**
+    @dev iterates over the pair orderbook, simulating the match to obtain the emergent price
+    @return emergentPrice: AVG price of the last matched Orders
+    @return lastBuyMatchId Id of the last Buy order to match
+    @return lastBuyMatchAmount Amount of the last Buy order to match
+    @return lastSellMatchId Id of the last Sell order to match
+  */
   function getEmergentPrice(Pair storage _self)
     public
     view
     returns (uint256 emergentPrice, uint256 lastBuyMatchId, uint256 lastBuyMatchAmount, uint256 lastSellMatchId)
   {
 
-    (Order memory lastBuyMatch, Order memory lastSellMatch) = getOrders(_self);
+    (uint256 lastBuyMatchedId, uint256 lastSellMatchedId) = getLastMatchingOrders(_self);
+    Order storage lastBuyMatch = get(_self.baseToken.orderbook, lastBuyMatchedId);
+    Order storage lastSellMatch = get(_self.secondaryToken.orderbook, lastSellMatchedId);
+
     if (lastBuyMatch.id == 0) return (0, 0, 0, 0);
-    emergentPrice = Math.average(getOrderPrice(lastBuyMatch), getOrderPrice(lastSellMatch));
+    emergentPrice = Math.average(getOrderPrice(getMarketPrice(_self), lastBuyMatch), getOrderPrice(getMarketPrice(_self), lastSellMatch));
     return (emergentPrice, lastBuyMatch.id, lastBuyMatch.exchangeableAmount, lastSellMatch.id);
 
   }
@@ -1380,11 +1437,12 @@ library MoCExchangeLib {
     false otherwise
     @dev It is identical to shouldMatchMemory but it receives its params as storage
     It was done this way to save some gas
-    @param buy Struct of buy order to be checked
-    @param sell Struct of sell order to be checked
+    @param _marketPrice The market price
+    @param _buy Struct of buy order to be checked
+    @param _sell Struct of sell order to be checked
   */
-  function shouldMatchStorage(Order storage buy, Order storage sell) private view returns (bool) {
-    return sell.id != 0 && buy.id != 0 && getOrderPrice(buy) >= getOrderPrice(sell);
+  function shouldMatchStorage(uint256 _marketPrice, Order storage _buy, Order storage _sell) private view returns (bool) {
+    return _sell.id != 0 && _buy.id != 0 && getOrderPrice(_marketPrice, _buy) >= getOrderPrice(_marketPrice, _sell);
   }
 
   /**
@@ -1392,20 +1450,22 @@ library MoCExchangeLib {
     false otherwise
     @dev It is identical to shouldMatchStorage but it receives its params as memory
     It was done this way to save some gas
-    @param buy Struct of buy order to be checked
-    @param sell Struct of sell order to be checked
+    @param _marketPrice The market price
+    @param _buy Struct of buy order to be checked
+    @param _sell Struct of sell order to be checked
   */
-  function shouldMatchMemory(Order memory buy, Order memory sell) private view returns (bool) {
-    return sell.id != 0 && buy.id != 0 && getOrderPrice(buy) >= getOrderPrice(sell);
+  function shouldMatchMemory(uint256 _marketPrice, Order memory _buy, Order memory _sell) private pure returns (bool) {
+    return _sell.id != 0 && _buy.id != 0 && getOrderPrice(_marketPrice, _buy) >= getOrderPrice(_marketPrice, _sell);
   }
 
   /**
     @notice Returns the price on an order
     @dev Checks the OrderType to compute the current price
+    @param _marketPrice Market price
     @param _order The order with price
   */
-  function getOrderPrice(Order memory _order) private view returns (uint256) {
-    return (_order.orderType == OrderType.LIMIT_ORDER) ? _order.price : priceOfMarketOrders(_order.multiplyFactor);
+  function getOrderPrice(uint256 _marketPrice, Order memory _order) private pure returns (uint256) {
+    return (_order.orderType == OrderType.LIMIT_ORDER) ? _order.price : marketOrderSpotPrice(_marketPrice, _order.multiplyFactor);
   }
   /**
     @notice Operates the buy order, doing modifications in the orderbook and the respecting transfers
@@ -1467,7 +1527,11 @@ library MoCExchangeLib {
     view
     returns (uint256, uint256)
   {
-    uint256 buyerExpectedSend = convertToBase(_limitingAmount, getOrderPrice(_buy), _pair.priceComparisonPrecision);
+    uint256 buyerExpectedSend = convertToBase(
+      _limitingAmount,
+      getOrderPrice(_pair.pageMemory.marketPrice, _buy),
+      _pair.priceComparisonPrecision
+    );
     uint256 buyerSent = convertToBase(_limitingAmount, _price, _pair.priceComparisonPrecision);
     return (buyerExpectedSend, buyerSent);
   }
@@ -1515,7 +1579,11 @@ library MoCExchangeLib {
     );
 
 
-    uint256 sellerExpectedReturn = convertToBase(_limitingAmount, getOrderPrice(_sell), _pair.priceComparisonPrecision);
+    uint256 sellerExpectedReturn = convertToBase(
+      _limitingAmount,
+      getOrderPrice(_pair.pageMemory.marketPrice, _sell),
+      _pair.priceComparisonPrecision
+    );
     uint256 buyerSent = convertToBase(_limitingAmount, _price, _pair.priceComparisonPrecision);
 
     uint256 surplus = buyerSent.sub(sellerExpectedReturn);
@@ -1677,19 +1745,19 @@ If zero, will start from ordebook top.
     Has one discarded param; kept to have a fixed signature
     @dev The initialization of lastBuyMatch/lastSellMatch without checking if they should match can cause
     some inconsistency but it is covered by the matchesAmount attribute in the pageMemory
-    @param _pair The pair of toekns
+    @param _pair The pair of tokens
   */
   function onSimulationStart(Pair storage _pair) public {
     _pair.tickStage = TickStage.RUNNING_SIMULATION;
-
+    _pair.pageMemory.marketPrice = getMarketPrice(_pair);
     (
       _pair.pageMemory.lastBuyMatch,
       _pair.pageMemory.lastBuyLimitOrderId,
-      _pair.pageMemory.lastBuyMarketOrderId) = getNextValidOrder(_pair.baseToken.orderbook,  _pair.tickState.number, 0, 0);
+      _pair.pageMemory.lastBuyMarketOrderId) = getNextValidOrder(_pair, true);
     (
       _pair.pageMemory.lastSellMatch,
       _pair.pageMemory.lastSellLimitOrderId,
-      _pair.pageMemory.lastSellMarketOrderId) = getNextValidOrder(_pair.secondaryToken.orderbook,  _pair.tickState.number, 0, 0);
+      _pair.pageMemory.lastSellMarketOrderId) = getNextValidOrder(_pair, false);
   }
 
   /**
@@ -1702,7 +1770,7 @@ If zero, will start from ordebook top.
     assert(_pair.tickStage == MoCExchangeLib.TickStage.RUNNING_SIMULATION);
 
     if (_pair.pageMemory.matchesAmount > 0) {
-      _pair.pageMemory.emergentPrice = Math.average(getOrderPrice(_pair.pageMemory.lastBuyMatch), getOrderPrice(_pair.pageMemory.lastSellMatch));
+      _pair.pageMemory.emergentPrice = Math.average(getOrderPrice(_pair.pageMemory.marketPrice, _pair.pageMemory.lastBuyMatch), getOrderPrice(_pair.pageMemory.marketPrice, _pair.pageMemory.lastSellMatch));
       _pair.lastClosingPrice = _pair.pageMemory.emergentPrice;
       _pair.emaPrice = calculateNewEMA(_pair.emaPrice, _pair.lastClosingPrice, _pair.smoothingFactor, factorPrecision);
     }
@@ -1722,8 +1790,6 @@ If zero, will start from ordebook top.
       return false;
     }
 
-
-
     /* We're assigning the next order to match (in the case of a complete fill)
      * in these variables, but the new value is never used.
      * It's possible to delete some code and make the execution cheaper by
@@ -1731,26 +1797,26 @@ If zero, will start from ordebook top.
      * the stepFunction'll receive the number of steps to run in the near future
      * and then we'll need the next order to match again.
      */
-    Order storage buy = getFirstForMatching(_commissionManager, _self.baseToken, _self.tickState.number);
-    Order storage sell = getFirstForMatching(_commissionManager, _self.secondaryToken, _self.tickState.number);
+    Order storage buy = getFirstForMatching(_self, _commissionManager, _self.baseToken, _self.tickState.number);
+    Order storage sell = getFirstForMatching(_self, _commissionManager, _self.secondaryToken, _self.tickState.number);
 
     bool isLastMatch = buy.id == _self.pageMemory.lastBuyMatch.id && sell.id == _self.pageMemory.lastSellMatch.id;
     // As last matching orders are known from the simulation, we could use them as loop exit condition
     (uint256 limitingAmount, MatchType matchType) = compareIntents(
       buy.exchangeableAmount,
-      getOrderPrice(buy),
+      getOrderPrice(_self.pageMemory.marketPrice, buy),
       sell.exchangeableAmount,
       _self.priceComparisonPrecision
     );
 
     executeMatch(_commissionManager, _self, buy, sell, limitingAmount, _self.pageMemory.emergentPrice);
     if (matchType == MatchType.DOUBLE_FILL) {
-      onOrderFullMatched(_commissionManager, _self.baseToken, buy, _self.tickState.number, _self.pageMemory.lastBuyMatch.id);
-      onOrderFullMatched(_commissionManager, _self.secondaryToken, sell, _self.tickState.number, _self.pageMemory.lastSellMatch.id);
+      onOrderFullMatched(_self, _self.baseToken);
+      onOrderFullMatched(_self, _self.secondaryToken);
     } else if (matchType == MatchType.BUYER_FILL) {
-      onOrderFullMatched(_commissionManager, _self.baseToken, buy, _self.tickState.number, _self.pageMemory.lastBuyMatch.id);
+      onOrderFullMatched(_self, _self.baseToken);
     } else if (matchType == MatchType.SELLER_FILL) {
-      onOrderFullMatched(_commissionManager, _self.secondaryToken, sell, _self.tickState.number, _self.pageMemory.lastSellMatch.id);
+      onOrderFullMatched(_self, _self.secondaryToken);
     } else {
       // TODO
       require(false, "Unknown type");
@@ -1771,23 +1837,22 @@ If zero, will start from ordebook top.
     // we're not modifying the "real" orders
     Order storage buy = _self.pageMemory.lastBuyMatch;
     Order storage sell = _self.pageMemory.lastSellMatch;
-    uint64 tickNumber = _self.tickState.number;
     uint256 pricePrecision = _self.priceComparisonPrecision;
-    MoCExchangeLib.Data storage buyOrderbook = _self.baseToken.orderbook;
-    MoCExchangeLib.Data storage sellOrderbook = _self.secondaryToken.orderbook;
+    uint256 marketPrice = _self.pageMemory.marketPrice;
 
     uint256 lastBuyLimitOrderId = _self.pageMemory.lastBuyLimitOrderId;
     uint256 lastBuyMarketOrderId = _self.pageMemory.lastBuyMarketOrderId;
     uint256 lastSellLimitOrderId = _self.pageMemory.lastSellLimitOrderId;
     uint256 lastSellMarketOrderId = _self.pageMemory.lastSellMarketOrderId;
 
-    if (!shouldMatchStorage(buy, sell)) {
+    if (!shouldMatchStorage(marketPrice, buy, sell)) {
       return false;
     }
 
+    uint256 orderPrice = getOrderPrice(marketPrice, buy);
     (uint256 limitingAmount, MatchType matchType) = compareIntents(
       buy.exchangeableAmount,
-      getOrderPrice(buy),
+      orderPrice,
       sell.exchangeableAmount,
       pricePrecision
     );
@@ -1795,24 +1860,22 @@ If zero, will start from ordebook top.
     if (matchType == MatchType.DOUBLE_FILL) {
       // the asignments from getNextValidOrder set the references
       // to point to the "real" orders
-      (buy, lastBuyLimitOrderId, lastBuyMarketOrderId) = getNextValidOrder(buyOrderbook, tickNumber, lastBuyLimitOrderId, lastBuyMarketOrderId);
-      (sell, lastSellLimitOrderId,lastSellMarketOrderId) = getNextValidOrder(sellOrderbook, tickNumber, lastSellLimitOrderId, lastSellMarketOrderId);
-
+      (buy, lastBuyLimitOrderId, lastBuyMarketOrderId) = getNextValidOrder(_self, true);
+      (sell, lastSellLimitOrderId, lastSellMarketOrderId) = getNextValidOrder(_self, false);
     } else if (matchType == MatchType.BUYER_FILL) {
-      (buy, lastBuyLimitOrderId, lastBuyMarketOrderId) = getNextValidOrder(buyOrderbook, tickNumber, lastBuyLimitOrderId, lastBuyMarketOrderId);
+      (buy, lastBuyLimitOrderId, lastBuyMarketOrderId) = getNextValidOrder(_self, true);
       sell.exchangeableAmount = sell.exchangeableAmount.sub(limitingAmount);
 
     } else if (matchType == MatchType.SELLER_FILL) {
-
-      uint256 buyerExpectedSend = convertToBase(limitingAmount, getOrderPrice(buy), pricePrecision);
-      (sell, lastSellLimitOrderId,lastSellMarketOrderId) = getNextValidOrder(sellOrderbook, tickNumber, lastSellLimitOrderId, lastSellMarketOrderId);
+      uint256 buyerExpectedSend = convertToBase(limitingAmount, orderPrice, pricePrecision);
+      (sell, lastSellLimitOrderId, lastSellMarketOrderId) = getNextValidOrder(_self, false);
       buy.exchangeableAmount = buy.exchangeableAmount.sub(buyerExpectedSend);
-
     } else {
       assert(false);
     }
-    _self.pageMemory.matchesAmount = _self.pageMemory.matchesAmount.add(matchType == MatchType.DOUBLE_FILL ? 2 : 1);
-    if (shouldMatchStorage(buy, sell)) {
+    uint256 matchToAdd = matchType == MatchType.DOUBLE_FILL ? 2 : 1;
+    _self.pageMemory.matchesAmount = _self.pageMemory.matchesAmount.add(matchToAdd);
+    if (shouldMatchStorage(marketPrice, buy, sell)) {
       // this assignments copy:
       // https://solidity.readthedocs.io/en/v0.5.11/types.html#reference-types
       _self.pageMemory.lastBuyMatch = buy;
@@ -1830,61 +1893,72 @@ If zero, will start from ordebook top.
 
   /**
     @notice gets the first not expired order of the orderbook, processing expired ones
+    @param _pair Token pair
     @param _commissionManager commission manager.
     @param _token order Token data
     @param _tickNumber current tick Number
     @return the first valid order in the orderbook
   */
-  function getFirstForMatching(CommissionManager _commissionManager, Token storage _token, uint64 _tickNumber) private returns (Order storage) {
-    Order storage order = mostCompetitiveOrder(_token.orderbook, first(_token.orderbook), firstMarketOrder(_token.orderbook));
+  function getFirstForMatching(
+    Pair storage _pair,
+    CommissionManager _commissionManager,
+    Token storage _token,
+    uint64 _tickNumber
+    ) private returns (Order storage) {
+    Order storage order = mostCompetitiveOrder(
+      _pair.pageMemory.marketPrice,
+      _token.orderbook,
+      first(_token.orderbook),
+      firstMarketOrder(_token.orderbook)
+    );
     if (isExpired(order, _tickNumber)) {
       processExpiredOrder(_commissionManager, _token, order.id, order.exchangeableAmount, order.reservedCommission, order.owner);
-      return getNextValidOrderForMatching(_commissionManager, _token, _tickNumber);
+      return getNextValidOrderForMatching(_pair, _commissionManager, _token, _tickNumber);
     }
     return order;
   }
 
   /**
     @notice Searchs for the following valid Order
+    @param _pair Token pair
     @param _commissionManager commission manager.
     @param _token order Token data
     @param _tickNumber current tick Number
     @return the following valid order in the orderbook
   */
-  function getNextValidOrderForMatching(CommissionManager _commissionManager, Token storage _token, uint64 _tickNumber)
+  function getNextValidOrderForMatching(Pair storage _pair, CommissionManager _commissionManager, Token storage _token, uint64 _tickNumber)
     private
     returns (Order storage)
   {
-    Order storage order = popAndGetNewTop(_token.orderbook);
+    Order storage order = popAndGetNewTop(_pair, _token.orderbook);
     if (order.id == 0 || !isExpired(order, _tickNumber)) {
       return order;
     } else {
       processExpiredOrder(_commissionManager, _token, order.id, order.exchangeableAmount, order.reservedCommission, order.owner);
-      return getNextValidOrderForMatching(_commissionManager, _token, _tickNumber);
+      return getNextValidOrderForMatching(_pair, _commissionManager, _token, _tickNumber);
     }
   }
 
   /**
     @notice emits OrderFullMatch for the given _order and searchs for the following valid one
-    @param _commissionManager commission manager.
+    @param _pair Token Pair
     @param _token token with the orderbook where the order is placed
-    @param _order the order that had matched completely
-    @param _tickNumber current tick Number
-    @param _lastOrderThatMatches last order id that matches
     @return the following valid order in the orderbook
   */
   function onOrderFullMatched(
-    CommissionManager _commissionManager,
-    Token storage _token,
-    Order storage _order,
-    uint64 _tickNumber,
-    uint256 _lastOrderThatMatches
+    Pair storage _pair,
+    Token storage _token
   ) private {
     // TODO refactor; this code is repeated in popAndGetNewTop
 
     //just pop the most competitive order
 
-    Order storage orderToPop = mostCompetitiveOrder(_token.orderbook, first(_token.orderbook), firstMarketOrder(_token.orderbook));
+    Order storage orderToPop = mostCompetitiveOrder(
+      _pair.pageMemory.marketPrice,
+      _token.orderbook,
+      first(_token.orderbook),
+      firstMarketOrder(_token.orderbook)
+    );
     Order storage newTop = get(_token.orderbook, orderToPop.next);
 
     if (orderToPop.orderType == OrderType.LIMIT_ORDER){
@@ -2004,5 +2078,15 @@ If zero, will start from ordebook top.
 
     positionOrder(_token.orderbook, orderToMove.id, previousOrderId);
     return true;
+  }
+
+  /**
+   * @notice Get the current market price calling PriceProvider
+   * @param _pair The pair of tokens
+   */
+  function getMarketPrice(Pair storage _pair) public view returns(uint256) {
+    (bytes32 binaryPrice, bool success) = _pair.priceProvider.peek();
+    require(success, "Price not available");
+    return uint256(binaryPrice);
   }
 }

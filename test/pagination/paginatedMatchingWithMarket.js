@@ -116,6 +116,8 @@ describe('Matching can be run in several pages', function() {
         await dex.matchOrders(...pair, 3);
 
         await assertTickStage(testHelper.tickStages.RECEIVING_ORDERS);
+        await testHelper.setOracleMarketPrice(dex, base.address, secondary.address, MARKET_PRICE);
+
         await Promise.all(
           [...new Array(15)].map(() =>
             Promise.all([
@@ -136,8 +138,10 @@ describe('Matching can be run in several pages', function() {
         // step per pair for matching and one extra step to finish the tick
         await dex.matchOrders(...pair, 15 * 2 + 1);
       });
+      it('THEN the tick has ended', async function() {
+        return assertTickStage(testHelper.tickStages.RECEIVING_ORDERS);
+      });
       it('THEN the tick length is the minimum (5)', async function() {
-        await assertTickStage(testHelper.tickStages.RECEIVING_ORDERS);
         const { nextTickBlock, lastTickBlock } = await dex.getNextTick(...pair);
         return assertBig(nextTickBlock.sub(lastTickBlock), minBlocksForTick);
       });
@@ -160,9 +164,12 @@ describe('Matching can be run in several pages', function() {
 
   contract('matching orders step by step: two full matches at the same price', function(accounts) {
     const [, buyer, seller] = accounts;
+    // eslint-disable-next-line mocha/no-sibling-hooks
     before(initContractsAndAllowance(accounts));
     describe('GIVEN there are 2 buy and 2 sell orders which match 1v1', function() {
       before(async function() {
+        await testHelper.setOracleMarketPrice(dex, base.address, secondary.address, MARKET_PRICE);
+
         // id: 1
         await dex.insertBuyMarketOrder({ from: buyer, priceMultiplier: 1 / MARKET_PRICE });
         // id: 2
@@ -315,9 +322,12 @@ describe('Matching can be run in several pages', function() {
     'matching orders step by step: one pair matches completelly, the other doesnt due to price difference',
     function(accounts) {
       const [, buyer, seller] = accounts;
+      // eslint-disable-next-line mocha/no-sibling-hooks
       before(initContractsAndAllowance(accounts));
       describe('GIVEN there is a pair of orders that match and there are one buy and one sell orders which dont match due to price difference', function() {
         before(async function() {
+          await testHelper.setOracleMarketPrice(dex, base.address, secondary.address, MARKET_PRICE);
+
           await dex.insertBuyMarketOrder({
             priceMultiplier: 1 / MARKET_PRICE,
             from: buyer
@@ -399,8 +409,8 @@ describe('Matching can be run in several pages', function() {
                 dex.buyOrdersLength(...pair),
                 dex.sellOrdersLength(...pair)
               ]);
-              testHelper.assertBig(buyOrderbookLength, 1);
-              testHelper.assertBig(sellOrderbookLength, 1);
+              await testHelper.assertBig(buyOrderbookLength, 1);
+              return testHelper.assertBig(sellOrderbookLength, 1);
             });
             it('AND the emergent price is 0 again, and lastClosingPrice does not change', function() {
               return assertTokenPairStatus({
@@ -469,9 +479,12 @@ describe('Matching can be run in several pages', function() {
     'matching orders step by step: one pair matches partially, leaving one to match other does not due to price difference',
     function(accounts) {
       const [, buyer, seller] = accounts;
+      // eslint-disable-next-line mocha/no-sibling-hooks
       before(initContractsAndAllowance(accounts));
       describe('GIVEN there is a pair of orders that matches partially, and another buy order with a lower price', function() {
         before(async function() {
+          await testHelper.setOracleMarketPrice(dex, base.address, secondary.address, MARKET_PRICE);
+
           await dex.insertBuyMarketOrder({
             priceMultiplier: 1 / MARKET_PRICE,
             from: buyer
@@ -622,9 +635,12 @@ describe('Matching can be run in several pages', function() {
     accounts
   ) {
     const [, buyer, seller] = accounts;
+    // eslint-disable-next-line mocha/no-sibling-hooks
     before(initContractsAndAllowance(accounts));
     describe('GIVEN there are one buy and one sell orders which do not match due to price difference', function() {
       before(async function() {
+        await testHelper.setOracleMarketPrice(dex, base.address, secondary.address, MARKET_PRICE);
+
         await dex.insertBuyMarketOrder({
           priceMultiplier: 0.99,
           from: buyer
@@ -745,6 +761,7 @@ describe('Matching can be run in several pages', function() {
 
   contract('matching orders in two steps with a lot of blocks between them', function(accounts) {
     const [, buyer, seller] = accounts;
+    // eslint-disable-next-line mocha/no-sibling-hooks
     before(
       initContractsAndAllowance(accounts, {
         ordersForTick: 8,
@@ -760,6 +777,8 @@ describe('Matching can be run in several pages', function() {
 
       describe('AND there are the double of expected orders for the tick', function() {
         before(async function() {
+          await testHelper.setOracleMarketPrice(dex, base.address, secondary.address, MARKET_PRICE);
+
           await Promise.all(
             [...new Array(8)].map(() =>
               Promise.all([
@@ -827,13 +846,13 @@ describe('Matching can be run in several pages', function() {
                 });
                 it('AND the lastTickBlock is the one when the tick started', async function() {
                   const { lastTickBlock } = await dex.getNextTick(...pair);
-                  assertBig(lastTickBlock, blockWhenTickStarted, 'Block When Tick Started');
+                  return assertBig(lastTickBlock, blockWhenTickStarted, 'Block When Tick Started');
                 });
                 // The amount of blocks it took to run the matching should not be
                 // considered as tick duration.
                 it('AND the next tick spans half as many blocks as the previous one(50)', async function() {
                   const { nextTickBlock, lastTickBlock } = await dex.getNextTick(...pair);
-                  assertBig(nextTickBlock.sub(lastTickBlock), 50, 'Blocks until next tick');
+                  return assertBig(nextTickBlock.sub(lastTickBlock), 50, 'Blocks until next tick');
                 });
               });
             });
@@ -848,10 +867,13 @@ describe('Matching can be run in several pages', function() {
     'The pagination make a tick able to finish no matter how many orders there are to be processed, and its types',
     function(accounts) {
       const [, buyer, seller] = accounts;
+      // eslint-disable-next-line mocha/no-sibling-hooks
       before(initContractsAndAllowance(accounts));
       const totalOrdersPerType = 100;
       describe(`GIVEN there are ${totalOrdersPerType} orders of buy and ${totalOrdersPerType} of sell`, function() {
         before(async function() {
+          await testHelper.setOracleMarketPrice(dex, base.address, secondary.address, MARKET_PRICE);
+
           await Promise.all(
             [...Array(totalOrdersPerType)].map(() =>
               dex.insertBuyLimitOrder({

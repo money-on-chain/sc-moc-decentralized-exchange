@@ -16,18 +16,20 @@ contract TokenPairConverter is TokenPairListing {
 
     @param _baseToken Address of the base token of the pair
     @param _secondaryToken Address of the secondary token of the pair
+    @param _priceProvider Address of the oracle price provider
     @param _priceComparisonPrecision Precision to be used in the pair price
     @param _initialPrice Price used initially until a new tick with matching orders is run
   */
   function addTokenPair(
     address _baseToken,
     address _secondaryToken,
+    address _priceProvider,
     uint256 _priceComparisonPrecision,
     uint256 _initialPrice
   ) public {
     // The TokenPairListing validates the caller is an authorized changer
     require(_baseToken == commonBaseTokenAddress || validPair(commonBaseTokenAddress, _baseToken), "Invalid Pair");
-    TokenPairListing.addTokenPair(_baseToken, _secondaryToken, _priceComparisonPrecision, _initialPrice);
+    TokenPairListing.addTokenPair(_baseToken, _secondaryToken, _priceProvider, _priceComparisonPrecision, _initialPrice);
   }
 
   /**

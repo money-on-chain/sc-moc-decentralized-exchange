@@ -6,7 +6,6 @@ import "./OrderIdGenerator.sol";
 import "./CommissionManager.sol";
 import "./TokenPairConverter.sol";
 
-
 contract EventfulOrderListing {
   /**
     @dev Cloned from MoCExchangeLib.sol or the event it is not recognized and emitted from that lib
@@ -47,7 +46,6 @@ contract EventfulOrderListing {
   */
   event TransferFailed(address indexed _tokenAddress, address indexed _to, uint256 _amount, bool _isRevert);
 }
-
 
 contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenerator, Stoppable, ReentrancyGuard {
   // intentionally using the biggest possible uint256
@@ -90,6 +88,16 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
    */
   function pendingBuyOrdersLength(address _baseToken, address _secondaryToken) external view returns (uint256) {
     return pendingBuyOrdersLength(tokenPair(_baseToken, _secondaryToken));
+  }
+
+  /**
+    @notice Returns the price provider of a given pair
+    @param _baseToken the base token of the pair
+    @param _secondaryToken the secondary token of the pair
+   */
+  function getPriceProvider(address _baseToken, address _secondaryToken) external view returns (address) {
+    MoCExchangeLib.Pair storage pair = tokenPair(_baseToken, _secondaryToken);
+    return address(pair.priceProvider);
   }
 
   /**

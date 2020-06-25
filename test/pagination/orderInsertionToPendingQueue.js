@@ -111,15 +111,24 @@ describe('Insertion of orders to a pending queue when the tick is being run', fu
 
   contract('Orders inserted with hint during matching', function(accounts) {
     const [, buyer, seller] = accounts;
+    // eslint-disable-next-line mocha/no-sibling-hooks
     before(initContractsAndAllowance(accounts));
 
     describe('GIVEN there are 2 buy and 2 sell orders', function() {
       before(function() {
         return Promise.all([
-          dex.insertBuyLimitOrder({ from: buyer }),
-          dex.insertBuyLimitOrder({ from: buyer }),
-          dex.insertSellLimitOrder({ from: seller }),
-          dex.insertSellLimitOrder({ from: seller })
+          dex.insertBuyLimitOrder({
+            from: buyer
+          }),
+          dex.insertBuyLimitOrder({
+            from: buyer
+          }),
+          dex.insertSellLimitOrder({
+            from: seller
+          }),
+          dex.insertSellLimitOrder({
+            from: seller
+          })
         ]);
       });
 

@@ -59,6 +59,7 @@ describe('Withdraw commissions tests', function() {
   };
 
   contract('GIVEN there are commissions charged in base', function(accounts) {
+    // eslint-disable-next-line mocha/no-sibling-hooks
     before(async function() {
       chargedCommission = await chargeCommissionInBase(accounts);
     });
@@ -85,6 +86,7 @@ describe('Withdraw commissions tests', function() {
     });
   });
   contract('GIVEN there are commissions charged in base', function(accounts) {
+    // eslint-disable-next-line mocha/no-sibling-hooks
     before(async function() {
       chargedCommission = await chargeCommissionInBase(accounts);
     });
@@ -125,6 +127,7 @@ describe('Withdraw commissions tests', function() {
     let chargedCommissionSecondary;
     let previousBalance;
 
+    // eslint-disable-next-line mocha/no-sibling-hooks
     before(async function() {
       previousBalance = await base.balanceOf(beneficiaryAddress);
 

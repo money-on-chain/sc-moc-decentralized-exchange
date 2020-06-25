@@ -7,6 +7,7 @@ import {MoCExchangeLib} from "./libs/MoCExchangeLib.sol";
 import {TickState} from "./libs/TickState.sol";
 import "./libs/MoCExchangeLib.sol";
 import "./ConfigurableTick.sol";
+import "./interface/IPriceProvider.sol";
 
 contract EventfulTokenPairListing {
   event TokenPairDisabled(address baseToken, address secondaryToken);
@@ -90,11 +91,11 @@ Emits an event
   }
 
   /**
-@dev Sets the EMA Price for a specific token pair
-@param _baseToken Address of the base token of the pair
-@param _secondaryToken Address of the secondary token of the pair
-@param _emaPrice The new EMA price for the token pair
-*/
+  @dev Sets the EMA Price for a specific token pair
+  @param _baseToken Address of the base token of the pair
+  @param _secondaryToken Address of the secondary token of the pair
+  @param _emaPrice The new EMA price for the token pair
+  */
   function setTokenPairEmaPrice(
     address _baseToken,
     address _secondaryToken,
@@ -102,6 +103,19 @@ Emits an event
   ) public onlyAuthorizedChanger {
     MoCExchangeLib.Pair storage pair = getTokenPair(_baseToken, _secondaryToken);
     pair.emaPrice = _emaPrice;
+  }
+
+  /**
+  @dev Sets a price provider for a specific token pair
+  @param _baseToken Address of the base token of the pair
+  @param _secondaryToken Address of the secondary token of the pair
+  @param _priceProvider Address of the price provider
+  */
+  function setPriceProvider(address _baseToken, address _secondaryToken, address _priceProvider) public onlyAuthorizedChanger() {
+    require(validPair(_baseToken, _secondaryToken), "The pair does not exist");
+    require(_priceProvider != address(0), "Price provider address can not be 0x");
+    MoCExchangeLib.Pair storage pair = getTokenPair(_baseToken, _secondaryToken);
+    pair.priceProvider = IPriceProvider(_priceProvider);
   }
 
   /**
@@ -116,6 +130,7 @@ or its inverse must not be listed already
   function addTokenPair(
     address _baseToken,
     address _secondaryToken,
+    address _priceProvider,
     uint256 _priceComparisonPrecision,
     uint256 _initialPrice
   ) public onlyAuthorizedChanger() isNewPairValid(_baseToken, _secondaryToken) {
@@ -125,6 +140,7 @@ or its inverse must not be listed already
     tokenPairs[pairIndex] = MoCExchangeLib.Pair(
       MoCExchangeLib.Token(MoCExchangeLib.Data(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, true), IERC20(_baseToken)),
       MoCExchangeLib.Token(MoCExchangeLib.Data(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false), IERC20(_secondaryToken)),
+      IPriceProvider(_priceProvider),
       // initialize TickState with the given Tick number and an nextTickBlock of blocksForTick after the current one
       TickState.Data(SafeMath.add(block.number, tickConfig.minBlocksForTick), 0, 0, 1),
       MoCExchangeLib.TickPaginationMemory(
@@ -134,6 +150,7 @@ or its inverse must not be listed already
         0,
         MoCExchangeLib.Order(MoCExchangeLib.OrderType.LIMIT_ORDER, 0, 0, 0, 0, 0, 0, address(0), 0),
         MoCExchangeLib.Order(MoCExchangeLib.OrderType.LIMIT_ORDER, 0, 0, 0, 0, 0, 0, address(0), 0),
+        0,
         0,
         0,
         0,

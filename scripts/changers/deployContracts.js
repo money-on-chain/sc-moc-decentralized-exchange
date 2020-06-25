@@ -11,6 +11,10 @@ const MaxOrderLifespanChanger = require('../../build/contracts/MaxOrderLifespanC
 const MinBlocksForTickChanger = require('../../build/contracts/MinBlocksForTickChanger.json');
 const MinOrderAmountChanger = require('../../build/contracts/MinOrderAmountChanger.json');
 const AddTokenPairChanger = require('../../build/contracts/AddTokenPairChanger.json');
+const PriceProviderChanger = require('../../build/contracts/PriceProviderChanger.json');
+const TokenPriceProviderLastClosingPrice = require('../../build/contracts/TokenPriceProviderLastClosingPrice.json');
+const TokenPriceProviderFallback = require('../../build/contracts/TokenPriceProviderFallback.json');
+const TokenPriceProviderFake = require('../../build/contracts/TokenPriceProviderFake.json');
 
 const { deployContract, getConfig } = require('./networkHelper');
 
@@ -113,6 +117,55 @@ const deployAddTokenPairChanger = async (
   ]);
 };
 
+const deployPriceProviderFake = async network =>
+  deployContract(TokenPriceProviderFake, network, []);
+
+const deployPriceProviderLastClosingPrice = async (
+  network,
+  baseTokenAddress,
+  secondaryTokenAddress
+) => {
+  const config = getConfig(network);
+
+  return deployContract(TokenPriceProviderLastClosingPrice, network, [
+    config.dex,
+    baseTokenAddress,
+    secondaryTokenAddress
+  ]);
+};
+
+const deployPriceProviderFallback = async (
+  network,
+  baseTokenAddress,
+  secondaryTokenAddress,
+  externalPriceProvider
+) => {
+  const config = getConfig(network);
+
+  return deployContract(TokenPriceProviderFallback, network, [
+    externalPriceProvider,
+    config.dex,
+    baseTokenAddress,
+    secondaryTokenAddress
+  ]);
+};
+
+const deployChangePriceProvider = async (
+  network,
+  baseTokenAddress,
+  secondaryTokenAddress,
+  priceProviderAddress
+) => {
+  const config = getConfig(network);
+
+  return deployContract(PriceProviderChanger, network, [
+    config.dex,
+    baseTokenAddress,
+    secondaryTokenAddress,
+    priceProviderAddress
+  ]);
+};
+
 module.exports = {
   deployTokenDisabler,
   deployTokenEnabler,
@@ -126,5 +179,9 @@ module.exports = {
   deployMaxOrderLifespanChanger,
   deployMinBlocksForTickChanger,
   deployMinOrderAmountChanger,
-  deployAddTokenPairChanger
+  deployAddTokenPairChanger,
+  deployChangePriceProvider,
+  deployPriceProviderLastClosingPrice,
+  deployPriceProviderFallback,
+  deployPriceProviderFake
 };

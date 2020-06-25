@@ -158,6 +158,7 @@ describe('Matching can be run in several pages', function() {
 
   contract('matching orders step by step: two full matches at the same price', function(accounts) {
     const [, buyer, seller] = accounts;
+    // eslint-disable-next-line mocha/no-sibling-hooks
     before(initContractsAndAllowance(accounts));
     describe('GIVEN there are 2 buy and 2 sell orders which match 1v1', function() {
       before(async function() {
@@ -309,13 +310,20 @@ describe('Matching can be run in several pages', function() {
     'matching orders step by step: one pair matches completelly, the other doesnt due to price difference',
     function(accounts) {
       const [, buyer, seller] = accounts;
+      // eslint-disable-next-line mocha/no-sibling-hooks
       before(initContractsAndAllowance(accounts));
       describe('GIVEN there is a pair of orders that match and there are one buy and one sell orders which dont match due to price difference', function() {
         before(async function() {
           await dex.insertBuyLimitOrder({ from: buyer }); // id: 1
           await dex.insertSellLimitOrder({ from: seller }); // id: 2
-          await dex.insertBuyLimitOrder({ from: buyer, price: DEFAULT_PRICE / 2 }); // id: 3
-          await dex.insertSellLimitOrder({ from: seller, price: DEFAULT_PRICE * 2 }); // id: 4
+          await dex.insertBuyLimitOrder({
+            from: buyer,
+            price: DEFAULT_PRICE / 2
+          }); // id: 3
+          await dex.insertSellLimitOrder({
+            from: seller,
+            price: DEFAULT_PRICE * 2
+          }); // id: 4
         });
 
         it('AND the pair is not running a tick', function() {
@@ -451,14 +459,21 @@ describe('Matching can be run in several pages', function() {
     'matching orders step by step: one pair matches partially, leaving one to match other doesnt due to price difference',
     function(accounts) {
       const [, buyer, seller] = accounts;
+      // eslint-disable-next-line mocha/no-sibling-hooks
       before(initContractsAndAllowance(accounts));
       describe('GIVEN there is a pair of orders that matches partially, and another buy order with a lower price', function() {
         before(async function() {
           await dex.insertBuyLimitOrder({ from: buyer }); // id: 1, matches completelly
           // id: 2 matches partially
-          await dex.insertSellLimitOrder({ from: seller, amount: DEFAULT_AMOUNT * 2 });
+          await dex.insertSellLimitOrder({
+            from: seller,
+            amount: DEFAULT_AMOUNT * 2
+          });
           // id: 3 doesnt match with partial order 2
-          await dex.insertBuyLimitOrder({ from: buyer, price: DEFAULT_PRICE / 2 });
+          await dex.insertBuyLimitOrder({
+            from: buyer,
+            price: DEFAULT_PRICE / 2
+          });
         });
 
         it('AND the pair is not running a tick', function() {
@@ -594,6 +609,7 @@ describe('Matching can be run in several pages', function() {
     accounts
   ) {
     const [, buyer, seller] = accounts;
+    // eslint-disable-next-line mocha/no-sibling-hooks
     before(initContractsAndAllowance(accounts));
     describe('GIVEN there are one buy and one sell orders which dont match due to price difference', function() {
       before(async function() {
@@ -711,6 +727,7 @@ describe('Matching can be run in several pages', function() {
 
   contract('matching orders in two steps with a lot of blocks between them', function(accounts) {
     const [, buyer, seller] = accounts;
+    // eslint-disable-next-line mocha/no-sibling-hooks
     before(
       initContractsAndAllowance(accounts, {
         ordersForTick: 8,
@@ -808,6 +825,7 @@ describe('Matching can be run in several pages', function() {
     'The pagination make a tick able to finish no matter how many orders there are to be processed, and its types',
     function(accounts) {
       const [, buyer, seller] = accounts;
+      // eslint-disable-next-line mocha/no-sibling-hooks
       before(initContractsAndAllowance(accounts));
       const totalOrdersPerType = 100;
       describe(`GIVEN there are ${totalOrdersPerType} orders of buy and ${totalOrdersPerType} of sell`, function() {

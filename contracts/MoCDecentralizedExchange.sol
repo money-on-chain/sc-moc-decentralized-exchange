@@ -5,7 +5,6 @@ import "openzeppelin-eth/contracts/math/Math.sol";
 import "./RestrictiveOrderListing.sol";
 import "partial-execution/contracts/PartialExecution.sol";
 
-
 contract EventfulExchange {
   /**
 @dev Cloned from MoCExchangeLib.sol or the event it is not recognized and emitted from that lib
@@ -107,7 +106,6 @@ contract EventfulExchange {
     uint256 closingPrice
   );
 }
-
 
 contract MoCDecentralizedExchange is EventfulExchange, RestrictiveOrderListing, PartialExecution {
   using SafeMath for uint256;
@@ -228,11 +226,23 @@ the previous to the one moved
       uint256 lastClosingPrice,
       bool disabled,
       uint256 emaPrice,
-      uint256 smoothingFactor
+      uint256 smoothingFactor,
+      uint256 marketPrice
     )
   {
     (tickNumber, nextTickBlock, lastTickBlock, lastClosingPrice, disabled, emaPrice, smoothingFactor) = getStatus(_baseToken, _secondaryToken);
     (emergentPrice, lastBuyMatchId, lastBuyMatchAmount, lastSellMatchId) = getEmergentPrice(_baseToken, _secondaryToken);
+    marketPrice = getMarketPrice(_baseToken, _secondaryToken);
+  }
+
+  /**
+    @notice Getter for every value related to a pair
+    @param _baseToken Address of the base token of the pair
+    @param _secondaryToken Address of the secondary token of the pair
+    @return lastClosingPrice - the last price from a successful matching
+  */
+  function getLastClosingPrice(address _baseToken, address _secondaryToken) external view returns (uint256 lastClosingPrice) {
+    (, , , lastClosingPrice, , , ) = getStatus(_baseToken, _secondaryToken);
   }
 
   /**
@@ -323,6 +333,16 @@ and disabled first
   }
 
   /**
+  @notice Get the current market price
+  @param _baseToken Address of the base token of the pair
+  @param _secondaryToken Address of the secondary token of the pair
+  */
+  function getMarketPrice(address _baseToken, address _secondaryToken) public view returns (uint256) {
+    MoCExchangeLib.Pair storage pair = tokenPair(_baseToken, _secondaryToken);
+    return MoCExchangeLib.getMarketPrice(pair);
+  }
+
+  /**
 @notice Returns the tick stage for a given pair
 @param _baseToken Address of the base token of the pair
 @param _secondaryToken Address of the secondary token of the pair
@@ -345,18 +365,20 @@ associated pair with the groupId.
 
 @param _baseToken Address of the base token of the pair
 @param _secondaryToken Address of the secondary token of the pair
+@param _priceProvider Address of the oracle price provider
 @param _priceComparisonPrecision Precision to be used in the pair price
 @param _initialPrice Price used initially until a new tick with matching orders is run
 */
   function addTokenPair(
     address _baseToken,
     address _secondaryToken,
+    address _priceProvider,
     uint256 _priceComparisonPrecision,
     uint256 _initialPrice
   ) public {
     // The TokenPairListing, called by TokenPairConverter, validates the caller is an
     // authorized changer
-    TokenPairConverter.addTokenPair(_baseToken, _secondaryToken, _priceComparisonPrecision, _initialPrice);
+    TokenPairConverter.addTokenPair(_baseToken, _secondaryToken, _priceProvider, _priceComparisonPrecision, _initialPrice);
     bytes32 groupId = getGroupIdForPair(_baseToken, _secondaryToken);
     bytes32[] memory taskList = new bytes32[](uint256(TaskTypes.length));
     taskList[uint256(TaskTypes.SIMULATION)] = getTaskId(groupId, TaskTypes.SIMULATION);

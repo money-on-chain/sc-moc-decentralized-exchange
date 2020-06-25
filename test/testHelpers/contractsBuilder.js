@@ -44,6 +44,9 @@ const Governor = artifacts.require('Governor');
 const Stopper = artifacts.require('Stopper');
 const OwnerBurnableToken = artifacts.require('OwnerBurnableToken');
 const CommissionManager = artifacts.require('CommissionManager');
+const TokenPriceProviderFake = artifacts.require('TokenPriceProviderFake');
+const PriceProviderLastClosingPrice = artifacts.require('TokenPriceProviderLastClosingPrice');
+const PriceProviderFallback = artifacts.require('TokenPriceProviderFallback');
 
 const getBaseToken = () => DocToken;
 const getSecondaryToken = () => this.using.secondaryToken || BProToken;
@@ -62,6 +65,9 @@ const getCommissionManager = () =>
 const getTickState = () => this.using.tickState || TickStateFake.deployed();
 const getGovernor = () => Governor.at(getProxyAddress('Governor'));
 const getStopper = () => Stopper.at(getProxyAddress('Stopper'));
+const getTokenPriceProviderFake = () => TokenPriceProviderFake;
+const getPriceProviderLastClosingPrice = () => PriceProviderLastClosingPrice;
+const getPriceProviderFallback = () => PriceProviderFallback;
 
 const createTickStateFake = async ({ ordersForTick, maxBlocksForTick, minBlocksForTick }) => {
   this.using.tickState = await TickStateFake.new();
@@ -111,6 +117,9 @@ const createContracts = async ({
     getGovernor(),
     getStopper()
   ]);
+
+  const priceProviderFake = await getTokenPriceProviderFake().new();
+
   const { commissionRate, cancelationPenaltyRate, expirationPenaltyRate } = commission || {};
 
   const commissionManagerProxy = await project.createProxy(CommissionManagerProxy);
@@ -143,9 +152,12 @@ const createContracts = async ({
 
   if (tokenPair) {
     const { pricePrecision, initialPrice } = tokenPair;
+    // set initial price
+    await priceProviderFake.poke(initialPrice || DEFAULT_PRICE_PRECISION.toString());
     await addTokenPair(dex)(
       base.address,
       secondary.address,
+      priceProviderFake.address,
       pricePrecision || DEFAULT_PRICE_PRECISION.toString(),
       initialPrice || DEFAULT_PRICE_PRECISION.toString(),
       governor
@@ -171,6 +183,9 @@ module.exports = () => {
     getGovernor,
     getStopper,
     getOwnerBurnableToken,
-    getTestToken
+    getTestToken,
+    getTokenPriceProviderFake,
+    getPriceProviderLastClosingPrice,
+    getPriceProviderFallback
   };
 };

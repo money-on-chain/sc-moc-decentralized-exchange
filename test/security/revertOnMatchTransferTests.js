@@ -125,7 +125,10 @@ describe('Security: ERC20 Transfer revert', function() {
   contract('Dex: GIVEN a user gets black-listed from secondary Token', function(accounts) {
     const getTestHelperAndBlackList = async () => {
       const testHelper = await getTestHelper(accounts)();
+      const dex = await testHelper.getDex();
       const secondary = await testHelper.getSecondary();
+      const base = await testHelper.getBase();
+      await testHelper.setOracleMarketPrice(dex, base.address, secondary.address, 2);
       await secondary.blacklist(accounts[2]);
       return testHelper;
     };

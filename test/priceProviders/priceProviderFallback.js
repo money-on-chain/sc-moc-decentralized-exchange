@@ -1,11 +1,10 @@
-const { expectRevert } = require('openzeppelin-test-helpers');
-const testHelperBuilder = require('./testHelpers/testHelper');
+const testHelperBuilder = require('../testHelpers/testHelper');
 
 const DEFAULT_INITIAL_PRICE = 10;
 let testHelper;
 let wadify;
 let pricefy;
-let priceProvider;
+let externalProvider;
 
 const decorateDex = function(dex, governor) {
   return Object.assign({}, dex, {
@@ -14,7 +13,7 @@ const decorateDex = function(dex, governor) {
 };
 
 const createNewPair = (dex, governor) =>
-  async function(baseToken, secondaryToken, lastClosingPrice, price, user) {
+  async function(baseToken, secondaryToken, priceProvider, lastClosingPrice, price, user) {
     await dex.addTokenPair(
       baseToken.address,
       secondaryToken.address,
@@ -49,17 +48,23 @@ const createNewPair = (dex, governor) =>
     }
   };
 
-const assertLastClosingPrice = async function(dex, base, secondary, expectedClosingPrice) {
-  const { lastClosingPrice } = await dex.getTokenPairStatus.call(base.address, secondary.address);
-  return testHelper.assertBigPrice(lastClosingPrice, expectedClosingPrice, 'Last closing price');
+const assertMarketPrice = async (priceProvider, expectedClosingPrice) => {
+  const lastClosingPrice = await priceProvider.peek();
+  assert(lastClosingPrice[1], 'Does not have price');
+  return testHelper.assertBigPrice(
+    parseInt(lastClosingPrice[0], 16).toString(),
+    expectedClosingPrice,
+    'Last closing price'
+  );
 };
 
-describe('Last closing price tests', function() {
+describe('Price provider with fallback tests - defaults to last closing price when external does not have a price', function() {
   let doc;
   let dex;
   let secondary;
   let otherSecondary;
   let governor;
+
   const setContracts = async function(accounts) {
     testHelper = testHelperBuilder();
     ({ wadify, pricefy } = testHelper);
@@ -70,7 +75,7 @@ describe('Last closing price tests', function() {
       maxBlocksForTick: 2,
       minBlocksForTick: 1
     });
-    [dex, doc, secondary, otherSecondary, governor, priceProvider] = await Promise.all([
+    [dex, doc, secondary, otherSecondary, governor, externalProvider] = await Promise.all([
       testHelper.getDex(),
       testHelper.getBase(),
       testHelper.getSecondary(),
@@ -78,26 +83,24 @@ describe('Last closing price tests', function() {
       testHelper.getGovernor(),
       testHelper.getTokenPriceProviderFake().new()
     ]);
+
     dex = testHelper.decorateGovernedSetters(dex);
     dex = decorateDex(dex, governor);
+
+    await externalProvider.pokeValidity(false);
   };
 
-  contract('RULE: Last closing price can not be set as 0', function(accounts) {
-    before(function() {
-      return setContracts(accounts);
-    });
-    it('WHEN inserting a new pair with price 0 it should revert', async function() {
-      await expectRevert(dex.createNewPair(doc, secondary, 0), 'initialPrice no zero');
-    });
-  });
-
   describe('RULE: Last closing price can not be 0', function() {
+    let priceProvider;
     contract('CASE: Running the matching process without orders', function(accounts) {
       before(function() {
         return setContracts(accounts);
       });
       it('GIVEN there is a token pair without orders', async function() {
-        await dex.createNewPair(doc, secondary, DEFAULT_INITIAL_PRICE);
+        priceProvider = await testHelper
+          .getPriceProviderFallback()
+          .new(externalProvider.address, dex.address, doc.address, secondary.address);
+        await dex.createNewPair(doc, secondary, priceProvider, DEFAULT_INITIAL_PRICE);
       });
       it('WHEN running the matching process', async function() {
         await dex.matchOrders(
@@ -106,8 +109,8 @@ describe('Last closing price tests', function() {
           testHelper.DEFAULT_STEPS_FOR_MATCHING
         );
       });
-      it('THEN the last closing price for the pair should be the same', async function() {
-        await assertLastClosingPrice(dex, doc, secondary, DEFAULT_INITIAL_PRICE);
+      it('THEN the market price for the pair should be the same', async function() {
+        await assertMarketPrice(priceProvider, DEFAULT_INITIAL_PRICE);
       });
     });
 
@@ -134,7 +137,12 @@ describe('Last closing price tests', function() {
               accounts
             })
           ]);
-          await dex.createNewPair(doc, secondary, DEFAULT_INITIAL_PRICE);
+
+          priceProvider = await testHelper
+            .getPriceProviderFallback()
+            .new(externalProvider.address, dex.address, doc.address, secondary.address);
+          await dex.createNewPair(doc, secondary, priceProvider, DEFAULT_INITIAL_PRICE);
+
           await dex.insertBuyLimitOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
             from: user
           });
@@ -153,8 +161,8 @@ describe('Last closing price tests', function() {
             it('THEN emergentPrice is zero', function() {
               return testHelper.assertBig(emergentPrice, 0, 'Last closing price');
             });
-            it('THEN the last closing price for the pair should be the same', async function() {
-              await assertLastClosingPrice(dex, doc, secondary, DEFAULT_INITIAL_PRICE);
+            it('THEN the market price for the pair should be the same', async function() {
+              await assertMarketPrice(priceProvider, DEFAULT_INITIAL_PRICE);
             });
           });
         });
@@ -163,21 +171,29 @@ describe('Last closing price tests', function() {
   });
 
   describe('RULE: Last closing price is token-pair independent', function() {
+    let priceProvider;
+    let otherPriceProvider;
     contract('CASE: Adding a new pair of tokens', function(accounts) {
       before(function() {
         return setContracts(accounts);
       });
 
       it('GIVEN there is a token pair ', async function() {
-        await dex.createNewPair(doc, secondary, DEFAULT_INITIAL_PRICE);
+        priceProvider = await testHelper
+          .getPriceProviderFallback()
+          .new(externalProvider.address, dex.address, doc.address, secondary.address);
+        await dex.createNewPair(doc, secondary, priceProvider, DEFAULT_INITIAL_PRICE);
       });
       it('WHEN inserting a new pair with different initial price', async function() {
-        await dex.createNewPair(doc, otherSecondary, DEFAULT_INITIAL_PRICE * 2);
+        otherPriceProvider = await testHelper
+          .getPriceProviderFallback()
+          .new(externalProvider.address, dex.address, doc.address, otherSecondary.address);
+        await dex.createNewPair(doc, otherSecondary, priceProvider, DEFAULT_INITIAL_PRICE * 2);
       });
       it('THEN each pair has its respective last closing price', async function() {
         await Promise.all([
-          assertLastClosingPrice(dex, doc, secondary, DEFAULT_INITIAL_PRICE),
-          assertLastClosingPrice(dex, doc, otherSecondary, DEFAULT_INITIAL_PRICE * 2)
+          await assertMarketPrice(priceProvider, DEFAULT_INITIAL_PRICE),
+          await assertMarketPrice(otherPriceProvider, DEFAULT_INITIAL_PRICE * 2)
         ]);
       });
     });
@@ -206,9 +222,24 @@ describe('Last closing price tests', function() {
               accounts
             })
           ]);
+
+          priceProvider = await testHelper
+            .getPriceProviderFallback()
+            .new(externalProvider.address, dex.address, doc.address, secondary.address);
+          otherPriceProvider = await testHelper
+            .getPriceProviderFallback()
+            .new(externalProvider.address, dex.address, doc.address, otherSecondary.address);
           await Promise.all([
-            dex.createNewPair(doc, secondary, DEFAULT_INITIAL_PRICE),
-            dex.createNewPair(doc, otherSecondary, DEFAULT_INITIAL_PRICE, 5, user)
+            dex.createNewPair(doc, secondary, priceProvider, DEFAULT_INITIAL_PRICE),
+
+            dex.createNewPair(
+              doc,
+              otherSecondary,
+              otherPriceProvider,
+              DEFAULT_INITIAL_PRICE,
+              5,
+              user
+            )
           ]);
           await dex.matchOrders(
             doc.address,
@@ -218,11 +249,29 @@ describe('Last closing price tests', function() {
         });
         describe('AND there are orders in two different token pairs', function() {
           describe('WHEN running the matching process', function() {
-            it('THEN the last closing price for the pair should be the expected ', function() {
-              return assertLastClosingPrice(dex, doc, otherSecondary, 5);
+            it('THEN the market price for the pair should be the expected ', function() {
+              return assertMarketPrice(otherPriceProvider, 5);
             });
-            it('AND the last closing price for the other pair should be the same', function() {
-              return assertLastClosingPrice(dex, doc, secondary, DEFAULT_INITIAL_PRICE);
+            it('AND the market price for the other pair should be the same', function() {
+              return assertMarketPrice(priceProvider, DEFAULT_INITIAL_PRICE);
+            });
+          });
+          describe('WHEN the external oracle has the price back', function() {
+            const externalPrice = 33;
+            before(async function() {
+              await externalProvider.pokeValidity(true);
+              return externalProvider.poke(pricefy(externalPrice));
+            });
+            it('THEN the market price for the pair should be taken from the external oracle', function() {
+              return assertMarketPrice(otherPriceProvider, externalPrice);
+            });
+            describe('AND the external oracle has the price invalidated again', function() {
+              before(async function() {
+                await externalProvider.pokeValidity(false);
+              });
+              it('THEN the market price for the pair should be the same as before', function() {
+                return assertMarketPrice(priceProvider, DEFAULT_INITIAL_PRICE);
+              });
             });
           });
         });

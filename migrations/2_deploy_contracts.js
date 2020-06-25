@@ -23,6 +23,9 @@ const TestToken = artifacts.require('TestToken');
 const WRBTC = artifacts.require('WRBTC');
 const ERC20WithBlacklist = artifacts.require('ERC20WithBlacklist');
 const TickStateFake = artifacts.require('TickStateFake');
+const TokenPriceProviderFake = artifacts.require('TokenPriceProviderFake');
+const TokenPriceProviderLastClosingPrice = artifacts.require('TokenPriceProviderLastClosingPrice');
+const TokenPriceProviderFallback = artifacts.require('TokenPriceProviderFallback');
 const MoCDexFake = artifacts.require('MoCDexFake');
 const CommissionManager = artifacts.require(FEE_MANAGER_NAME);
 
@@ -33,10 +36,36 @@ const pushImplementations = options => push({ ...options });
 const createDexProxy = (dexName, options, initArgs) =>
   create({ contractAlias: dexName, initMethod: 'initialize', initArgs, ...options });
 
+const deployPriceProvider = (
+  config,
+  dexAddress,
+  baseTokenName,
+  secondaryTokenName,
+  baseTokenAddress,
+  secondaryTokenAddress
+) => {
+  if (config.deployFakes) return TokenPriceProviderFake.new();
+
+  const externalPriceProvider =
+    config.externalPriceProvider &&
+    config.externalPriceProvider[baseTokenName] &&
+    config.externalPriceProvider[baseTokenName][secondaryTokenName];
+  console.log(`Deploying price provider with externañ${externalPriceProvider}`);
+
+  return externalPriceProvider
+    ? TokenPriceProviderFallback.new(
+        externalPriceProvider,
+        dexAddress,
+        baseTokenAddress,
+        secondaryTokenAddress
+      )
+    : TokenPriceProviderLastClosingPrice.new(dexAddress, baseTokenAddress, secondaryTokenAddress);
+};
+
 module.exports = async function(deployer, currentNetwork, [owner]) {
   const deployFakes = currentNetwork === 'development' || currentNetwork === 'coverage';
   console.log('Deploying fakes?', deployFakes);
-  const config = Object.assign({}, allConfig.default, allConfig[currentNetwork]);
+  const config = Object.assign({}, { deployFakes }, allConfig.default, allConfig[currentNetwork]);
   const { existingTokens } = config;
   const addresses = config.addressesToHaveBalance || [];
   addresses.push(owner);
@@ -191,19 +220,80 @@ module.exports = async function(deployer, currentNetwork, [owner]) {
 
   const { haveToAddTokenPairs } = config;
 
+  const docBproPriceProvider = await deployPriceProvider(
+    config,
+    dexProxy.address,
+    'DocToken',
+    'BproToken',
+    doc.address,
+    bpro.address
+  );
+  const docTestTokenPriceProvider = await deployPriceProvider(
+    config,
+    dexProxy.address,
+    'DocToken',
+    'TestToken',
+    doc.address,
+    testToken.address
+  );
+  const docWrbtcPriceProvider = await deployPriceProvider(
+    config,
+    dexProxy.address,
+    'DocToken',
+    'WRBTC',
+    doc.address,
+    wrbtc.address
+  );
+  const wrbtcBproPriceProvider = await deployPriceProvider(
+    config,
+    dexProxy.address,
+    'WRBTC',
+    'BproToken',
+    wrbtc.address,
+    bpro.address
+  );
+  const wrbtcTestTokenPriceProvider = await deployPriceProvider(
+    config,
+    dexProxy.address,
+    'WRBTC',
+    'TestToken',
+    wrbtc.address,
+    testToken.address
+  );
+
   const tokenPairsToAdd = [
-    [doc.address, bpro.address, DEFAULT_PRICE_PRECISION_STRING, DEFAULT_PRICE_PRECISION_STRING],
     [
       doc.address,
-      testToken.address,
+      bpro.address,
+      docBproPriceProvider.address,
       DEFAULT_PRICE_PRECISION_STRING,
       DEFAULT_PRICE_PRECISION_STRING
     ],
-    [doc.address, wrbtc.address, DEFAULT_PRICE_PRECISION_STRING, DEFAULT_PRICE_PRECISION_STRING],
-    [wrbtc.address, bpro.address, DEFAULT_PRICE_PRECISION_STRING, DEFAULT_PRICE_PRECISION_STRING],
+    [
+      doc.address,
+      testToken.address,
+      docTestTokenPriceProvider.address,
+      DEFAULT_PRICE_PRECISION_STRING,
+      DEFAULT_PRICE_PRECISION_STRING
+    ],
+    [
+      doc.address,
+      wrbtc.address,
+      docWrbtcPriceProvider.address,
+      DEFAULT_PRICE_PRECISION_STRING,
+      DEFAULT_PRICE_PRECISION_STRING
+    ],
+    [
+      wrbtc.address,
+      bpro.address,
+      wrbtcBproPriceProvider.address,
+      DEFAULT_PRICE_PRECISION_STRING,
+      DEFAULT_PRICE_PRECISION_STRING
+    ],
     [
       wrbtc.address,
       testToken.address,
+      wrbtcTestTokenPriceProvider.address,
       DEFAULT_PRICE_PRECISION_STRING,
       DEFAULT_PRICE_PRECISION_STRING
     ]
@@ -260,7 +350,12 @@ module.exports = async function(deployer, currentNetwork, [owner]) {
         upgradeDelegator: upgradeDelegator.address,
         governor: governor.address,
         stopper: stopper.address,
-        commissionManager: commissionManager.address
+        commissionManager: commissionManager.address,
+        docBproPriceProvider: docBproPriceProvider.address,
+        docTestTokenPriceProvider: docTestTokenPriceProvider.address,
+        docWrbtcPriceProvider: docWrbtcPriceProvider.address,
+        wrbtcBproPriceProvider: wrbtcBproPriceProvider.address,
+        wrbtcTestTokenPriceProvider: wrbtcTestTokenPriceProvider.address
       },
       null,
       2

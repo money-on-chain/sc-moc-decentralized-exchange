@@ -16,6 +16,7 @@ const ExpirationPenaltyRateChanger = artifacts.require('ExpirationPenaltyRateCha
 const TokenPairDisabler = artifacts.require('TokenPairDisabler');
 const TokenPairEnabler = artifacts.require('TokenPairEnabler');
 const EmaPriceChanger = artifacts.require('EmaPriceChanger');
+const PriceProviderChanger = artifacts.require('PriceProviderChanger');
 const SmoothingFactorChanger = artifacts.require('SmoothingFactorChanger');
 
 let testHelper;
@@ -27,6 +28,7 @@ describe('Governed functions tests', function() {
   let base;
   let secondary;
   let governor;
+  let newPriceProvider;
   before(async function() {
     testHelper = testHelperBuilder();
     [dex, commissionManager, base, secondary, governor] = await Promise.all([
@@ -36,6 +38,7 @@ describe('Governed functions tests', function() {
       testHelper.getSecondary(),
       testHelper.getGovernor()
     ]);
+    newPriceProvider = await testHelper.getTokenPriceProviderFake().new();
   });
 
   const testGoverned = function({
@@ -263,6 +266,29 @@ describe('Governed functions tests', function() {
     getContract: () => dex,
     getChanger: () =>
       EmaPriceChanger.new(dex.address, base.address, secondary.address, testHelper.wadify(3))
+  });
+
+  testGoverned({
+    action: 'setting price provider',
+    functionName: 'setPriceProvider',
+    getParams: () => [base.address, secondary.address, newPriceProvider.address],
+    then: () =>
+      it('THEN the token pair shuold have a new price provider', async function() {
+        const currentPriceProvider = await dex.getPriceProvider(base.address, secondary.address);
+        return testHelper.assertAddresses(
+          newPriceProvider.address.toLowerCase(),
+          currentPriceProvider.toLowerCase(),
+          'Address of the price provider'
+        );
+      }),
+    getContract: () => dex,
+    getChanger: () =>
+      PriceProviderChanger.new(
+        dex.address,
+        base.address,
+        secondary.address,
+        newPriceProvider.address
+      )
   });
 
   testGoverned({

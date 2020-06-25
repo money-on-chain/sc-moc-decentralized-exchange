@@ -134,7 +134,7 @@ describe('volume tests and gas cost report generation, using a 1% commission rat
     });
   });
 
-  const totalOrdersPerType = 21;
+  const totalOrdersPerType = 19;
   const descriptionUniqueTest = `match ${totalOrdersPerType} vs ${totalOrdersPerType} orders, orderbook with half expired in between`;
   contract(descriptionUniqueTest, function(accounts) {
     let logObject;
@@ -207,8 +207,8 @@ describe('volume tests and gas cost report generation, using a 1% commission rat
         totalOrders: 15
       },
       {
-        description: '18 sells against 1 buy',
-        totalOrders: 18
+        description: '17 sells against 1 buy',
+        totalOrders: 17
       }
     ].forEach(({ description, totalOrders }) => {
       contract(description, function(accounts) {
