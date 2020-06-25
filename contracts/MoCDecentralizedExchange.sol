@@ -226,11 +226,23 @@ the previous to the one moved
       uint256 lastClosingPrice,
       bool disabled,
       uint256 emaPrice,
-      uint256 smoothingFactor
+      uint256 smoothingFactor,
+      uint256 marketPrice
     )
   {
     (tickNumber, nextTickBlock, lastTickBlock, lastClosingPrice, disabled, emaPrice, smoothingFactor) = getStatus(_baseToken, _secondaryToken);
     (emergentPrice, lastBuyMatchId, lastBuyMatchAmount, lastSellMatchId) = getEmergentPrice(_baseToken, _secondaryToken);
+    marketPrice = getMarketPrice(_baseToken, _secondaryToken);
+  }
+
+  /**
+    @notice Getter for every value related to a pair
+    @param _baseToken Address of the base token of the pair
+    @param _secondaryToken Address of the secondary token of the pair
+    @return lastClosingPrice - the last price from a successful matching
+  */
+  function getLastClosingPrice(address _baseToken, address _secondaryToken) external view returns (uint256 lastClosingPrice) {
+    (, , , lastClosingPrice, , , ) = getStatus(_baseToken, _secondaryToken);
   }
 
   /**

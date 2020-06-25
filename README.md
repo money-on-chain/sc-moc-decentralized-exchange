@@ -4,6 +4,7 @@
 1. [Main Concepts](#main-concepts)
    1. [Tokens Pair](#tokens-pair)
    1. [Secondary token - Base token](#secondary-token-base-token)
+   1. [Price Providers](#price-providers)
    1. [Limit Order](#limit-order)
    1. [Market Order](#market-order)
    1. [Orderbook](#orderbook)
@@ -33,6 +34,9 @@ The way to exchange a token is through a pair that contains it. A pair, or a tok
 
 In a pair, the secondary token is seen as the good and the base token is seen as the medium of payment i.e. if a buy order is placed the sender is buying secondary tokens in exchange for base tokens meanwhile if a sell order is placed the sender is selling secondary tokens in exchange for base tokens.
 
+## Price Providers
+They are contracts that allow you to check the price of the secondary token expressed in units of the primary token. It is an interface of an oracle for example [Maker Dao Price Feed](https://developer.makerdao.com/feeds/) .
+
 ## Limit Orders
 
 Limit Orders (LO from now on) are a type of orders defined by an amount and the price to be paid/charged.
@@ -49,7 +53,7 @@ The multiply factor allows determining the competitiveness of market orders and 
 Order Token Price = Market Price * Multiply Factor
 ```
 
-The market price is always expresed in how much units of base currency is being paid/charged for a minimum unit of the secondary token.
+The market price is always expresed in how much units of base currency is being paid/charged for a minimum unit of the secondary token. The market price is obtained with [price providers](#price-providers)
 In the other hand, the exchangeable amount is the amount to be locked by the user minus fee , i.e. if the user is buying the exchangeable amount of the base token and if the user is selling the locking amount of the secondary token.
 The order can be executed partially too, i.e. an order can be matched with N orders in M different ticks. The orders can be matched with limit and market orders.
 
@@ -207,7 +211,7 @@ DEX and CommisionManger contracts subscribes to a governance implementation that
 
 - Pause/Un-pause the whole system (intended as temporal halts for future upgrades)
 
-For further detail on Governance mechanism refer to [Moc Governance project](https://gitlab.com/atixlabs/moc---gobernanza)
+For further detail on Governance mechanism refer to [Areopagus-Governance](https://github.com/money-on-chain/Areopagus-Governance)
 
 ## Block gas limit prevention
 

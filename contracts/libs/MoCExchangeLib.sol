@@ -906,7 +906,7 @@ library MoCExchangeLib {
   }
 
   /**
-    Returns the ID of the next valid order. It can be MO or LO.
+    Returns the next valid order. It can be MO or LO.
     @notice returns the next valid Order for the given _orderbook
     @dev gets the next Order, if not valid, recursivelly calls itself until finding the first valid or reaching the end.
 
@@ -928,6 +928,14 @@ library MoCExchangeLib {
     return (mostCompetitiveOrder(_marketPrice, _orderbook, nextLO, nextMO), newCurrentLimitOrderId, newCurrentMarketOrderId);
   }
 
+  /**
+    Returns the next valid order. It can be MO or LO.
+    @notice returns the next valid Order for the given _orderbook
+    @dev gets the next Order, if not valid, recursivelly calls itself until finding the first valid or reaching the end.
+    @param _self the pair of tokens
+    @param _isBuy true to get a buy order, false otherwise.
+    @return next valid Order, id = 0 if no valid order found
+   */
   function getNextValidOrder(
     Pair storage _self,
     bool _isBuy
@@ -946,7 +954,16 @@ library MoCExchangeLib {
     );
   }
 
-
+  /**
+    Returns the next valid order. It can be MO or LO.
+    @notice returns the next valid Order for the given _orderbook
+    @dev gets the next Order, if not valid, recursivelly calls itself until finding the first valid or reaching the end.
+    @param _self the pair of tokens
+    @param _isBuy true to get a buy order, false otherwise.
+    @param _limitOrderId previous id of LO.
+    @param _marketOrderId previous id of MO.
+    @return next valid Order, id = 0 if no valid order found
+   */
   function getNextValidOrderEP(
     Pair storage _self,
     bool _isBuy,
@@ -1300,7 +1317,8 @@ library MoCExchangeLib {
     );
   }
   /**
-    @dev iterates over the pair orderbook, simulating the match to obtain potencial closing price
+    @notice Gets the ids of the last sell and buy matching orders.
+    @dev iterates over the pair orderbook, simulating the match to obtain potencial closing price after.
     @return emergentPrice: AVG price of the last matched Orders
     @return lastBuyMatchId Id of the last Buy order to match
     @return lastBuyMatchAmount Amount of the last Buy order to match
