@@ -254,7 +254,7 @@ describe('Order cancel tests', function() {
       describe('WHEN the owner cancels the last one', function() {
         describe('AND he provides no hint', function() {
           it('THEN the transactions reverts for out of gas', function() {
-            const cancel = cancelOrder(getScenario({ accounts, orderId: 100, gas: 120000 }));
+            const cancel = cancelOrder(getScenario({ accounts, orderId: 100, gas: 200000 }));
             // Out of gas are replaced for a revert in the ZeppelinOS proxy pattern
             return expectRevert.unspecified(cancel());
           });
@@ -263,7 +263,7 @@ describe('Order cancel tests', function() {
           it('THEN the transactions is processed', async function() {
             const orderId = 100;
             const prevHint = new BN(99);
-            const cancel = cancelOrder(getScenario({ accounts, orderId, prevHint, gas: 120000 }));
+            const cancel = cancelOrder(getScenario({ accounts, orderId, prevHint, gas: 200000 }));
             await cancel();
             const cancelledOrder = orderTracker.getByOrderId(orderId);
             return expectEvent.inLogs(cancelledOrder.cancelTx.logs, 'OrderCancelled', {

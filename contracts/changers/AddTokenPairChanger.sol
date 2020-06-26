@@ -4,7 +4,6 @@ import "areopagus/contracts/Governance/ChangeContract.sol";
 
 import "../MoCDecentralizedExchange.sol";
 
-
 /**
   @notice Changer that adds one or more pair of tokens to be listed in the MoC Decentralized Exchange
 */

@@ -81,7 +81,9 @@ module.exports = async function(deployer, currentNetwork, [owner]) {
     COMMISSION_RATE,
     CANCELATION_PENALTY_RATE,
     EXPIRATION_PENALTY_RATE,
-    TOKENS_TO_MINT
+    TOKENS_TO_MINT,
+    MIN_MO_MULTIPLY_FACTOR,
+    MAX_MO_MULTIPLY_FACTOR
   } = config;
   const DEFAULT_PRICE_PRECISION_STRING = DEFAULT_PRICE_PRECISION.toString();
   const executeBatched = actions =>
@@ -195,6 +197,8 @@ module.exports = async function(deployer, currentNetwork, [owner]) {
     MAX_BLOCKS_FOR_TICK,
     MIN_BLOCKS_FOR_TICK,
     MIN_ORDER_AMOUNT.toString(),
+    (MIN_MO_MULTIPLY_FACTOR * TOKEN_DECIMALS).toString(),
+    (MAX_MO_MULTIPLY_FACTOR * TOKEN_DECIMALS).toString(),
     MAX_ORDER_LIFESPAN,
     governor.address,
     stopper.address

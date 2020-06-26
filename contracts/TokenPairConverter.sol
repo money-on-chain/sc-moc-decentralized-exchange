@@ -4,7 +4,6 @@ import "openzeppelin-eth/contracts/math/SafeMath.sol";
 
 import "./TokenPairListing.sol";
 
-
 contract TokenPairConverter is TokenPairListing {
   using SafeMath for uint256;
 

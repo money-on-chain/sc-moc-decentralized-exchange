@@ -35,6 +35,7 @@ The way to exchange a token is through a pair that contains it. A pair, or a tok
 In a pair, the secondary token is seen as the good and the base token is seen as the medium of payment i.e. if a buy order is placed the sender is buying secondary tokens in exchange for base tokens meanwhile if a sell order is placed the sender is selling secondary tokens in exchange for base tokens.
 
 ## Price Providers
+
 They are contracts that allow you to check the price of the secondary token expressed in units of the primary token. It is an interface of an oracle for example [Maker Dao Price Feed](https://developer.makerdao.com/feeds/) .
 
 ## Limit Orders
@@ -203,7 +204,7 @@ Using unsigned int256 as the norm for all values, sets an upper limit to ~76 dec
 
 ## Governance and Upgradability
 
-DEX and CommisionManger contracts subscribes to a governance implementation that allows an external contract to authorize changers to:
+DEX and CommissionManager contracts subscribes to a governance implementation that allows an external contract to authorize changers to:
 
 - Set single parameters values (for example, adjusting commission fee)
 

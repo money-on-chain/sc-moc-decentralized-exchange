@@ -101,6 +101,15 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
   }
 
   /**
+    @notice Withdraws all the already charged(because of a matching, a cancellation or an expiration)
+    commissions of a given token
+    @param token Address of the token to withdraw the commissions from
+   */
+  function withdrawCommissions(address token) external nonReentrant {
+    MoCExchangeLib.withdrawCommissions(token, commissionManager);
+  }
+
+  /**
     @notice Inserts an order in the buy orderbook of a given pair without a hint
     the pair should not be disabled; the contract should not be paused. Takes the funds
     with a transferFrom
@@ -222,15 +231,6 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     uint256 _previousOrderIdHint
   ) public whenNotPaused {
     doCancelOrder(getTokenPair(_baseToken, _secondaryToken), _orderId, _previousOrderIdHint, false);
-  }
-
-  /**
-    @notice Withdraws all the already charged(because of a matching, a cancellation or an expiration)
-    commissions of a given token
-    @param token Address of the token to withdraw the commissions from
-   */
-  function withdrawCommissions(address token) public nonReentrant {
-    MoCExchangeLib.withdrawCommissions(token, commissionManager);
   }
 
   /**

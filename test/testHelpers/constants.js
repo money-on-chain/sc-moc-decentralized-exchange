@@ -12,6 +12,9 @@ module.exports = {
   DEFAULT_MIN_ORDER_AMOUNT: new BN(0).toString(),
   DEFAULT_MAX_ORDER_LIFESPAN: 10,
   DEFAULT_COMMISSION_RATE: new BN(0).toString(),
+  DEFAULT_MIN_MO_MULTIPLY_FACTOR: 0.01,
+  // Purposely put a very high max to help make more extreme tests
+  DEFAULT_MAX_MO_MULTIPLY_FACTOR: 199,
   DEFAULT_CANCELATION_PENALTY_RATE: new BN(0).toString(),
   DEFAULT_EXPIRATION_PENALTY_RATE: new BN(0).toString(),
   DEFAULT_ACCOUNT_INDEX: 1,

@@ -11,7 +11,10 @@ const {
   DEFAULT_PRICE_PRECISION,
   DEFAULT_COMMISSION_RATE,
   DEFAULT_CANCELATION_PENALTY_RATE,
-  DEFAULT_EXPIRATION_PENALTY_RATE
+  DEFAULT_EXPIRATION_PENALTY_RATE,
+  DEFAULT_MIN_MO_MULTIPLY_FACTOR,
+  DEFAULT_MAX_MO_MULTIPLY_FACTOR,
+  RATE_PRECISION
 } = require('./constants');
 
 ZWeb3.initialize(web3.currentProvider);
@@ -62,6 +65,7 @@ const getDex = () =>
   this.using.dex || MoCDecentralizedExchange.at(getProxyAddress('MoCDecentralizedExchange'));
 const getCommissionManager = () =>
   this.using.commissionManager || CommissionManager.at(getProxyAddress('CommissionManager'));
+
 const getTickState = () => this.using.tickState || TickStateFake.deployed();
 const getGovernor = () => Governor.at(getProxyAddress('Governor'));
 const getStopper = () => Stopper.at(getProxyAddress('Stopper'));
@@ -96,6 +100,8 @@ const createContracts = async ({
   maxOrderLifespan,
   customBeneficiaryAddress,
   commission,
+  minMultiplyFactor,
+  maxMultiplyFactor,
   tokenPair
 }) => {
   const project = await TestHelper();
@@ -135,6 +141,13 @@ const createContracts = async ({
   );
   this.using.commissionManager = commissionManager;
 
+  const minMultiplyFactorRatePrecision = (
+    (minMultiplyFactor || DEFAULT_MIN_MO_MULTIPLY_FACTOR) * RATE_PRECISION
+  ).toString();
+  const maxMultiplyFactorRatePrecision = (
+    (maxMultiplyFactor || DEFAULT_MAX_MO_MULTIPLY_FACTOR) * RATE_PRECISION
+  ).toString();
+
   // base is assumed to be doc
   await dex.initialize(
     base.address,
@@ -143,6 +156,8 @@ const createContracts = async ({
     maxBlocksForTick || DEFAULT_MAX_BLOCKS_FOR_TICK,
     minBlocksForTick || DEFAULT_MIN_BLOCKS_FOR_TICK,
     minOrderAmount || DEFAULT_MIN_ORDER_AMOUNT,
+    minMultiplyFactorRatePrecision,
+    maxMultiplyFactorRatePrecision,
     maxOrderLifespan || DEFAULT_MAX_ORDER_LIFESPAN,
     governor.address,
     stopper.address

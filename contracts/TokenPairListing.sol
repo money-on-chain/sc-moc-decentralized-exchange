@@ -111,7 +111,11 @@ Emits an event
   @param _secondaryToken Address of the secondary token of the pair
   @param _priceProvider Address of the price provider
   */
-  function setPriceProvider(address _baseToken, address _secondaryToken, address _priceProvider) public onlyAuthorizedChanger() {
+  function setPriceProvider(
+    address _baseToken,
+    address _secondaryToken,
+    address _priceProvider
+  ) public onlyAuthorizedChanger() {
     require(validPair(_baseToken, _secondaryToken), "The pair does not exist");
     require(_priceProvider != address(0), "Price provider address can not be 0x");
     MoCExchangeLib.Pair storage pair = getTokenPair(_baseToken, _secondaryToken);
