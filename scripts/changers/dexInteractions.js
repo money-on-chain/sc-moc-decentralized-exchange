@@ -1,5 +1,7 @@
 const CommissionManager = require('../../build/contracts/CommissionManager.json');
 const MoCDecentralizedExchange = require('../../build/contracts/MoCDecentralizedExchange.json');
+const TokenPriceProviderFake = require('../../build/contracts/TokenPriceProviderFake.json');
+
 const { getWeb3, getConfig } = require('./networkHelper');
 
 const getChargedCommissions = async (network, tokenAddress) => {
@@ -37,8 +39,24 @@ const getStatus = async network => {
   };
 };
 
+const changePrice = async (network, priceProviderAddress, price) => {
+  const web3 = getWeb3(network);
+  const accounts = await web3.eth.getAccounts();
+  const priceProvider = new web3.eth.Contract(TokenPriceProviderFake.abi, priceProviderAddress);
+  return priceProvider.methods.poke(price).send({ from: accounts[0] });
+};
+
+const changePriceValidity = async (network, priceProviderAddress, validity) => {
+  const web3 = getWeb3(network);
+  const accounts = await web3.eth.getAccounts();
+  const priceProvider = new web3.eth.Contract(TokenPriceProviderFake.abi, priceProviderAddress);
+  return priceProvider.methods.pokeValidity(validity).send({ from: accounts[0] });
+};
+
 module.exports = {
   getChargedCommissions,
   withdrawCommissions,
-  getStatus
+  getStatus,
+  changePriceValidity,
+  changePrice
 };
