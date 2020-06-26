@@ -1992,7 +1992,7 @@ If zero, will start from ordebook top.
     uint256 _reservedCommission,
     address _account,
     bool _isExpiration
-  ) internal returns (bool, uint256, uint256, uint256) {
+  ) public returns (bool, uint256, uint256, uint256) {
     uint256 chargedCommission = _commissionManager.chargeExceptionalCommission(_reservedCommission, address(_token), _isExpiration);
     uint256 commissionToReturn = _reservedCommission.sub(chargedCommission);
     bool transferResult = SafeTransfer.doTransfer(_token, _account, _exchangeableAmount.add(commissionToReturn));

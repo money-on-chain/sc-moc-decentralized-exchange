@@ -30,6 +30,8 @@ const MAX_BLOCKS_FOR_TICK = 12;
 const MIN_BLOCKS_FOR_TICK = 4;
 const DEFAULT_PRICE_PRECISION = (10 ** 4).toString();
 const COMMISSION_RATE = '0';
+const MIN_MULTIPLY_FACTOR = '15000000000000000';
+const MAX_MULTIPLY_FACTOR = '350000000000000000';
 const ERROR_MSG_ALREADY_INITIALIZED = 'Contract instance has already been initialized.';
 const ERROR_MSG_INVALID_BASE_TOKEN = 'Invalid Pair';
 const ERROR_MSG_PAIR_DOESNT_EXIST = 'Token pair does not exist';
@@ -70,6 +72,7 @@ const initializeDex = async function(temporaryOwner, beneficiaryAddress) {
     governor.address,
     temporaryOwner
   );
+
   await dex.initialize(
     doc.address,
     commissionManager.address,
@@ -77,6 +80,8 @@ const initializeDex = async function(temporaryOwner, beneficiaryAddress) {
     MAX_BLOCKS_FOR_TICK,
     MIN_BLOCKS_FOR_TICK,
     MIN_ORDER_AMOUNT,
+    MIN_MULTIPLY_FACTOR,
+    MAX_MULTIPLY_FACTOR,
     MAX_ORDER_LIFESPAN,
     governor.address,
     stopper.address
@@ -100,6 +105,8 @@ describe('token listing tests', function() {
           MAX_BLOCKS_FOR_TICK,
           MIN_BLOCKS_FOR_TICK,
           MIN_ORDER_AMOUNT,
+          MIN_MULTIPLY_FACTOR,
+          MAX_MULTIPLY_FACTOR,
           MAX_ORDER_LIFESPAN,
           governor.address,
           stopper.address

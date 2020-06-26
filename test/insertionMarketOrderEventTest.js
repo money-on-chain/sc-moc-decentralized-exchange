@@ -1,6 +1,12 @@
 const { BN, expectRevert } = require('openzeppelin-test-helpers');
 const testHelperBuilder = require('./testHelpers/testHelper');
 
+const ERROR_MULTIPLY_FACTOR_ZERO = 'MultiplyFactor is zero';
+const ERROR_MULTIPLY_FACTOR_MIN_VALUE = 'Low MultiplyFactor';
+const ERROR_MULTIPLY_FACTOR_MAX_VALUE = 'High MultiplyFactor';
+const ERROR_LIFESPAN_TOO_HIGH = 'Lifespan too high';
+const ERROR_EXCH_AMOUNT_TOO_LOW = 'Amount too low';
+
 describe('Market Order insertion event tests', function() {
   let from;
   let dex;
@@ -65,7 +71,7 @@ describe('Market Order insertion event tests', function() {
               from
             }
           ),
-          'Lifespan too high'
+          ERROR_LIFESPAN_TOO_HIGH
         );
       });
     });
@@ -83,7 +89,7 @@ describe('Market Order insertion event tests', function() {
               from
             }
           ),
-          'Exchangeable amount cannot be zero'
+          ERROR_EXCH_AMOUNT_TOO_LOW
         );
       });
     });
@@ -93,7 +99,43 @@ describe('Market Order insertion event tests', function() {
           dex.insertMarketOrder(base.address, secondary.address, wadify(10), pricefy(0), 10, true, {
             from
           }),
-          'MultiplyFactor cannot be zero'
+          ERROR_MULTIPLY_FACTOR_ZERO
+        );
+      });
+    });
+    describe('AND WHEN inserting a buy order with 1000.99 multiplyFactor', function() {
+      it('THEN it should revert', function() {
+        return expectRevert(
+          dex.insertMarketOrder(
+            base.address,
+            secondary.address,
+            wadify(10),
+            pricefy(1000.99),
+            10,
+            true,
+            {
+              from
+            }
+          ),
+          ERROR_MULTIPLY_FACTOR_MAX_VALUE
+        );
+      });
+    });
+    describe('AND WHEN inserting a buy order with 0.00001 multiplyFactor', function() {
+      it('THEN it should revert', function() {
+        return expectRevert(
+          dex.insertMarketOrder(
+            base.address,
+            secondary.address,
+            wadify(10),
+            pricefy(0.00001),
+            10,
+            true,
+            {
+              from
+            }
+          ),
+          ERROR_MULTIPLY_FACTOR_MIN_VALUE
         );
       });
     });
@@ -138,7 +180,7 @@ describe('Market Order insertion event tests', function() {
               from
             }
           ),
-          'Lifespan too high'
+          ERROR_LIFESPAN_TOO_HIGH
         );
       });
     });
@@ -156,7 +198,7 @@ describe('Market Order insertion event tests', function() {
               from
             }
           ),
-          'Exchangeable amount cannot be zero'
+          ERROR_EXCH_AMOUNT_TOO_LOW
         );
       });
     });
@@ -166,7 +208,43 @@ describe('Market Order insertion event tests', function() {
           dex.insertMarketOrder(base.address, secondary.address, wadify(10), pricefy(0), 10, true, {
             from
           }),
-          'MultiplyFactor cannot be zero'
+          ERROR_MULTIPLY_FACTOR_ZERO
+        );
+      });
+    });
+    describe('AND WHEN inserting a buy order with 2000.99 multiplyFactor', function() {
+      it('THEN it should revert', function() {
+        return expectRevert(
+          dex.insertMarketOrder(
+            base.address,
+            secondary.address,
+            wadify(10),
+            pricefy(2000.99),
+            10,
+            true,
+            {
+              from
+            }
+          ),
+          ERROR_MULTIPLY_FACTOR_MAX_VALUE
+        );
+      });
+    });
+    describe('AND WHEN inserting a buy order with 0.00002 multiplyFactor', function() {
+      it('THEN it should revert', function() {
+        return expectRevert(
+          dex.insertMarketOrder(
+            base.address,
+            secondary.address,
+            wadify(10),
+            pricefy(0.00002),
+            10,
+            true,
+            {
+              from
+            }
+          ),
+          ERROR_MULTIPLY_FACTOR_MIN_VALUE
         );
       });
     });
@@ -211,7 +289,7 @@ describe('Market Order insertion event tests', function() {
               from
             }
           ),
-          'Lifespan too high'
+          ERROR_LIFESPAN_TOO_HIGH
         );
       });
     });
@@ -229,7 +307,7 @@ describe('Market Order insertion event tests', function() {
               from
             }
           ),
-          'Exchangeable amount cannot be zero'
+          ERROR_EXCH_AMOUNT_TOO_LOW
         );
       });
     });
@@ -247,7 +325,43 @@ describe('Market Order insertion event tests', function() {
               from
             }
           ),
-          'MultiplyFactor cannot be zero'
+          ERROR_MULTIPLY_FACTOR_ZERO
+        );
+      });
+    });
+    describe('AND WHEN inserting a sell order with 1000.99 multiplyFactor', function() {
+      it('THEN it should revert', function() {
+        return expectRevert(
+          dex.insertMarketOrder(
+            base.address,
+            secondary.address,
+            wadify(10),
+            pricefy(1000.99),
+            10,
+            false,
+            {
+              from
+            }
+          ),
+          ERROR_MULTIPLY_FACTOR_MAX_VALUE
+        );
+      });
+    });
+    describe('AND WHEN inserting a sell order with 0.00001 multiplyFactor', function() {
+      it('THEN it should revert', function() {
+        return expectRevert(
+          dex.insertMarketOrder(
+            base.address,
+            secondary.address,
+            wadify(10),
+            pricefy(0.00001),
+            10,
+            false,
+            {
+              from
+            }
+          ),
+          ERROR_MULTIPLY_FACTOR_MIN_VALUE
         );
       });
     });
@@ -292,7 +406,7 @@ describe('Market Order insertion event tests', function() {
               from
             }
           ),
-          'Lifespan too high'
+          ERROR_LIFESPAN_TOO_HIGH
         );
       });
     });
@@ -310,7 +424,7 @@ describe('Market Order insertion event tests', function() {
               from
             }
           ),
-          'Exchangeable amount cannot be zero'
+          ERROR_EXCH_AMOUNT_TOO_LOW
         );
       });
     });
@@ -328,7 +442,7 @@ describe('Market Order insertion event tests', function() {
               from
             }
           ),
-          'MultiplyFactor cannot be zero'
+          ERROR_MULTIPLY_FACTOR_ZERO
         );
       });
     });
@@ -452,7 +566,7 @@ describe('Market Order insertion event tests', function() {
               from
             }
           ),
-          'Exchangeable amount cannot be zero'
+          ERROR_EXCH_AMOUNT_TOO_LOW
         );
       });
     });
@@ -470,7 +584,7 @@ describe('Market Order insertion event tests', function() {
               from
             }
           ),
-          'MultiplyFactor cannot be zero'
+          ERROR_MULTIPLY_FACTOR_ZERO
         );
       });
     });
@@ -578,7 +692,7 @@ describe('Market Order insertion event tests', function() {
                 from
               }
             ),
-            'Lifespan too high'
+            ERROR_LIFESPAN_TOO_HIGH
           );
         });
       });

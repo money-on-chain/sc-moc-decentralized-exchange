@@ -11,6 +11,7 @@ const MinOrderAmountChanger = artifacts.require('MinOrderAmountChanger');
 const MaxOrderLifespanChanger = artifacts.require('MaxOrderLifespanChanger');
 const BeneficiaryAddressChanger = artifacts.require('BeneficiaryAddressChanger');
 const CommissionRateChanger = artifacts.require('CommissionRateChanger');
+const MarketOrderSettingsChanger = artifacts.require('MarketOrderSettingsChanger');
 const CancelationPenaltyRateChanger = artifacts.require('CancelationPenaltyRateChanger');
 const ExpirationPenaltyRateChanger = artifacts.require('ExpirationPenaltyRateChanger');
 const TokenPairDisabler = artifacts.require('TokenPairDisabler');
@@ -190,6 +191,42 @@ describe('Governed functions tests', function() {
         return testHelper.assertBigWad(commissionRate, 0.012, 'Commission rate');
       }),
     getChanger: () => CommissionRateChanger.new(commissionManager.address, testHelper.wadify(0.012))
+  });
+
+  testGoverned({
+    action: 'set the min multiply factor',
+    functionName: 'setMinMultiplyFactor',
+    getContract: () => dex,
+    getParams: () => [testHelper.wadify(0.015)],
+    then: () =>
+      it('THEN the min multiply factor has changed', async function() {
+        const minMultiplyFactor = await dex.minMultiplyFactor();
+        testHelper.assertBigWad(minMultiplyFactor, 0.015, 'Min multiply factor');
+      }),
+    getChanger: () =>
+      MarketOrderSettingsChanger.new(
+        dex.address,
+        testHelper.wadify(0.015),
+        testHelper.wadify(9.012)
+      )
+  });
+
+  testGoverned({
+    action: 'set the max multiply factor',
+    functionName: 'setMaxMultiplyFactor',
+    getContract: () => dex,
+    getParams: () => [testHelper.wadify(19.015)],
+    then: () =>
+      it('THEN the max multiply factor has changed', async function() {
+        const maxMultiplyFactor = await dex.maxMultiplyFactor();
+        testHelper.assertBigWad(maxMultiplyFactor, 19.015, 'Max multiply factor');
+      }),
+    getChanger: () =>
+      MarketOrderSettingsChanger.new(
+        dex.address,
+        testHelper.wadify(0.015),
+        testHelper.wadify(19.015)
+      )
   });
 
   testGoverned({
