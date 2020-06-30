@@ -18,6 +18,7 @@ contract EventfulOrderListing {
     uint256 exchangeableAmount,
     uint256 reservedCommission,
     uint256 price,
+    uint256 multiplyFactor,
     uint64 expiresInTick,
     bool isBuy,
     MoCExchangeLib.OrderType orderType

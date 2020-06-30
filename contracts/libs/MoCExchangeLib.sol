@@ -63,6 +63,7 @@ library MoCExchangeLib {
     uint256 exchangeableAmount,
     uint256 reservedCommission,
     uint256 price,
+    uint256 multiplyFactor,
     uint64 expiresInTick,
     bool isBuy,
     MoCExchangeLib.OrderType orderType
@@ -1186,7 +1187,7 @@ library MoCExchangeLib {
       } else {
         insertLimitOrder(token.orderbook, _id, _sender, _exchangeableAmount, _reservedCommission, _price, expiresInTick, _previousOrderIdHint);
       }
-      emitNewOrderEvent(_id, _self, _sender, _exchangeableAmount, _reservedCommission, _price, expiresInTick, _isBuy, OrderType.LIMIT_ORDER);
+      emitNewOrderEventForLimitOrder(_id, _self, _sender, _exchangeableAmount, _reservedCommission, _price, expiresInTick, _isBuy, OrderType.LIMIT_ORDER);
     }
   }
 
@@ -1240,7 +1241,7 @@ library MoCExchangeLib {
       } else {
         insertMarketOrder(token.orderbook, _id, _exchangeableAmount, _reservedCommission,  _multiplyFactor, expiresInTick, _previousOrderIdHint);
       }
-      emitNewOrderEvent(_id, _self, _sender, _exchangeableAmount, _reservedCommission, _multiplyFactor, expiresInTick, _isBuy, OrderType.MARKET_ORDER);
+      emitNewOrderEventForMarketOrder(_id, _self, _sender, _exchangeableAmount, _reservedCommission, _multiplyFactor, expiresInTick, _isBuy, OrderType.MARKET_ORDER);
     }
   }
 
@@ -1298,7 +1299,7 @@ library MoCExchangeLib {
   /**
     @dev this wrapp responds more to a "stack-too-deep" problem than a desire function break drown
   */
-  function emitNewOrderEvent(
+  function emitNewOrderEventForLimitOrder(
     uint256 _orderId,
     Pair storage _self,
     address _sender,
@@ -1317,11 +1318,42 @@ library MoCExchangeLib {
       _exchangeableAmount,
       _reservedCommission,
       _price,
+      0,
       _expiresInTick,
       _isBuy,
       _orderType
     );
   }
+
+  /**
+    @dev this wrapp responds more to a "stack-too-deep" problem than a desire function break drown
+  */
+  function emitNewOrderEventForMarketOrder(
+    uint256 _orderId,
+    Pair storage _self,
+    address _sender,
+    uint256 _exchangeableAmount,
+    uint256 _reservedCommission,
+    uint256 _multiplyFactor,
+    uint64 _expiresInTick,
+    bool _isBuy,
+    OrderType _orderType
+  ) private {
+    emit NewOrderInserted(
+      _orderId,
+      _sender,
+      address(_self.baseToken.token),
+      address(_self.secondaryToken.token),
+      _exchangeableAmount,
+      _reservedCommission,
+      0,
+      _multiplyFactor,
+      _expiresInTick,
+      _isBuy,
+      _orderType
+    );
+  }
+  
   /**
     @notice Gets the ids of the last sell and buy matching orders.
     @dev iterates over the pair orderbook, simulating the match to obtain the final matching orders
@@ -2078,6 +2110,7 @@ If zero, will start from ordebook top.
       orderToMove.exchangeableAmount,
       orderToMove.reservedCommission,
       orderToMove.price,
+      0,
       orderToMove.expiresInTick,
       isBuy,
       OrderType.LIMIT_ORDER // TODO This is correct for now; but we might have to change it soon
