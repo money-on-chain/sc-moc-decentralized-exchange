@@ -1353,7 +1353,7 @@ library MoCExchangeLib {
       _orderType
     );
   }
-  
+
   /**
     @notice Gets the ids of the last sell and buy matching orders.
     @dev iterates over the pair orderbook, simulating the match to obtain the final matching orders

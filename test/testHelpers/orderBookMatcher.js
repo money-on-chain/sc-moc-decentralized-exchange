@@ -131,7 +131,7 @@ const expectInsertionEventMarket = isBuy => (
     secondaryTokenAddress,
     exchangeableAmount: wadify(lockingAmount).sub(wadify(commission || 0)),
     reservedCommission: wadify(commission || 0),
-    price: pricefy(price / MARKET_PRICE), // This field is actually the priceMultiplier
+    multiplyFactor: pricefy(price / MARKET_PRICE), // This field is actually the priceMultiplier
     isBuy
   });
 };

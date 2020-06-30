@@ -124,7 +124,7 @@ const assertOrder = m => (order, expected) => {
 };
 
 const assertNewOrderEvent = function(wadify, pricefy, eventName) {
-  return ({ price, amount, ...props }, getContext) => {
+  return ({ price, amount, multiplyFactor, ...props }, getContext) => {
     const { tx, baseAddress, secondaryAddress } = getContext();
 
     const usualProps = {
@@ -133,7 +133,7 @@ const assertNewOrderEvent = function(wadify, pricefy, eventName) {
     };
     if (amount) Object.assign(usualProps, { amount: wadify(amount) });
     if (price) Object.assign(usualProps, { price: pricefy(price) });
-
+    if (multiplyFactor) Object.assign(usualProps, { multiplyFactor: pricefy(multiplyFactor) });
     const eventProps = Object.assign(usualProps, props);
     return expectEvent.inLogs(tx.logs, eventName, eventProps);
   };
