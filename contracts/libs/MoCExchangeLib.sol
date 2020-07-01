@@ -534,11 +534,16 @@ library MoCExchangeLib {
     Order storage previousOrder = get(self, _intendedPreviousOrderId);
     // the order for the _intendedPreviousOrderId provided exist
     require(previousOrder.id != 0, "PreviousOrder doesnt exist");
+
+    require(previousOrder.orderType == OrderType.LIMIT_ORDER, "Hint is not limit order");
+
     // the price goes after the intended previous order
     require(!priceGoesBefore(self, _price, previousOrder.price), "Order should go before");
     Order storage nextOrder = get(self, previousOrder.next);
     // the price goes before the next order, if there is a next order
     require(nextOrder.id == 0 || priceGoesBefore(self, _price, nextOrder.price), "Order should go after");
+
+
   }
 
   /**
@@ -550,6 +555,9 @@ library MoCExchangeLib {
     Order storage previousOrder = get(self, _intendedPreviousOrderId);
     // the order for the _intendedPreviousOrderId provided exist
     require(previousOrder.id != 0, "PreviousOrder doesnt exist");
+
+    require(get(self, _intendedPreviousOrderId).orderType == OrderType.MARKET_ORDER, "Hint is not market order");
+
     // the price goes after the intended previous order
     require(!multiplyFactorGoesBefore(self, _multiplyFactor, previousOrder.multiplyFactor), "Market Order should go before");
     Order storage nextOrder = get(self, previousOrder.next);

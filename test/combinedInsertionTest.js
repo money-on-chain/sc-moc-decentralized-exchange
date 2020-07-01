@@ -1,4 +1,8 @@
+const { expectRevert } = require('openzeppelin-test-helpers');
 const testHelperBuilder = require('./testHelpers/testHelper');
+
+const ERROR_MSG_PREVIOUS_ORDER_NOT_LIMIT = 'Hint is not limit order';
+const ERROR_MSG_PREVIOUS_ORDER_NOT_MARKET = 'Hint is not market order';
 
 describe('specific combined order insertion tests', function() {
   let dex;
@@ -215,4 +219,33 @@ describe('specific combined order insertion tests', function() {
       });
     }
   );
+
+  contract('Dex: InsertOrderAfter crossed references', function(accounts) {
+    describe('GIVEN 2 sell orders, one being a limit and the other being a market', function() {
+      before(async function() {
+        await initContractsAndAllowance(accounts)();
+        // id 1
+        await dex.insertSellLimitOrder(...pair, wadify(10), pricefy(10), lifespan, { from });
+        // id 2
+        await dex.insertMarketOrder(...pair, wadify(10), pricefy(1), lifespan, false, { from });
+      });
+      it('WHEN trying to insert a sell market order with a reference to a limit order, THEN it reverts', async function() {
+        await expectRevert(
+          dex.insertMarketOrderAfter(...pair, wadify(10), pricefy(10), 1, lifespan, false, {
+            from
+          }),
+          ERROR_MSG_PREVIOUS_ORDER_NOT_MARKET
+        );
+      });
+
+      it('WHEN trying to insert a sell limit order with a reference to a market order, THEN it reverts', async function() {
+        await expectRevert(
+          dex.insertSellLimitOrderAfter(...pair, wadify(10), pricefy(10), lifespan, 2, {
+            from
+          }),
+          ERROR_MSG_PREVIOUS_ORDER_NOT_LIMIT
+        );
+      });
+    });
+  });
 });
