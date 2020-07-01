@@ -38,7 +38,7 @@ library MoCExchangeLib {
 
   // intentionally using the biggest possible uint256
   // so it doesn't conflict with valid ids
-  uint256 constant INSERT_FIRST = ~uint256(0);
+  uint256 constant NO_HINT = ~uint256(0);
 
   /**
     @notice A new order has been inserted in the orderbook, and it is ready to be matched
@@ -534,11 +534,16 @@ library MoCExchangeLib {
     Order storage previousOrder = get(self, _intendedPreviousOrderId);
     // the order for the _intendedPreviousOrderId provided exist
     require(previousOrder.id != 0, "PreviousOrder doesnt exist");
+
+    require(previousOrder.orderType == OrderType.LIMIT_ORDER, "Hint is not limit order");
+
     // the price goes after the intended previous order
     require(!priceGoesBefore(self, _price, previousOrder.price), "Order should go before");
     Order storage nextOrder = get(self, previousOrder.next);
     // the price goes before the next order, if there is a next order
     require(nextOrder.id == 0 || priceGoesBefore(self, _price, nextOrder.price), "Order should go after");
+
+
   }
 
   /**
@@ -550,6 +555,9 @@ library MoCExchangeLib {
     Order storage previousOrder = get(self, _intendedPreviousOrderId);
     // the order for the _intendedPreviousOrderId provided exist
     require(previousOrder.id != 0, "PreviousOrder doesnt exist");
+
+    require(get(self, _intendedPreviousOrderId).orderType == OrderType.MARKET_ORDER, "Hint is not market order");
+
     // the price goes after the intended previous order
     require(!multiplyFactorGoesBefore(self, _multiplyFactor, previousOrder.multiplyFactor), "Market Order should go before");
     Order storage nextOrder = get(self, previousOrder.next);
@@ -566,17 +574,15 @@ library MoCExchangeLib {
   function popAndGetNewTop(Pair storage _pair, Data storage self) internal returns (Order storage) {
     Order storage orderToPop = mostCompetitiveOrder(_pair.pageMemory.marketPrice, self, first(self), firstMarketOrder(self));
     Order storage newTop = get(self, orderToPop.next);
-    delete (self.orders[orderToPop.id]);
-    if (newTop.orderType == OrderType.LIMIT_ORDER){
+    if (orderToPop.orderType == OrderType.LIMIT_ORDER){
       self.firstId = newTop.id;
-      decreaseQueuesLength(self, false);
-      return mostCompetitiveOrder(_pair.pageMemory.marketPrice, self, newTop, firstMarketOrder(self));
     }
     else{
       self.firstMarketOrderId = newTop.id;
-      decreaseQueuesLength(self, true);
-      return mostCompetitiveOrder(_pair.pageMemory.marketPrice, self, first(self), newTop);
     }
+    decreaseQueuesLength(self, orderToPop.orderType != OrderType.LIMIT_ORDER);
+    delete (self.orders[orderToPop.id]);
+    return mostCompetitiveOrder(_pair.pageMemory.marketPrice, self, first(self), firstMarketOrder(self));
   }
 
   /**
@@ -643,7 +649,7 @@ library MoCExchangeLib {
       }
     }
     // In any case, the item should be deleted and the list resized
-    bool isMarketOrder = self.orders[_toRemove.id].orderType == OrderType.MARKET_ORDER;
+    bool isMarketOrder = _toRemove.orderType == OrderType.MARKET_ORDER;
     delete (self.orders[_toRemove.id]);
     decreaseQueuesLength(self, isMarketOrder);
   }
@@ -1175,7 +1181,7 @@ library MoCExchangeLib {
       insertLimitOrderAsPending(token.orderbook, _id, _sender, _exchangeableAmount, _reservedCommission, _price, expiresInTick);
       emit NewOrderAddedToPendingQueue(_id, 0);
     } else {
-      if (_previousOrderIdHint == INSERT_FIRST) {
+      if (_previousOrderIdHint == NO_HINT) {
         insertLimitOrder(token.orderbook, _id, _sender, _exchangeableAmount, _reservedCommission, _price, expiresInTick);
       } else {
         insertLimitOrder(token.orderbook, _id, _sender, _exchangeableAmount, _reservedCommission, _price, expiresInTick, _previousOrderIdHint);
@@ -1229,7 +1235,7 @@ library MoCExchangeLib {
       insertMarketOrderAsPending(token.orderbook, _id, _sender, _exchangeableAmount, _reservedCommission, _multiplyFactor, expiresInTick);
       emit NewOrderAddedToPendingQueue(_id, 0);
     } else {
-      if (_previousOrderIdHint == INSERT_FIRST) {
+      if (_previousOrderIdHint == NO_HINT) {
         insertMarketOrder(token.orderbook, _id, _exchangeableAmount, _reservedCommission, _multiplyFactor, expiresInTick);
       } else {
         insertMarketOrder(token.orderbook, _id, _exchangeableAmount, _reservedCommission,  _multiplyFactor, expiresInTick, _previousOrderIdHint);
@@ -1808,6 +1814,7 @@ If zero, will start from ordebook top.
       sell.exchangeableAmount,
       _self.priceComparisonPrecision
     );
+
 
     executeMatch(_commissionManager, _self, buy, sell, limitingAmount, _self.pageMemory.emergentPrice);
     if (matchType == MatchType.DOUBLE_FILL) {

@@ -63,6 +63,7 @@ describe('specific insertion tests', function() {
         await initContractsAndAllowance(accounts)();
         await dex.insertSellLimitOrder(...pair, wadify(10), pricefy(10), lifespan, { from });
         await dex.insertSellLimitOrder(...pair, wadify(10), pricefy(1), lifespan, { from });
+        await dex.insertBuyLimitOrder(...pair, wadify(10), pricefy(1), lifespan, { from }); // ID 3
       });
       describe('WHEN inserting an order, between 2 existing ones', function() {
         it('THEN it end up ordered', async function() {
@@ -70,8 +71,8 @@ describe('specific insertion tests', function() {
             from
           });
           const order = await dex.getSellOrderAtIndex(...pair, 1);
-          testHelper.assertBigWad(order.exchangeableAmount, 1, 'order amount');
-          testHelper.assertBigPrice(order.price, 5, 'order price');
+          await testHelper.assertBigWad(order.exchangeableAmount, 1, 'order amount');
+          return testHelper.assertBigPrice(order.price, 5, 'order price');
         });
       });
       describe('WHEN inserting order first in the orderbook', function() {
@@ -82,8 +83,8 @@ describe('specific insertion tests', function() {
         });
         it('THEN it end up ordered', async function() {
           const order = await dex.getSellOrderAtIndex(...pair, 0);
-          testHelper.assertBigWad(order.exchangeableAmount, 1, 'order amount');
-          testHelper.assertBigPrice(order.price, 0.5, 'order price');
+          await testHelper.assertBigWad(order.exchangeableAmount, 1, 'order amount');
+          return testHelper.assertBigPrice(order.price, 0.5, 'order price');
         });
       });
       it('WHEN trying to insert one before a more competitive one, THEN it reverts', async function() {
@@ -101,6 +102,12 @@ describe('specific insertion tests', function() {
       it('WHEN trying to insert an order with a reference to a non-existent order, THEN it reverts', async function() {
         await expectRevert(
           dex.insertSellLimitOrderAfter(...pair, wadify(10), pricefy(10), lifespan, 8, { from }),
+          ERROR_MSG_PREVIOUS_ORDER_DOESNT_EXIST
+        );
+      });
+      it('WHEN trying to insert a sell order with a reference to a buy order, THEN it reverts', async function() {
+        await expectRevert(
+          dex.insertSellLimitOrderAfter(...pair, wadify(10), pricefy(10), lifespan, 3, { from }),
           ERROR_MSG_PREVIOUS_ORDER_DOESNT_EXIST
         );
       });
@@ -136,8 +143,8 @@ describe('specific insertion tests', function() {
         });
         it('THEN it end up after the existing one', async function() {
           const order = await dex.getBuyOrderAtIndex(...pair, 1);
-          testHelper.assertBigWad(order.exchangeableAmount, 1, 'order amount');
-          testHelper.assertBigPrice(order.price, 5, 'order price');
+          await testHelper.assertBigWad(order.exchangeableAmount, 1, 'order amount');
+          return testHelper.assertBigPrice(order.price, 5, 'order price');
         });
       });
     });

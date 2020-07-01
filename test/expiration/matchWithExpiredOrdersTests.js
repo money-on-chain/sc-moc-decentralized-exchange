@@ -183,6 +183,102 @@ describe('Match with expired orders tests', function() {
   });
 
   contract('Dex Fake: uses order edit to manipulate expiration', accounts => {
+    describe('GIVEN there are one buy order, a sell limit order that does match and an expired sell market order but more competitive', function() {
+      before(async function() {
+        await initContractsAndAllowance(accounts);
+        await insertBuyLimitOrder({ price: 3, amount: 3, accountIndex: 1 });
+        await insertSellLimitOrder({ price: 3, amount: 30, accountIndex: 2 });
+        await insertSellMarketOrder({ price: 0.1, amount: 30, accountIndex: 3 });
+        await dex.editOrder(base.address, secondary.address, 3, false, '1');
+      });
+      describe('WHEN instructed to match', function() {
+        before(async function() {
+          txReceipt = await dex.matchOrders(
+            // reverting
+            base.address,
+            secondary.address,
+            testHelper.DEFAULT_STEPS_FOR_MATCHING
+          );
+        });
+        it(
+          'THEN the buy order matches and the order-book is empty',
+          assertOrderBookLength({ type: 'buy', expectedLength: 0 })
+        );
+        it(
+          'AND the sell orderbook still has the sell limit order because it was bigger',
+          assertOrderBookLength({ type: 'sell', expectedLength: 1 })
+        );
+        it('AND the only sell order in the orderbook is the not competitive one', async function() {
+          const order = await dex.getSellOrderAtIndex(base.address, secondary.address, 0);
+          return testHelper.assertBig(order.id, 2);
+        });
+      });
+    });
+  });
+
+  contract('Dex Fake: uses order edit to manipulate expiration', accounts => {
+    describe('GIVEN there are one buy order, a sell limit order that does NOT match and an expired sell market order but more competitive', function() {
+      before(async function() {
+        await initContractsAndAllowance(accounts);
+        await insertBuyLimitOrder({ price: 3, amount: 3, accountIndex: 1 });
+        await insertSellLimitOrder({ price: 3.5, amount: 30, accountIndex: 2 });
+        await insertSellMarketOrder({ price: 0.1, amount: 30, accountIndex: 3 });
+        await dex.editOrder(base.address, secondary.address, 3, false, '1');
+      });
+      describe('WHEN instructed to match', function() {
+        before(async function() {
+          txReceipt = await dex.matchOrders(
+            // reverting
+            base.address,
+            secondary.address,
+            testHelper.DEFAULT_STEPS_FOR_MATCHING
+          );
+        });
+        it(
+          'THEN the buy order matches and the order-book is empty',
+          assertOrderBookLength({ type: 'buy', expectedLength: 1 })
+        );
+        it(
+          'AND the sell orderbook still has the sell limit order because it was bigger',
+          assertOrderBookLength({ type: 'sell', expectedLength: 2 })
+        );
+      });
+    });
+  });
+
+  contract('Dex Fake: uses order edit to manipulate expiration', accounts => {
+    describe('GIVEN there are one buy order and an expired sell market order but more competitive', function() {
+      before(async function() {
+        await initContractsAndAllowance(accounts);
+        await insertBuyLimitOrder({ price: 3, amount: 3, accountIndex: 1 });
+        await insertSellMarketOrder({ price: 0.1, amount: 30, accountIndex: 3 });
+        await dex.editOrder(base.address, secondary.address, 2, false, '1');
+      });
+      describe('WHEN instructed to match', function() {
+        before(async function() {
+          txReceipt = await dex.matchOrders(
+            base.address,
+            secondary.address,
+            testHelper.DEFAULT_STEPS_FOR_MATCHING
+          );
+        });
+        it(
+          'THEN the buy order is ignored and still on the orderbook',
+          assertOrderBookLength({ type: 'buy', expectedLength: 1 })
+        );
+        it(
+          'AND the sell orderbook still has the sell limit order',
+          assertOrderBookLength({ type: 'sell', expectedLength: 1 })
+        );
+        it('AND another sell limit order can be added', async function() {
+          await insertSellLimitOrder({ price: 3, amount: 30, accountIndex: 2 });
+          return assertOrderBookLength({ type: 'sell', expectedLength: 2 });
+        });
+      });
+    });
+  });
+
+  contract('Dex Fake: uses order edit to manipulate expiration', accounts => {
     describe('GIVEN there are two buy & sell order that "fully match" \nAND a third buy expired before', function() {
       before(async function() {
         await initContractsAndAllowance(accounts);
