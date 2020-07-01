@@ -50,7 +50,7 @@ contract EventfulOrderListing {
 contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenerator, Stoppable, ReentrancyGuard {
   // intentionally using the biggest possible uint256
   // so it doesn't conflict with valid ids
-  uint256 private constant INSERT_FIRST = ~uint256(0);
+  uint256 private constant NO_HINT = ~uint256(0);
 
   CommissionManager public commissionManager;
 
@@ -126,7 +126,7 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     uint256 _price,
     uint64 _lifespan
   ) public {
-    insertBuyLimitOrderAfter(_baseToken, _secondaryToken, _amount, _price, _lifespan, INSERT_FIRST);
+    insertBuyLimitOrderAfter(_baseToken, _secondaryToken, _amount, _price, _lifespan, NO_HINT);
   }
 
   /**
@@ -147,7 +147,7 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     uint256 _price,
     uint64 _lifespan
   ) public {
-    insertSellLimitOrderAfter(_baseToken, _secondaryToken, _amount, _price, _lifespan, INSERT_FIRST);
+    insertSellLimitOrderAfter(_baseToken, _secondaryToken, _amount, _price, _lifespan, NO_HINT);
   }
 
   /**
@@ -160,8 +160,8 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     @param _price Maximum price to be paid [base/secondary]
     @param _lifespan After _lifespan ticks the order will be expired and no longer matched, must be lower or equal than the maximum
     @param _previousOrderIdHint Order that comes immediately before the new order;
-    0 is considered as no hint and the smart contract must iterate
-    INSERT_FIRST is considered a hint to be put at the start
+    NO_HINT is considered as no hint and the smart contract must iterate from the beginning
+    0 is considered to be a hint to put it at the start
   */
   function insertBuyLimitOrderAfter(
     address _baseToken,
@@ -185,8 +185,8 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     @param _price Minimum price to charge [base/secondary]
     @param _lifespan After _lifespan ticks the order will be expired and no longer matched, must be lower or equal than the maximum
     @param _previousOrderIdHint Order that comes immediately before the new order;
-    0 is considered as no hint and the smart contract must iterate
-    INSERT_FIRST is considered a hint to be put at the start
+    NO_HINT is considered as no hint and the smart contract must iterate from the beginning
+    0 is considered to be a hint to put it at the start
   */
   function insertSellLimitOrderAfter(
     address _baseToken,
@@ -243,7 +243,6 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     @param _multiplyFactor Maximum price to be paid [base/secondary]
     @param _lifespan After _lifespan ticks the order will be expired and no longer matched, must be lower or equal than the maximum
     @param _isBuy true if it is a buy market order
-    0 is considered as no hint and the smart contract must iterate
   */
   function insertMarketOrder(
     address _baseToken,
@@ -253,7 +252,7 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     uint64 _lifespan,
     bool _isBuy
   ) public whenNotPaused {
-    insertMarketOrderAfter(_baseToken, _secondaryToken, _amount, _multiplyFactor, INSERT_FIRST, _lifespan, _isBuy);
+    insertMarketOrderAfter(_baseToken, _secondaryToken, _amount, _multiplyFactor, NO_HINT, _lifespan, _isBuy);
   }
 
   /**
@@ -265,10 +264,10 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     @param _amount The quantity of tokens sent
     @param _multiplyFactor Maximum price to be paid [base/secondary]
     @param _previousOrderIdHint Order that comes immediately before the new order;
+    NO_HINT is considered as no hint and the smart contract must iterate from the beginning
+    0 is considered to be a hint to put it at the start
     @param _lifespan After _lifespan ticks the order will be expired and no longer matched, must be lower or equal than the maximum
     @param _isBuy true if it is a buy market order
-    0 is considered as no hint and the smart contract must iterate
-    INSERT_FIRST is considered a hint to be put at the start
   */
   function insertMarketOrderAfter(
     address _baseToken,
@@ -375,8 +374,8 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     @param _price Maximum price to be paid [base/secondary]
     @param _lifespan After _lifespan ticks the order will be expired and no longer matched, must be lower or equal than the maximum
     @param _previousOrderIdHint Order that comes immediately before the new order;
-    0 is considered as no hint and the smart contract must iterate
-    INSERT_FIRST is considered a hint to be put at the start
+    NO_HINT is considered as no hint and the smart contract must iterate from the beginning
+    0 is considered to be a hint to put it at the start
   */
   function insertBuyLimitOrderAfter(
     MoCExchangeLib.Pair storage _pair,
@@ -408,8 +407,8 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     @param _price Maximum price to be paid [base/secondary]
     @param _lifespan After _lifespan ticks the order will be expired and no longer matched, must be lower or equal than the maximum
     @param _previousOrderIdHint Order that comes immediately before the new order;
-    0 is considered as no hint and the smart contract must iterate
-    INSERT_FIRST is considered a hint to be put at the start
+    NO_HINT is considered as no hint and the smart contract must iterate from the beginning
+    0 is considered to be a hint to put it at the start
    */
   function insertSellLimitOrderAfter(
     MoCExchangeLib.Pair storage _pair,

@@ -127,8 +127,8 @@ contract RestrictiveOrderListing is OrderListing {
     @param _price Maximum price to be paid [base/secondary]
     @param _lifespan After _lifespan ticks the order will be expired and no longer matched, must be lower or equal than the maximum
     @param _previousOrderIdHint Order that comes immediately before the new order;
-    0 is considered as no hint and the smart contract must iterate
-    INSERT_FIRST is considered a hint to be put at the start
+    NO_HINT is considered as no hint and the smart contract must iterate from the beginning
+    0 is considered to be a hint to put it at the start
   */
   function insertBuyLimitOrderAfter(
     address _baseToken,
@@ -178,10 +178,10 @@ contract RestrictiveOrderListing is OrderListing {
     @param _amount The quantity of tokens sent
     @param _multiplyFactor Maximum price to be paid [base/secondary]
     @param _previousOrderIdHint Order that comes immediately before the new order;
+    NO_HINT is considered as no hint and the smart contract must iterate from the beginning
+    0 is considered to be a hint to put it at the start
     @param _lifespan After _lifespan ticks the order will be expired and no longer matched, must be lower or equal than the maximum
     @param _isBuy true if it is a buy market order
-    0 is considered as no hint and the smart contract must iterate
-    INSERT_FIRST is considered a hint to be put at the start
   */
   function insertMarketOrderAfter(
     address _baseToken,
@@ -209,8 +209,8 @@ contract RestrictiveOrderListing is OrderListing {
     @param _price Maximum price to be paid [base/secondary]
     @param _lifespan After _lifespan ticks the order will be expired and no longer matched, must be lower or equal than the maximum
     @param _previousOrderIdHint Order that comes immediately before the new order;
-    0 is considered as no hint and the smart contract must iterate
-    INSERT_FIRST is considered a hint to be put at the start
+    NO_HINT is considered as no hint and the smart contract must iterate from the beginning
+    0 is considered to be a hint to put it at the start
    */
   function insertSellLimitOrderAfter(
     address _baseToken,
