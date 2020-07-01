@@ -83,6 +83,16 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
   }
 
   /**
+    @notice Returns the amount of pending market orders that are in the orderbook of this pair
+    @param _baseToken the base token of the pair
+    @param _secondaryToken the secondary token of the pair
+    @param _isBuy true to get buy market orders amount, false to get sell market orders amount.
+   */
+  function pendingMarketOrdersLength(address _baseToken, address _secondaryToken, bool _isBuy) external view returns (uint256) {
+    return pendingMarketOrdersLength(tokenPair(_baseToken, _secondaryToken), _isBuy);
+  }
+
+  /**
     @notice Returns the amount of pending buy orders that are in the orderbook of this pair
     @param _baseToken the base token of the pair
     @param _secondaryToken the secondary token of the pair
@@ -355,6 +365,15 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
    */
   function pendingSellOrdersLength(MoCExchangeLib.Pair storage _pair) internal view returns (uint256) {
     return _pair.secondaryToken.orderbook.amountOfPendingOrders;
+  }
+
+  /**
+    @notice Returns the amount of pending market orders that are in the orderbook of this pair
+    @param _pair Storage structure that represents the pair
+    @param _isBuy true to get the length of buy pending market orders, false to get the length of sell market orders
+   */
+  function pendingMarketOrdersLength(MoCExchangeLib.Pair storage _pair, bool _isBuy) internal view returns (uint256) {
+    return _isBuy ? _pair.baseToken.orderbook.amountOfPendingMarketOrders : _pair.secondaryToken.orderbook.amountOfPendingMarketOrders;
   }
 
   /**

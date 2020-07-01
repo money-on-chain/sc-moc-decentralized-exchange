@@ -493,11 +493,10 @@ for the execution of a tick of a given pair
     uint256
   ) private returns (bool shouldKeepGoing) {
     MoCExchangeLib.Pair storage pair = getTokenPair(_groupId);
-    MoCExchangeLib.movePendingOrdersStepFunction(pair);
-    return pendingSellOrdersLength(pair) != 0 || pendingBuyOrdersLength(pair) != 0;
+    return MoCExchangeLib.movePendingOrdersStepFunction(pair);
   }
 
-  /**
+/**
 @notice Hook that gets triggered when the tick of a given pair starts.
 @dev Emits an event that marks the start of a tick
 @param _groupId Id that represent the group of tasks which should be done
