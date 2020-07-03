@@ -1,6 +1,3 @@
-/* eslint-disable mocha/no-setup-in-describe */
-/* eslint-disable mocha/no-async-describe */
-
 /**
  * RATIONALE:
  * once upon a time, there was a nasty nasty bug which
