@@ -506,7 +506,7 @@ library MoCExchangeLib {
     @param _price Target price of the new order
    */
   function validateIntendedFirstOrderInTheData(Data storage self, uint256 _price) private view {
-    if (self.length != 0 && self.limitOrderLength != 0) {
+    if (self.limitOrderLength != 0) {
       // there is one or more orders in the Data, so the price should be the most competitive
       Order storage firstOrder = first(self);
       require(priceGoesBefore(self, _price, firstOrder.price), "Price doesnt belong to start");
@@ -518,7 +518,7 @@ library MoCExchangeLib {
     @param _multiplyFactor Target multiplyFactor of the new order
   */
   function validateIntendedFirstMarketOrderInTheData(Data storage self, uint256 _multiplyFactor) private view {
-    if (self.length != 0 && self.marketOrderLength != 0) {
+    if (self.marketOrderLength != 0) {
       // there is one or more orders in the Data, so the price should be the most competitive
       Order storage firstOrder = firstMarketOrder(self);
       require(multiplyFactorGoesBefore(self, _multiplyFactor, firstOrder.multiplyFactor), "Multiply factor doesnt belong to start");
@@ -590,7 +590,11 @@ library MoCExchangeLib {
    */
   function decreaseQueuesLength(Data storage _self, bool _isMarketOrder) internal {
     _self.length = _self.length.sub(1);
-    (_isMarketOrder) ? _self.marketOrderLength.sub(1) : _self.limitOrderLength.sub(1);
+    if (_isMarketOrder) {
+      _self.marketOrderLength = _self.marketOrderLength.sub(1);
+     } else {
+      _self.limitOrderLength = _self.limitOrderLength.sub(1);
+    }
   }
 
   /**
