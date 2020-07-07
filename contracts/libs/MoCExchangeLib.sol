@@ -1436,9 +1436,10 @@ library MoCExchangeLib {
     Order storage _buy,
     Order storage _sell,
     uint256 _limitingAmount,
-    uint256 _price
+    uint256 _price,
+    bool _fillsBuy
   ) internal {
-    executeBuyerMatch(_commissionManager, _pair, _buy, _limitingAmount, _price);
+    executeBuyerMatch(_fillsBuy, _commissionManager, _pair, _buy, _limitingAmount, _price);
     executeSellerMatch(_commissionManager, _pair, _sell, _limitingAmount, _price);
   }
 
@@ -1486,6 +1487,7 @@ library MoCExchangeLib {
     @param _price the emergent price to use when doing the calculuses
   */
   function executeBuyerMatch(
+    bool _fillsBuy,
     CommissionManager _commissionManager,
     Pair storage _pair,
     Order storage _buy,
@@ -1494,6 +1496,9 @@ library MoCExchangeLib {
   ) private {
     // calculates the amouts to exchange, the one to sent to the seller and the change that its going back to the buyer
     (uint256 buyerExpectedSend, uint256 buyerSent) = calculateAmountToExchange(_pair, _buy, _limitingAmount, _price);
+
+    // Send the whole order if we are filling to avoid dust
+    buyerExpectedSend = _fillsBuy ? _buy.exchangeableAmount : buyerExpectedSend;
 
     // calculates and retains the propotional commission for the exchange
     uint256 exchangeCommission = _commissionManager.chargeCommissionForMatch(
@@ -1820,7 +1825,7 @@ If zero, will start from ordebook top.
     );
 
 
-    executeMatch(_commissionManager, _self, buy, sell, limitingAmount, _self.pageMemory.emergentPrice);
+    executeMatch(_commissionManager, _self, buy, sell, limitingAmount, _self.pageMemory.emergentPrice, matchType != MatchType.SELLER_FILL);
     if (matchType == MatchType.DOUBLE_FILL) {
       onOrderFullMatched(_self, _self.baseToken);
       onOrderFullMatched(_self, _self.secondaryToken);
