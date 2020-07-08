@@ -42,7 +42,7 @@ module.exports = {
       host: 'http://50.116.28.95:4444/',
       provider: new HDWalletProvider(mnemonic, 'http://50.116.28.95:4444/'),
       network_id: '*',
-      gasPrice: 60000000
+      gasPrice: 80000000
     }
   },
   mocha: {
