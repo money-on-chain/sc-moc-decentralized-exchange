@@ -1187,7 +1187,7 @@ library MoCExchangeLib {
       } else {
         insertLimitOrder(token.orderbook, _id, _sender, _exchangeableAmount, _reservedCommission, _price, expiresInTick, _previousOrderIdHint);
       }
-      emitNewOrderEventForLimitOrder(_id, _self, _sender, _exchangeableAmount, _reservedCommission, _price, expiresInTick, _isBuy, OrderType.LIMIT_ORDER);
+      emitNewOrderEventForLimitOrder(_id, _self, _sender, _exchangeableAmount, _reservedCommission, _price, expiresInTick, _isBuy);
     }
   }
 
@@ -1241,7 +1241,7 @@ library MoCExchangeLib {
       } else {
         insertMarketOrder(token.orderbook, _id, _exchangeableAmount, _reservedCommission,  _multiplyFactor, expiresInTick, _previousOrderIdHint);
       }
-      emitNewOrderEventForMarketOrder(_id, _self, _sender, _exchangeableAmount, _reservedCommission, _multiplyFactor, expiresInTick, _isBuy, OrderType.MARKET_ORDER);
+      emitNewOrderEventForMarketOrder(_id, _self, _sender, _exchangeableAmount, _reservedCommission, _multiplyFactor, expiresInTick, _isBuy);
     }
   }
 
@@ -1307,8 +1307,7 @@ library MoCExchangeLib {
     uint256 _reservedCommission,
     uint256 _price,
     uint64 _expiresInTick,
-    bool _isBuy,
-    OrderType _orderType
+    bool _isBuy
   ) private {
     emit NewOrderInserted(
       _orderId,
@@ -1321,7 +1320,7 @@ library MoCExchangeLib {
       0,
       _expiresInTick,
       _isBuy,
-      _orderType
+      OrderType.LIMIT_ORDER
     );
   }
 
@@ -1336,8 +1335,7 @@ library MoCExchangeLib {
     uint256 _reservedCommission,
     uint256 _multiplyFactor,
     uint64 _expiresInTick,
-    bool _isBuy,
-    OrderType _orderType
+    bool _isBuy
   ) private {
     emit NewOrderInserted(
       _orderId,
@@ -1350,7 +1348,7 @@ library MoCExchangeLib {
       _multiplyFactor,
       _expiresInTick,
       _isBuy,
-      _orderType
+      OrderType.MARKET_ORDER
     );
   }
 
