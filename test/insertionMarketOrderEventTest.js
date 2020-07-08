@@ -49,7 +49,7 @@ describe('Market Order insertion event tests', function() {
         );
       });
       it('THEN an event is emitted for the buy order', function() {
-        assertNewOrderEvent({ isBuy: true, expiresInTick: '11' }, () => ({
+        assertNewOrderEvent({ isBuy: true, expiresInTick: '11', multiplyFactor: 1.8 }, () => ({
           tx,
           baseAddress: base.address,
           secondaryAddress: secondary.address,
@@ -158,7 +158,7 @@ describe('Market Order insertion event tests', function() {
         );
       });
       it('THEN the event is emitted for the buy order', function() {
-        assertNewOrderEvent({ isBuy: true, expiresInTick: '11' }, () => ({
+        assertNewOrderEvent({ isBuy: true, expiresInTick: '11', multiplyFactor: 1.8 }, () => ({
           tx,
           baseAddress: base.address,
           secondaryAddress: secondary.address,
@@ -267,7 +267,7 @@ describe('Market Order insertion event tests', function() {
         );
       });
       it('THEN an event is emitted for the buy order', function() {
-        assertNewOrderEvent({ isBuy: false, expiresInTick: '11' }, () => ({
+        assertNewOrderEvent({ isBuy: false, expiresInTick: '11', multiplyFactor: 0.8 }, () => ({
           tx,
           baseAddress: base.address,
           secondaryAddress: secondary.address,
@@ -526,7 +526,7 @@ describe('Market Order insertion event tests', function() {
         );
       });
       it('THEN an event is emitted for the buy market order', function() {
-        assertNewOrderEvent({ isBuy: true, expiresInTick: '11' }, () => ({
+        assertNewOrderEvent({ isBuy: true, expiresInTick: '11', multiplyFactor: 0.8 }, () => ({
           tx,
           baseAddress: base.address,
           secondaryAddress: testToken.address,
@@ -641,7 +641,7 @@ describe('Market Order insertion event tests', function() {
         );
       });
       it('THEN the event is emitted', function() {
-        assertNewOrderEvent({ id: new BN(4), isBuy: false }, () => ({
+        assertNewOrderEvent({ id: new BN(4), isBuy: false, multiplyFactor: 1.4 }, () => ({
           tx,
           baseAddress: base.address,
           secondaryAddress: testToken.address,
@@ -730,7 +730,7 @@ describe('Market Order insertion event tests', function() {
           );
         });
         it('THEN the event is emitted', function() {
-          assertNewOrderEvent({ id: new BN(3), price: 1.7 }, () => ({
+          assertNewOrderEvent({ id: new BN(3), multiplyFactor: 1.7 }, () => ({
             tx,
             baseAddress: base.address,
             secondaryAddress: secondary.address,
