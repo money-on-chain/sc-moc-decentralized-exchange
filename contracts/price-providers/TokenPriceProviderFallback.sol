@@ -23,12 +23,13 @@ contract TokenPriceProviderFallback is IPriceProvider {
 
   function peek() external view returns (bytes32, bool) {
     (bytes32 externalPrice, bool isValid) = externalPriceProvider.peek();
-    bytes32 finalPrice = isValid ? externalPrice : fallbackPrice();
+    bool isOkPrice = isValid && uint256(externalPrice) > 0;
+    bytes32 finalPrice = isOkPrice ? externalPrice : fallbackPrice();
     return (finalPrice, true);
   }
 
   function fallbackPrice() internal view returns (bytes32) {
-    uint256 lastClosingPrice = dex.getLastClosingPrice(baseToken, secondaryToken);
-    return bytes32(lastClosingPrice);
+    uint256 lastNonZeroClosingPrice = dex.getLastNonZeroClosingPrice(baseToken, secondaryToken);
+    return bytes32(lastNonZeroClosingPrice);
   }
 }

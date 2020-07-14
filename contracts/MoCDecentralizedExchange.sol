@@ -230,7 +230,7 @@ the previous to the one moved
       uint256 marketPrice
     )
   {
-    (tickNumber, nextTickBlock, lastTickBlock, lastClosingPrice, disabled, emaPrice, smoothingFactor) = getStatus(_baseToken, _secondaryToken);
+    (tickNumber, nextTickBlock, lastTickBlock, lastClosingPrice, disabled, emaPrice, smoothingFactor, ) = getStatus(_baseToken, _secondaryToken);
     (emergentPrice, lastBuyMatchId, lastBuyMatchAmount, lastSellMatchId) = getEmergentPrice(_baseToken, _secondaryToken);
     marketPrice = getMarketPrice(_baseToken, _secondaryToken);
   }
@@ -239,10 +239,10 @@ the previous to the one moved
     @notice Getter for every value related to a pair
     @param _baseToken Address of the base token of the pair
     @param _secondaryToken Address of the secondary token of the pair
-    @return lastClosingPrice - the last price from a successful matching
+    @return lastNotZeroClosingPrice - the last closing price != 0
   */
-  function getLastClosingPrice(address _baseToken, address _secondaryToken) external view returns (uint256 lastClosingPrice) {
-    (, , , lastClosingPrice, , , ) = getStatus(_baseToken, _secondaryToken);
+  function getLastNonZeroClosingPrice(address _baseToken, address _secondaryToken) external view returns (uint256 lastNotZeroClosingPrice) {
+    (, , , , , , ,lastNotZeroClosingPrice) = getStatus(_baseToken, _secondaryToken);
   }
 
   /**

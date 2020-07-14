@@ -165,7 +165,8 @@ or its inverse must not be listed already
       _initialPrice,
       false,
       _initialPrice,
-      SMOOTHING_FACTOR
+      SMOOTHING_FACTOR,
+      _initialPrice
     );
   }
 
@@ -241,6 +242,9 @@ and it affects negatively other pairs that depend on this
 @return lastTickBlock Block in which the last tick started to run
 @return lastClosingPrice Emergent price of the last tick
 @return disabled True if the pair is disabled(it can not be inserted any orders); false otherwise
+@return emaPrice The last calculated emaPrice of the last tick
+@return smoothingFactor The current smoothing factor
+@return lastNotZeroClosingPrice is the last closing price != 0
 */
   function getStatus(address _baseToken, address _secondaryToken)
     internal
@@ -252,7 +256,8 @@ and it affects negatively other pairs that depend on this
       uint256 lastClosingPrice,
       bool disabled,
       uint256 emaPrice,
-      uint256 smoothingFactor
+      uint256 smoothingFactor,
+      uint256 lastNotZeroClosingPrice
     )
   {
     return tokenPair(_baseToken, _secondaryToken).getStatus();

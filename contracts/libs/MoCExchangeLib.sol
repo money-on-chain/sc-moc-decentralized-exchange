@@ -166,6 +166,7 @@ library MoCExchangeLib {
     bool disabled;
     uint256 emaPrice;
     uint256 smoothingFactor;
+    uint256 lastNotZeroClosingPrice;
   }
 
   /**
@@ -1123,6 +1124,7 @@ library MoCExchangeLib {
     @return disabled True if the pair is disabled(it can not be inserted any orders); false otherwise
     @return emaPrice The last calculated emaPrice of the last tick
     @return smoothingFactor The current smoothing factor
+    @return lastNotZeroClosingPrice is the last closing price != 0
    */
   function getStatus(Pair storage _self)
     internal
@@ -1134,7 +1136,8 @@ library MoCExchangeLib {
       uint256 lastClosingPrice,
       bool disabled,
       uint256 emaPrice,
-      uint256 smoothingFactor
+      uint256 smoothingFactor,
+      uint256 lastNotZeroClosingPrice
     )
   {
     tickNumber = _self.tickState.number;
@@ -1144,6 +1147,7 @@ library MoCExchangeLib {
     disabled = _self.disabled;
     emaPrice = _self.emaPrice;
     smoothingFactor = _self.smoothingFactor;
+    lastNotZeroClosingPrice = _self.lastNotZeroClosingPrice;
   }
 
   /**
@@ -1787,6 +1791,9 @@ If zero, will start from ordebook top.
     if (_pair.pageMemory.matchesAmount > 0) {
       _pair.pageMemory.emergentPrice = Math.average(getOrderPrice(_pair.pageMemory.marketPrice, _pair.pageMemory.lastBuyMatch), getOrderPrice(_pair.pageMemory.marketPrice, _pair.pageMemory.lastSellMatch));
       _pair.lastClosingPrice = _pair.pageMemory.emergentPrice;
+      if (_pair.pageMemory.emergentPrice != 0){
+        _pair.lastNotZeroClosingPrice = _pair.pageMemory.emergentPrice;
+      }
       _pair.emaPrice = calculateNewEMA(_pair.emaPrice, _pair.lastClosingPrice, _pair.smoothingFactor, factorPrecision);
     }
 
