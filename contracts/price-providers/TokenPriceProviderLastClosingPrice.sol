@@ -19,17 +19,12 @@ contract TokenPriceProviderLastClosingPrice is IPriceProvider {
   }
 
   function peek() external view returns (bytes32, bool) {
-    return doPeek();
+    uint256 lastNonZeroClosingPrice = dex.getLastNonZeroClosingPrice(baseToken, secondaryToken);
+    return (bytes32(lastNonZeroClosingPrice), true);
   }
 
   function peekAsUint() external view returns (uint256 lastNonZeroClosingPrice, bool success) {
-    (bytes32 binaryPrice, bool isSuccess) = doPeek();
-    success = isSuccess;
-    lastNonZeroClosingPrice = uint256(binaryPrice);
-  }
-
-  function doPeek() internal view returns (bytes32, bool) {
-    uint256 lastNonZeroClosingPrice = dex.getLastNonZeroClosingPrice(baseToken, secondaryToken);
-    return (bytes32(lastNonZeroClosingPrice), true);
+    lastNonZeroClosingPrice = dex.getLastNonZeroClosingPrice(baseToken, secondaryToken);
+    success = true;
   }
 }
