@@ -2,6 +2,7 @@ const { expectRevert } = require('openzeppelin-test-helpers');
 const testHelperBuilder = require('../testHelpers/testHelper');
 
 let testHelper;
+const ERROR_HINT_NOT_LIMIT_ORDER = 'Hint is not limit order';
 describe('Depletion of the Pending Queue MO in the after match with wrong hints', function() {
   let dex;
   let base;
@@ -213,4 +214,63 @@ describe('Depletion of the Pending Queue MO in the after match with wrong hints'
       });
     }
   );
+
+  contract('SCENARIO: crossed references LO and MO', function(accounts) {
+    const [, , seller] = accounts;
+    // eslint-disable-next-line mocha/no-sibling-hooks
+    before(initContractsAndAllowance(accounts));
+    givenTheTickIsRunning(accounts, function() {
+      describe('AND there one pending LO with a hint pointing to one MO', function() {
+        before(async function() {
+          await dex.insertSellMarketOrder({
+            from: seller,
+            pending: true,
+            priceMultiplier: DEFAULT_MULTIPLY_FACTOR / 2
+          });
+          await dex.insertSellLimitOrder({
+            from: seller,
+            pending: true
+          });
+        });
+        describe('WHEN calling matchOrders with different orders types', function() {
+          it('THEN the tx fails', function() {
+            return expectRevert(
+              dex.matchOrdersWithHints(...pair, 5, [6]),
+              ERROR_HINT_NOT_LIMIT_ORDER
+            );
+          });
+        });
+      });
+    });
+  });
+
+  contract('SCENARIO: crossed references MO and LO', function(accounts) {
+    const [, , seller] = accounts;
+    // eslint-disable-next-line mocha/no-sibling-hooks
+    before(initContractsAndAllowance(accounts));
+    givenTheTickIsRunning(accounts, function() {
+      describe('AND there one pending MO with a hint pointing to one LO', function() {
+        before(async function() {
+          await dex.insertSellMarketOrder({
+            from: seller,
+            pending: true,
+            priceMultiplier: DEFAULT_MULTIPLY_FACTOR
+          });
+
+          await dex.insertSellLimitOrder({
+            from: seller,
+            pending: true
+          });
+        });
+        describe('WHEN calling matchOrders with between LO and MO', function() {
+          it('THEN the tx fails', function() {
+            return expectRevert(
+              dex.matchOrdersWithHints(...pair, 6, [5]),
+              ERROR_HINT_NOT_LIMIT_ORDER
+            );
+          });
+        });
+      });
+    });
+  });
 });
