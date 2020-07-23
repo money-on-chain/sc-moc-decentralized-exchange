@@ -2055,11 +2055,11 @@ If zero, will start from ordebook top.
     @param _pair The pair of tokens
     @return True if there are still pending orders to move; false otherwise
   */
-  function movePendingOrdersStepFunction(Pair storage _pair) public {
+  function movePendingMarketOrdersStepFunction(Pair storage _pair) public {
     assert(_pair.tickStage == MoCExchangeLib.TickStage.MOVING_PENDING_ORDERS);
     // Cannot return shouldKeepGoing based on movedBuyOrder to avoid DOS attacks where someone
     // inserts new pending orders as soon as we finished inserting the other orders
-    bool movedBuyOrder = movePendingOrderFrom(
+    bool movedBuyOrder = movePendingMarketOrderFrom(
       _pair.baseToken,
       _pair.pageMemory,
       address(_pair.baseToken.token),
@@ -2067,7 +2067,7 @@ If zero, will start from ordebook top.
       true
     );
     if (!movedBuyOrder) {
-      movePendingOrderFrom(
+      movePendingMarketOrderFrom(
         _pair.secondaryToken,
         _pair.pageMemory,
         address(_pair.baseToken.token),
@@ -2075,6 +2075,109 @@ If zero, will start from ordebook top.
         false
       );
     }
+  }
+
+/**
+@notice Moves an order from the pending queue to the orderbook
+Has two discarded param; kept to have a fixed signature
+@dev First it tries to move everything in the buy queue and then goes to the selling queue
+Nevertheless always checks the buy order, no mather if we finished it already in case there is
+a new buy order while we process the sell order.
+It is important that this is the absolute LAST task of the ticks group
+@param _pair The pair of tokens
+for the execution of a tick of a given pair
+@return True if there are still pending orders to move; false otherwise
+*/
+  function movePendingOrdersStepFunction(Pair storage _pair) public returns (bool shouldKeepGoing) {
+    movePendingLimitOrdersStepFunction(_pair);
+    bool pendingOrders = _pair.baseToken.orderbook.amountOfPendingOrders != 0 || _pair.secondaryToken.orderbook.amountOfPendingOrders != 0;
+    if (!pendingOrders){
+      movePendingMarketOrdersStepFunction(_pair);
+      pendingOrders = _pair.baseToken.orderbook.amountOfPendingMarketOrders != 0 || _pair.secondaryToken.orderbook.amountOfPendingMarketOrders != 0;
+    }
+
+    return pendingOrders;
+  }
+
+  /**
+    @notice Moves a limit order from the pending queue to the orderbook
+    Has two discarded param; kept to have a fixed signature
+    @dev First it tries to move everything in the buy queue and then goes to the selling queue
+    Nevertheless always checks the buy order, no mather if we finished it already in case there is
+    a new buy order while we process the sell order.
+    It is important that this is the absolute LAST task of the ticks group
+    @param _pair The pair of tokens
+    @return True if there are still pending orders to move; false otherwise
+  */
+  function movePendingLimitOrdersStepFunction(Pair storage _pair) public {
+    assert(_pair.tickStage == MoCExchangeLib.TickStage.MOVING_PENDING_ORDERS);
+    // Cannot return shouldKeepGoing based on movedBuyOrder to avoid DOS attacks where someone
+    // inserts new pending orders as soon as we finished inserting the other orders
+    bool movedBuyOrder = movePendingLimitOrderFrom(
+      _pair.baseToken,
+      _pair.pageMemory,
+      address(_pair.baseToken.token),
+      address(_pair.secondaryToken.token),
+      true
+    );
+    if (!movedBuyOrder) {
+      movePendingLimitOrderFrom(
+        _pair.secondaryToken,
+        _pair.pageMemory,
+        address(_pair.baseToken.token),
+        address(_pair.secondaryToken.token),
+        false
+      );
+    }
+  }
+
+  /**
+    @notice Moves a market order from the pending queue to the corresponding orderbook
+    @param _token Struct that containts the orderbook and pendingQueue data structures
+    @param pageMemory Page memory of this tick, has auxiliar info to make it run. Hints are useful in this fn
+    @param baseTokenAddress Address of the base token of the pair this order belongs to
+    @param secondaryTokenAddress Address of the secondary token of the pair this order belongs to
+    @param isBuy True if the _token and orderbook/pendingQueue in it are related to buy orders
+    False otherwise
+   */
+  function movePendingMarketOrderFrom(
+    Token storage _token,
+    TickPaginationMemory storage pageMemory,
+    address baseTokenAddress,
+    address secondaryTokenAddress,
+    bool isBuy
+  ) public returns (bool doneWork) {
+    if (_token.orderbook.amountOfPendingMarketOrders == 0) return false;
+    Order storage orderToMove = firstPendingMarketOrder(_token.orderbook);
+    _token.orderbook.firstPendingMarketOrderToPopId = orderToMove.next;
+    _token.orderbook.amountOfPendingMarketOrders = _token.orderbook.amountOfPendingMarketOrders.sub(1);
+
+    // position orderToMove
+    uint256 previousOrderId;
+    //TODO: DAM: Check this
+    if (pageMemory.hintIdsIndex < pageMemory.hintIds.length) {
+      previousOrderId = pageMemory.hintIds[pageMemory.hintIdsIndex++];
+      validatePreviousMarketOrder(_token.orderbook, orderToMove.multiplyFactor, previousOrderId);
+    } else {
+      previousOrderId = findPreviousMarketOrderToMultiplyFactor(_token.orderbook, orderToMove.multiplyFactor);
+    }
+
+    emit NewOrderInserted(
+      orderToMove.id,
+      orderToMove.owner,
+      baseTokenAddress,
+      secondaryTokenAddress,
+      orderToMove.exchangeableAmount,
+      orderToMove.reservedCommission,
+      0,
+      orderToMove.multiplyFactor,
+      orderToMove.expiresInTick,
+      isBuy,
+      OrderType.MARKET_ORDER
+    );
+
+    positionMarketOrder(_token.orderbook, orderToMove.id, previousOrderId);
+    return true;
   }
 
   /**
@@ -2086,14 +2189,13 @@ If zero, will start from ordebook top.
     @param isBuy True if the _token and orderbook/pendingQueue in it are related to buy orders
     False otherwise
    */
-  function movePendingOrderFrom(
+  function movePendingLimitOrderFrom(
     Token storage _token,
     TickPaginationMemory storage pageMemory,
     address baseTokenAddress,
     address secondaryTokenAddress,
     bool isBuy
   ) public returns (bool doneWork) {
-    //TODO: adapt to MarketOrders
     if (_token.orderbook.amountOfPendingOrders == 0) return false;
     // pop from queue
     Order storage orderToMove = firstPending(_token.orderbook);
