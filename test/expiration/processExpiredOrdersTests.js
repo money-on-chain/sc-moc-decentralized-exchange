@@ -106,7 +106,14 @@ describe('Process expired Order', function() {
       describe('WHEN invoking buy processExpired for many orders starting from top', function() {
         before(async function() {
           await createOrder();
-          txReceipt = await dex.processExpired(...pair, isBuy, startFromTop, noHint, manySteps);
+          txReceipt = await dex.processExpired(
+            ...pair,
+            isBuy,
+            startFromTop,
+            noHint,
+            manySteps,
+            false
+          );
         });
         it('THEN the order has been processed with the correct value transfers', function() {
           return assertExpiredOrderProcessed(
@@ -133,7 +140,7 @@ describe('Process expired Order', function() {
       describe('WHEN invoking buy processExpired for many orders starting from it', function() {
         before(async function() {
           await createOrder();
-          txReceipt = await dex.processExpired(...pair, isBuy, orderId, noHint, manySteps);
+          txReceipt = await dex.processExpired(...pair, isBuy, orderId, noHint, manySteps, false);
         });
         it('THEN the order has been processed', function() {
           return assertExpiredOrderProcessed({ orderId }, { to: accounts[1] });
@@ -142,7 +149,7 @@ describe('Process expired Order', function() {
       describe('WHEN invoking buy processExpired for only 1 order starting from it', function() {
         before(async function() {
           await createOrder();
-          txReceipt = await dex.processExpired(...pair, isBuy, orderId, noHint, '1');
+          txReceipt = await dex.processExpired(...pair, isBuy, orderId, noHint, '1', false);
         });
         it('THEN the order has been processed', function() {
           return assertExpiredOrderProcessed({ orderId }, { to: accounts[1] });
@@ -152,7 +159,7 @@ describe('Process expired Order', function() {
         before(async function() {
           await createOrder();
           const nextId = orderId.add(new BN(2));
-          txReceipt = await dex.processExpired(...pair, isBuy, orderId, nextId, manySteps);
+          txReceipt = await dex.processExpired(...pair, isBuy, orderId, nextId, manySteps, false);
         });
         it('THEN the order is processed as it is the first', function() {
           return assertExpiredOrderProcessed({ orderId }, { to: accounts[1] });
@@ -176,7 +183,14 @@ describe('Process expired Order', function() {
       });
       describe('WHEN invoking sell processExpired for many orders starting from top', function() {
         before(async function() {
-          txReceipt = await dex.processExpired(...pair, isBuy, startFromTop, noHint, manySteps);
+          txReceipt = await dex.processExpired(
+            ...pair,
+            isBuy,
+            startFromTop,
+            noHint,
+            manySteps,
+            false
+          );
         });
         it('THEN the order has been processed', function() {
           return assertExpiredOrderProcessed({ orderId }, { to: accounts[1] });
@@ -199,7 +213,14 @@ describe('Process expired Order', function() {
       });
       describe('WHEN invoking buy processExpired for many orders starting from top', function() {
         beforeEach(async function() {
-          txReceipt = await dex.processExpired(...pair, isBuy, startFromTop, noHint, manySteps);
+          txReceipt = await dex.processExpired(
+            ...pair,
+            isBuy,
+            startFromTop,
+            noHint,
+            manySteps,
+            false
+          );
         });
         it('THEN the order has been processed', function() {
           return assertExpiredOrderProcessed({ orderId }, { to: accounts[2] });
@@ -210,7 +231,7 @@ describe('Process expired Order', function() {
       });
       describe('WHEN invoking buy processExpired for many orders starting from it', function() {
         beforeEach(async function() {
-          txReceipt = await dex.processExpired(...pair, isBuy, orderId, noHint, manySteps);
+          txReceipt = await dex.processExpired(...pair, isBuy, orderId, noHint, manySteps, false);
         });
         it('THEN the order has been processed', function() {
           return assertExpiredOrderProcessed({ orderId }, { to: accounts[2] });
@@ -222,7 +243,14 @@ describe('Process expired Order', function() {
       describe('WHEN invoking buy processExpired for one order starting from it, and hinting correct prev', function() {
         beforeEach(async function() {
           const correctPrevHint = orderId.sub(new BN(1));
-          txReceipt = await dex.processExpired(...pair, isBuy, orderId, correctPrevHint, '1');
+          txReceipt = await dex.processExpired(
+            ...pair,
+            isBuy,
+            orderId,
+            correctPrevHint,
+            '1',
+            false
+          );
         });
         it('THEN the order has been processed', function() {
           return assertExpiredOrderProcessed({ orderId }, { to: accounts[2] });
@@ -235,7 +263,7 @@ describe('Process expired Order', function() {
         it('THEN the tx reverts', function() {
           const inCorrectPrevHint = orderId.add(new BN(1));
           return expectRevert(
-            dex.processExpired(...pair, isBuy, orderId, inCorrectPrevHint, '1'),
+            dex.processExpired(...pair, isBuy, orderId, inCorrectPrevHint, '1', false),
             'Previous order not found'
           );
         });
@@ -245,7 +273,7 @@ describe('Process expired Order', function() {
       it('THEN the transaction reverts as there is no order to process', function() {
         const next = orderId.add(new BN(1));
         return expectRevert(
-          dex.processExpired(...pair, isBuy, next, noHint, '1'),
+          dex.processExpired(...pair, isBuy, next, noHint, '1', false),
           'No expired order found'
         );
       });
@@ -267,7 +295,14 @@ describe('Process expired Order', function() {
       });
       describe('WHEN invoking buy processExpired for many orders starting from top', function() {
         beforeEach(async function() {
-          txReceipt = await dex.processExpired(...pair, isBuy, startFromTop, noHint, manySteps);
+          txReceipt = await dex.processExpired(
+            ...pair,
+            isBuy,
+            startFromTop,
+            noHint,
+            manySteps,
+            false
+          );
         });
         it('THEN both order has been processed', async function() {
           await assertExpiredOrderProcessed({ orderId }, { to: accounts[2] });
@@ -279,7 +314,7 @@ describe('Process expired Order', function() {
       });
       describe('WHEN invoking buy processExpired for two order starting from the top', function() {
         beforeEach(async function() {
-          txReceipt = await dex.processExpired(...pair, isBuy, startFromTop, noHint, '2');
+          txReceipt = await dex.processExpired(...pair, isBuy, startFromTop, noHint, '2', false);
         });
         it('THEN only first expired order gets processed', async function() {
           await assertExpiredOrderProcessed({ orderId }, { to: accounts[2] });
@@ -289,7 +324,7 @@ describe('Process expired Order', function() {
       describe('WHEN invoking buy processExpired for one order starting from the second expired one, hinting previous', function() {
         beforeEach(async function() {
           const correctPrev = orderId2.sub(new BN(1));
-          txReceipt = await dex.processExpired(...pair, isBuy, orderId2, correctPrev, '1');
+          txReceipt = await dex.processExpired(...pair, isBuy, orderId2, correctPrev, '1', false);
         });
         it('THEN only the second expired order gets processed', async function() {
           await assertExpiredOrderProcessed({ orderId: orderId2 }, { to: accounts[4] });
@@ -319,7 +354,14 @@ describe('Process expired Order', function() {
       });
       describe('WHEN invoking buy processExpired for many orders starting from top', function() {
         beforeEach(async function() {
-          txReceipt = await dex.processExpired(...pair, isBuy, startFromTop, noHint, manySteps);
+          txReceipt = await dex.processExpired(
+            ...pair,
+            isBuy,
+            startFromTop,
+            noHint,
+            manySteps,
+            false
+          );
         });
         it('THEN both order has been processed', async function() {
           await assertExpiredOrderProcessed({ orderId }, { to: accounts[4] });
@@ -331,7 +373,7 @@ describe('Process expired Order', function() {
       });
       describe('WHEN invoking buy processExpired for two orders starting from the first expired', function() {
         beforeEach(async function() {
-          txReceipt = await dex.processExpired(...pair, isBuy, orderId, noHint, '2');
+          txReceipt = await dex.processExpired(...pair, isBuy, orderId, noHint, '2', false);
         });
         it('THEN both order has been processed', async function() {
           await assertExpiredOrderProcessed({ orderId }, { to: accounts[4] });
@@ -363,7 +405,14 @@ describe('Process expired Order', function() {
       });
       describe('WHEN invoking buy processExpired for many orders starting from top', function() {
         beforeEach(async function() {
-          txReceipt = await dex.processExpired(...pair, isBuy, startFromTop, noHint, manySteps);
+          txReceipt = await dex.processExpired(
+            ...pair,
+            isBuy,
+            startFromTop,
+            noHint,
+            manySteps,
+            false
+          );
         });
         it('THEN both order has been processed', async function() {
           await assertExpiredOrderProcessed({ orderId }, { to: accounts[4] });

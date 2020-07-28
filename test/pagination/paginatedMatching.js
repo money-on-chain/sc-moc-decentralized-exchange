@@ -888,14 +888,16 @@ describe('Matching can be run in several pages', function() {
                   true,
                   totalOrdersPerType / 4,
                   totalOrdersPerType / 4 - 1,
-                  totalOrdersPerType / 2
+                  totalOrdersPerType / 2,
+                  false
                 );
                 await dex.processExpired(
                   ...pair,
                   false,
                   totalOrdersPerType / 4 + totalOrdersPerType,
                   totalOrdersPerType / 4 - 1 + totalOrdersPerType,
-                  totalOrdersPerType / 2
+                  totalOrdersPerType / 2,
+                  false
                 );
 
                 let currentStage = await dex.getTickStage(...pair);

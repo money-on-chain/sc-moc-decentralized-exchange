@@ -31,7 +31,7 @@ const expireOrder = async ({ account, orderId }) => {
   await dex.editOrder(base.address, secondary.address, orderId, false, '1', {
     from: account
   });
-  return dex.processExpired(base.address, secondary.address, false, orderId, noHint, '1', {
+  return dex.processExpired(base.address, secondary.address, false, orderId, noHint, '1', false, {
     from: account
   });
 };

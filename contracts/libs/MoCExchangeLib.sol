@@ -1671,6 +1671,7 @@ library MoCExchangeLib {
 @param _previousOrderIdHint previous order id hint in the orderbook to _orderId, used as on optimization to search for.
 If zero, will start from ordebook top.
 @param _steps Number of iterations to look for expired orders to process. Use one, if just looking to process _orderId only
+@param _evalMarketOrders true to expire a Market Order, false otherwise
 */
   function processExpired(
     Pair storage _pair,
@@ -1678,10 +1679,12 @@ If zero, will start from ordebook top.
     bool _isBuy,
     uint256 _orderId,
     uint256 _previousOrderIdHint,
-    uint256 _steps
+    uint256 _steps,
+    bool _evalMarketOrders
   ) public {
     MoCExchangeLib.Token storage token = _isBuy ? _pair.baseToken : _pair.secondaryToken;
-    MoCExchangeLib.Order storage toEvaluate = _orderId == 0 ? first(token.orderbook) : get(token.orderbook, _orderId);
+    MoCExchangeLib.Order storage firstOrder = _evalMarketOrders ? firstMarketOrder(token.orderbook) : first(token.orderbook);
+    MoCExchangeLib.Order storage toEvaluate = _orderId == 0 ? firstOrder : get(token.orderbook, _orderId);
     uint256 nextOrderId = toEvaluate.next;
     uint256 previousOrderId = _previousOrderIdHint;
     uint256 currStep = 0;
