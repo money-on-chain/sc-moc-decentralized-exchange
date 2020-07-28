@@ -84,10 +84,67 @@ const initContractsAndAllowance = async accounts => {
   };
 };
 
-describe('Process expired Order', function() {
+describe('Process expired Limit Order', function() {
   before(function() {
     testHelper = testHelperBuilder();
     ({ wadify } = testHelper);
+  });
+
+  contract('Dex Fake: trying to expire limit orders from an empty orderbook', function(accounts) {
+    describe('GIVEN there is an empty orderdoor', function() {
+      before(async function() {
+        await initContractsAndAllowance(accounts);
+        // run match to move Tick number
+        await dex.matchOrders(...pair, testHelper.DEFAULT_STEPS_FOR_MATCHING);
+        await testHelper.assertBigWad(base.balanceOf(dex.address), 0);
+      });
+      describe('WHEN invoking buy processExpired for many buy limit orders starting from top', function() {
+        it('THEN the transaction reverts as there is no order to process', function() {
+          return expectRevert(
+            dex.processExpired(...pair, true, startFromTop, noHint, manySteps, false),
+            'No expired order found'
+          );
+        });
+      });
+      describe('WHEN invoking buy processExpired for many sell limit orders starting from top', function() {
+        it('THEN the transaction reverts as there is no order to process', function() {
+          return expectRevert(
+            dex.processExpired(...pair, false, startFromTop, noHint, manySteps, false),
+            'No expired order found'
+          );
+        });
+      });
+    });
+  });
+
+  contract('Dex Fake: uses limit order edit to manipulate and market orders expirations', function(
+    accounts
+  ) {
+    let createOrder;
+    describe('GIVEN there is only one expired buy limit order [E]', function() {
+      before(async function() {
+        await initContractsAndAllowance(accounts);
+        // run match to move Tick number
+        await dex.matchOrders(...pair, testHelper.DEFAULT_STEPS_FOR_MATCHING);
+        await testHelper.assertBigWad(base.balanceOf(dex.address), 0);
+        createOrder = async () => {
+          ({ id: orderId } = await dex.insertBuyLimitOrder({ accountIndex: 1 }));
+          await dex.editOrder(...pair, orderId, isBuy, '1');
+        };
+      });
+      describe('WHEN invoking buy processExpired for many market orders starting from top', function() {
+        before(async function() {
+          await createOrder();
+        });
+        it('THEN the transaction reverts as there is no order to process', function() {
+          const next = orderId.add(new BN(1));
+          return expectRevert(
+            dex.processExpired(...pair, isBuy, next, noHint, '1', true),
+            'No expired order found'
+          );
+        });
+      });
+    });
   });
 
   contract('Dex Fake: uses order edit to manipulate expiration', function(accounts) {
