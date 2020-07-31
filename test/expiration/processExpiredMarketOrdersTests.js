@@ -17,6 +17,7 @@ const noHint = '0';
 const manySteps = '100';
 let wadify;
 
+const ERROR_NOT_MARKET_ORDER = 'The order to expire is not a market order';
 const initContractsAndAllowance = async accounts => {
   await testHelper.createContracts({
     owner: accounts[0],
@@ -119,6 +120,37 @@ describe('Process expired Market Order', function() {
           return expectRevert(
             dex.processExpired(...pair, false, startFromTop, noHint, manySteps, true),
             'No expired order found'
+          );
+        });
+      });
+    });
+  });
+
+  contract('Dex Fake: Trying to expire limit orders with market orders params', function(accounts) {
+    let createOrder;
+    describe('GIVEN there is only one expired buy limit order', function() {
+      before(async function() {
+        await initContractsAndAllowance(accounts);
+        // run match to move Tick number
+        await dex.matchOrders(...pair, testHelper.DEFAULT_STEPS_FOR_MATCHING);
+        await testHelper.assertBigWad(base.balanceOf(dex.address), 0);
+        createOrder = async () => {
+          ({ id: orderId } = await dex.insertBuyLimitOrder({ accountIndex: 1 }));
+          await dex.editOrder(...pair, orderId, isBuy, '1');
+        };
+      });
+      describe('WHEN invoking buy processExpired with a limit order ID', function() {
+        before(async function() {
+          await createOrder();
+        });
+        it('THEN there is a buy orders to expire', async function() {
+          const thereIsOrdersToExpire = await dex.areOrdersToExpire(...pair, isBuy);
+          assert(thereIsOrdersToExpire, 'There is not an order to expire');
+        });
+        it('THEN the transaction reverts as not a market order', function() {
+          return expectRevert(
+            dex.processExpired(...pair, isBuy, orderId, noHint, '1', true),
+            ERROR_NOT_MARKET_ORDER
           );
         });
       });

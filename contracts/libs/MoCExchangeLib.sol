@@ -1685,6 +1685,12 @@ If zero, will start from ordebook top.
     MoCExchangeLib.Token storage token = _isBuy ? _pair.baseToken : _pair.secondaryToken;
     MoCExchangeLib.Order storage firstOrder = _evalMarketOrders ? firstMarketOrder(token.orderbook) : first(token.orderbook);
     MoCExchangeLib.Order storage toEvaluate = _orderId == 0 ? firstOrder : get(token.orderbook, _orderId);
+    if (_evalMarketOrders && toEvaluate.id != 0){
+      require(toEvaluate.orderType == OrderType.MARKET_ORDER, "The order to expire is not a market order");
+    }
+    if (!_evalMarketOrders && toEvaluate.id != 0){
+      require(toEvaluate.orderType == OrderType.LIMIT_ORDER, "The order to expire is not a limit order");
+    }
     uint256 nextOrderId = toEvaluate.next;
     uint256 previousOrderId = _previousOrderIdHint;
     uint256 currStep = 0;
