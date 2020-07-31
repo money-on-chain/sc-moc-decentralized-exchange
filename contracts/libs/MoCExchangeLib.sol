@@ -1671,7 +1671,7 @@ library MoCExchangeLib {
 @param _previousOrderIdHint previous order id hint in the orderbook to _orderId, used as on optimization to search for.
 If zero, will start from ordebook top.
 @param _steps Number of iterations to look for expired orders to process. Use one, if just looking to process _orderId only
-@param _evalMarketOrders true to expire a Market Order, false otherwise
+@param _includeMarketOrders true to expire a Market Order, false otherwise
 */
   function processExpired(
     Pair storage _pair,
@@ -1680,15 +1680,15 @@ If zero, will start from ordebook top.
     uint256 _orderId,
     uint256 _previousOrderIdHint,
     uint256 _steps,
-    bool _evalMarketOrders
+    bool _includeMarketOrders
   ) public {
     MoCExchangeLib.Token storage token = _isBuy ? _pair.baseToken : _pair.secondaryToken;
-    MoCExchangeLib.Order storage firstOrder = _evalMarketOrders ? firstMarketOrder(token.orderbook) : first(token.orderbook);
+    MoCExchangeLib.Order storage firstOrder = _includeMarketOrders ? firstMarketOrder(token.orderbook) : first(token.orderbook);
     MoCExchangeLib.Order storage toEvaluate = _orderId == 0 ? firstOrder : get(token.orderbook, _orderId);
-    if (_evalMarketOrders && toEvaluate.id != 0){
+    if (_includeMarketOrders && toEvaluate.id != 0){
       require(toEvaluate.orderType == OrderType.MARKET_ORDER, "The order to expire is not a market order");
     }
-    if (!_evalMarketOrders && toEvaluate.id != 0){
+    if (!_includeMarketOrders && toEvaluate.id != 0){
       require(toEvaluate.orderType == OrderType.LIMIT_ORDER, "The order to expire is not a limit order");
     }
     uint256 nextOrderId = toEvaluate.next;
