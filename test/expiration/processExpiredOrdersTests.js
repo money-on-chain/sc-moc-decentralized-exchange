@@ -11,6 +11,7 @@ let txReceipt;
 let testHelper;
 let pair;
 let isBuy = true;
+const isMarketOrder = false;
 let orderId;
 const startFromTop = '0';
 const noHint = '0';
@@ -18,6 +19,7 @@ const manySteps = '100';
 let wadify;
 
 const ERROR_NOT_LIMIT_ORDER = 'The order to expire is not a limit order';
+const ERROR_NOT_MARKET_ORDER = 'The order to expire is not a market order';
 const initContractsAndAllowance = async accounts => {
   await testHelper.createContracts({
     owner: accounts[0],
@@ -85,7 +87,7 @@ const initContractsAndAllowance = async accounts => {
   };
 };
 
-describe('Process expired Limit Order', function() {
+describe('Process expired Order', function() {
   before(function() {
     testHelper = testHelperBuilder();
     ({ wadify } = testHelper);
@@ -102,7 +104,7 @@ describe('Process expired Limit Order', function() {
       describe('WHEN invoking buy processExpired for many buy limit orders starting from top', function() {
         it('THEN the transaction reverts as there is no order to process', function() {
           return expectRevert(
-            dex.processExpired(...pair, true, startFromTop, noHint, manySteps, false),
+            dex.processExpired(...pair, true, startFromTop, noHint, manySteps, isMarketOrder),
             'No expired order found'
           );
         });
@@ -110,7 +112,7 @@ describe('Process expired Limit Order', function() {
       describe('WHEN invoking buy processExpired for many sell limit orders starting from top', function() {
         it('THEN the transaction reverts as there is no order to process', function() {
           return expectRevert(
-            dex.processExpired(...pair, false, startFromTop, noHint, manySteps, false),
+            dex.processExpired(...pair, false, startFromTop, noHint, manySteps, isMarketOrder),
             'No expired order found'
           );
         });
@@ -141,8 +143,40 @@ describe('Process expired Limit Order', function() {
         });
         it('THEN the transaction reverts as not a limit order', function() {
           return expectRevert(
-            dex.processExpired(...pair, isBuy, orderId, noHint, '1', false),
+            dex.processExpired(...pair, isBuy, orderId, noHint, '1', isMarketOrder),
             ERROR_NOT_LIMIT_ORDER
+          );
+        });
+      });
+    });
+  });
+
+  contract('Dex Fake: Trying to expire limit orders with market orders params', function(accounts) {
+    let createOrder;
+    describe('GIVEN there is only one expired buy limit order', function() {
+      before(async function() {
+        await initContractsAndAllowance(accounts);
+        // run match to move Tick number
+        await dex.matchOrders(...pair, testHelper.DEFAULT_STEPS_FOR_MATCHING);
+        await testHelper.assertBigWad(base.balanceOf(dex.address), 0);
+        createOrder = async () => {
+          ({ id: orderId } = await dex.insertBuyLimitOrder({ accountIndex: 1 }));
+          await dex.editOrder(...pair, orderId, isBuy, '1');
+        };
+      });
+      describe('WHEN invoking buy processExpired with a limit order ID', function() {
+        before(async function() {
+          await createOrder();
+        });
+        it('THEN there is a buy orders to expire', async function() {
+          const thereIsOrdersToExpire = await dex.areOrdersToExpire(...pair, isBuy);
+          assert(thereIsOrdersToExpire, 'There is not an order to expire');
+        });
+        it('THEN the transaction reverts as not a market order', function() {
+          const processMarketOrder = true;
+          return expectRevert(
+            dex.processExpired(...pair, isBuy, orderId, noHint, '1', processMarketOrder),
+            ERROR_NOT_MARKET_ORDER
           );
         });
       });
@@ -179,6 +213,41 @@ describe('Process expired Limit Order', function() {
     });
   });
 
+  contract(
+    'Dex Fake: uses market order edit to manipulate and trying market orders expirations',
+    function(accounts) {
+      let createOrder;
+      describe('GIVEN there is only one expired buy market order [E]', function() {
+        before(async function() {
+          await initContractsAndAllowance(accounts);
+          // run match to move Tick number
+          await dex.matchOrders(...pair, testHelper.DEFAULT_STEPS_FOR_MATCHING);
+          await testHelper.assertBigWad(base.balanceOf(dex.address), 0);
+          createOrder = async () => {
+            ({ id: orderId } = await dex.insertBuyMarketOrder({ accountIndex: 1 }));
+            await dex.editOrder(...pair, orderId, isBuy, '1');
+          };
+        });
+        describe('WHEN invoking buy processExpired for many limit orders starting from top', function() {
+          before(async function() {
+            await createOrder();
+          });
+          it('THEN there is a buy orders to expire', async function() {
+            const theIsBuyMOToExpire = await dex.areOrdersToExpire(...pair, isBuy);
+            assert(theIsBuyMOToExpire, 'There is not a buy market orders to expire');
+          });
+          it('THEN the transaction reverts as there is no order to process', function() {
+            const next = orderId.add(new BN(1));
+            return expectRevert(
+              dex.processExpired(...pair, isBuy, next, noHint, '1', false),
+              'No expired order found'
+            );
+          });
+        });
+      });
+    }
+  );
+
   contract('Dex Fake: uses order edit to manipulate expiration', function(accounts) {
     let createOrder;
     describe('GIVEN there is only one expired buy order [E]', function() {
@@ -201,7 +270,7 @@ describe('Process expired Limit Order', function() {
             startFromTop,
             noHint,
             manySteps,
-            false
+            isMarketOrder
           );
         });
         it('THEN the order has been processed with the correct value transfers', function() {
@@ -229,7 +298,14 @@ describe('Process expired Limit Order', function() {
       describe('WHEN invoking buy processExpired for many orders starting from it', function() {
         before(async function() {
           await createOrder();
-          txReceipt = await dex.processExpired(...pair, isBuy, orderId, noHint, manySteps, false);
+          txReceipt = await dex.processExpired(
+            ...pair,
+            isBuy,
+            orderId,
+            noHint,
+            manySteps,
+            isMarketOrder
+          );
         });
         it('THEN the order has been processed', function() {
           return assertExpiredOrderProcessed({ orderId }, { to: accounts[1] });
@@ -238,7 +314,7 @@ describe('Process expired Limit Order', function() {
       describe('WHEN invoking buy processExpired for only 1 order starting from it', function() {
         before(async function() {
           await createOrder();
-          txReceipt = await dex.processExpired(...pair, isBuy, orderId, noHint, '1', false);
+          txReceipt = await dex.processExpired(...pair, isBuy, orderId, noHint, '1', isMarketOrder);
         });
         it('THEN the order has been processed', function() {
           return assertExpiredOrderProcessed({ orderId }, { to: accounts[1] });
@@ -248,7 +324,14 @@ describe('Process expired Limit Order', function() {
         before(async function() {
           await createOrder();
           const nextId = orderId.add(new BN(2));
-          txReceipt = await dex.processExpired(...pair, isBuy, orderId, nextId, manySteps, false);
+          txReceipt = await dex.processExpired(
+            ...pair,
+            isBuy,
+            orderId,
+            nextId,
+            manySteps,
+            isMarketOrder
+          );
         });
         it('THEN the order is processed as it is the first', function() {
           return assertExpiredOrderProcessed({ orderId }, { to: accounts[1] });
@@ -278,7 +361,7 @@ describe('Process expired Limit Order', function() {
             startFromTop,
             noHint,
             manySteps,
-            false
+            isMarketOrder
           );
         });
         it('THEN the order has been processed', function() {
@@ -308,7 +391,7 @@ describe('Process expired Limit Order', function() {
             startFromTop,
             noHint,
             manySteps,
-            false
+            isMarketOrder
           );
         });
         it('THEN the order has been processed', function() {
@@ -320,7 +403,14 @@ describe('Process expired Limit Order', function() {
       });
       describe('WHEN invoking buy processExpired for many orders starting from it', function() {
         beforeEach(async function() {
-          txReceipt = await dex.processExpired(...pair, isBuy, orderId, noHint, manySteps, false);
+          txReceipt = await dex.processExpired(
+            ...pair,
+            isBuy,
+            orderId,
+            noHint,
+            manySteps,
+            isMarketOrder
+          );
         });
         it('THEN the order has been processed', function() {
           return assertExpiredOrderProcessed({ orderId }, { to: accounts[2] });

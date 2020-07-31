@@ -170,7 +170,7 @@ the previous to the one moved
     @param _previousOrderIdHint previous order id hint in the orderbook to _orderId, used as on optimization to search for.
     If zero, will start from ordebook top.
     @param _steps Number of iterations to look for expired orders to process. Use one, if just looking to process _orderId only
-    @param _includeMarketOrders true to expire a Market Order, false otherwise
+    @param _expireMarketOrders true to expire a Market Order, false to expire a Limit Order
     */
   function processExpired(
     address _baseToken,
@@ -179,10 +179,10 @@ the previous to the one moved
     uint256 _orderId,
     uint256 _previousOrderIdHint,
     uint256 _steps,
-    bool _includeMarketOrders
+    bool _expireMarketOrders
   ) external whenNotPaused {
     MoCExchangeLib.Pair storage pair = getTokenPair(_baseToken, _secondaryToken);
-    MoCExchangeLib.processExpired(pair, commissionManager, _evaluateBuyOrders, _orderId, _previousOrderIdHint, _steps, _includeMarketOrders);
+    MoCExchangeLib.processExpired(pair, commissionManager, _evaluateBuyOrders, _orderId, _previousOrderIdHint, _steps, _expireMarketOrders);
   }
 
   /**
