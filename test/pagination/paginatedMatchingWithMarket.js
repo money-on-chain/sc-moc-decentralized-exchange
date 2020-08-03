@@ -933,7 +933,7 @@ describe('Matching can be run in several pages', function() {
                   totalOrdersPerType / 4,
                   totalOrdersPerType / 4 - 1,
                   totalOrdersPerType / 2,
-                  false
+                  testHelper.orderTypes.LIMIT_ORDER
                 );
                 await dex.processExpired(
                   ...pair,
@@ -941,7 +941,7 @@ describe('Matching can be run in several pages', function() {
                   totalOrdersPerType / 4 + totalOrdersPerType,
                   totalOrdersPerType / 4 - 1 + totalOrdersPerType,
                   totalOrdersPerType / 2,
-                  false
+                  testHelper.orderTypes.LIMIT_ORDER
                 );
 
                 let currentStage = await dex.getTickStage(...pair);

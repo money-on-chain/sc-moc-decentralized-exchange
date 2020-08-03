@@ -26,7 +26,7 @@ const cancelOrder = ({ account, orderId, orderIdHint }) =>
   dex.cancelSellOrder(base.address, secondary.address, orderId, orderIdHint, {
     from: account
   });
-const expireOrder = async ({ account, orderId, isMarketOrder }) => {
+const expireOrder = async ({ account, orderId, orderType }) => {
   const noHint = 0;
   await dex.editOrder(base.address, secondary.address, orderId, false, '1', {
     from: account
@@ -38,7 +38,7 @@ const expireOrder = async ({ account, orderId, isMarketOrder }) => {
     orderId,
     noHint,
     '1',
-    isMarketOrder,
+    orderType,
     {
       from: account
     }
@@ -234,12 +234,11 @@ describe('insert after removal test', function() {
           );
         });
         describe('WHEN the limit order is expired', function() {
-          const isMarketOrder = false;
           before(async function() {
             return expireOrder({
               account: accounts[DEFAULT_ACCOUNT_INDEX],
               orderId: 1,
-              isMarketOrder
+              orderType: testHelper.orderTypes.LIMIT_ORDER
             });
           });
 
@@ -291,13 +290,12 @@ describe('insert after removal test', function() {
           );
         });
         describe('WHEN the market order is expired', function() {
-          const isMarketOrder = true;
           before(async function() {
             return expireOrder({
               account: accounts[DEFAULT_ACCOUNT_INDEX],
               orderId: 2,
               orderIdHint: 0,
-              isMarketOrder
+              orderType: testHelper.orderTypes.MARKET_ORDER
             });
           });
 

@@ -1671,7 +1671,7 @@ library MoCExchangeLib {
 @param _previousOrderIdHint previous order id hint in the orderbook to _orderId, used as on optimization to search for.
 If zero, will start from ordebook top.
 @param _steps Number of iterations to look for expired orders to process. Use one, if just looking to process _orderId only
-@param _expireMarketOrders true to expire a Market Order, false to expire Limit Orders
+@param _orderType Order type to expire
 */
   function processExpired(
     Pair storage _pair,
@@ -1680,17 +1680,15 @@ If zero, will start from ordebook top.
     uint256 _orderId,
     uint256 _previousOrderIdHint,
     uint256 _steps,
-    bool _expireMarketOrders
+    OrderType _orderType
   ) public {
+    require(_orderType == OrderType.LIMIT_ORDER || _orderType == OrderType.MARKET_ORDER, "Invalid order type to expire");
     MoCExchangeLib.Token storage token = _isBuy ? _pair.baseToken : _pair.secondaryToken;
     MoCExchangeLib.Order storage toEvaluate = _orderId == 0 ?
-      getFirstOrderToExpire(token.orderbook, _expireMarketOrders) :
+      getFirstOrderToExpire(token.orderbook, _orderType) :
       get(token.orderbook, _orderId);
-    if (_expireMarketOrders && toEvaluate.id != 0){
-      require(toEvaluate.orderType == OrderType.MARKET_ORDER, "The order to expire is not a market order");
-    }
-    if (!_expireMarketOrders && toEvaluate.id != 0){
-      require(toEvaluate.orderType == OrderType.LIMIT_ORDER, "The order to expire is not a limit order");
+    if (toEvaluate.id != 0){ 
+      require(toEvaluate.orderType == _orderType, "The order to expire does not correspond to the specified OrderType");
     }
     uint256 nextOrderId = toEvaluate.next;
     uint256 previousOrderId = _previousOrderIdHint;
@@ -1722,15 +1720,6 @@ If zero, will start from ordebook top.
     require(hasProcess, "No expired order found");
   }
 
-  /**
-    @notice Return the first order to expire.
-    @param _orderbook the orderbook with the orders
-    @param _expireMarketOrder true to get the first market order, false to get the first limit order
-   */
-  function getFirstOrderToExpire(Data storage _orderbook, bool _expireMarketOrder) private view returns (Order storage){
-    return _expireMarketOrder ? firstMarketOrder(_orderbook) : first(_orderbook);
-  }
-  
    /**
     @notice Checks if there is any order to expire in an orderbook of a pair
     @dev iterates _steps times over the orderbook starting from _orderId and process any encountered expired order
@@ -1981,6 +1970,18 @@ If zero, will start from ordebook top.
       return getNextValidOrderForMatching(_pair, _commissionManager, _token, _tickNumber);
     }
     return order;
+  }
+
+  /**
+    @notice Return the first order to expire.
+    @param _orderbook the orderbook with the orders
+    @param _orderType Order type to expire
+   */
+  function getFirstOrderToExpire(Data storage _orderbook, OrderType _orderType) private view returns (Order storage){
+    if (_orderType == OrderType.MARKET_ORDER){
+      return firstMarketOrder(_orderbook);
+    }
+    return first(_orderbook);
   }
 
   /**
