@@ -93,7 +93,7 @@ describe('Process expired Order', function() {
   });
 
   contract('Dex Fake: trying to expire limit orders from an empty orderbook', function(accounts) {
-    describe('GIVEN there is an empty orderdoor', function() {
+    describe('GIVEN there is an empty orderdook', function() {
       before(async function() {
         await initContractsAndAllowance(accounts);
         // run match to move Tick number
@@ -146,7 +146,7 @@ describe('Process expired Order', function() {
           await dex.editOrder(...pair, orderId, isBuy, '1');
         };
       });
-      describe('WHEN invoking buy processExpired with a market order ID', function() {
+      describe('WHEN invoking buy processExpired with a limit order ID', function() {
         before(async function() {
           await createOrder();
         });
