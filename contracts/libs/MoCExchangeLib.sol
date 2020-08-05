@@ -1671,6 +1671,7 @@ library MoCExchangeLib {
 @param _previousOrderIdHint previous order id hint in the orderbook to _orderId, used as on optimization to search for.
 If zero, will start from ordebook top.
 @param _steps Number of iterations to look for expired orders to process. Use one, if just looking to process _orderId only
+@param _orderType Order type to expire
 */
   function processExpired(
     Pair storage _pair,
@@ -1678,10 +1679,17 @@ If zero, will start from ordebook top.
     bool _isBuy,
     uint256 _orderId,
     uint256 _previousOrderIdHint,
-    uint256 _steps
+    uint256 _steps,
+    OrderType _orderType
   ) public {
+    require(_orderType == OrderType.LIMIT_ORDER || _orderType == OrderType.MARKET_ORDER, "Invalid order type to expire");
     MoCExchangeLib.Token storage token = _isBuy ? _pair.baseToken : _pair.secondaryToken;
-    MoCExchangeLib.Order storage toEvaluate = _orderId == 0 ? first(token.orderbook) : get(token.orderbook, _orderId);
+    MoCExchangeLib.Order storage toEvaluate = _orderId == 0 ?
+      getFirstOrderToExpire(token.orderbook, _orderType) :
+      get(token.orderbook, _orderId);
+    if (toEvaluate.id != 0){ 
+      require(toEvaluate.orderType == _orderType, "The order to expire does not correspond to the specified OrderType");
+    }
     uint256 nextOrderId = toEvaluate.next;
     uint256 previousOrderId = _previousOrderIdHint;
     uint256 currStep = 0;
@@ -1962,6 +1970,18 @@ If zero, will start from ordebook top.
       return getNextValidOrderForMatching(_pair, _commissionManager, _token, _tickNumber);
     }
     return order;
+  }
+
+  /**
+    @notice Return the first order to expire.
+    @param _orderbook the orderbook with the orders
+    @param _orderType Order type to expire
+   */
+  function getFirstOrderToExpire(Data storage _orderbook, OrderType _orderType) private view returns (Order storage){
+    if (_orderType == OrderType.MARKET_ORDER){
+      return firstMarketOrder(_orderbook);
+    }
+    return first(_orderbook);
   }
 
   /**

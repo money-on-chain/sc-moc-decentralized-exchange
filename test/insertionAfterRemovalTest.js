@@ -26,14 +26,23 @@ const cancelOrder = ({ account, orderId, orderIdHint }) =>
   dex.cancelSellOrder(base.address, secondary.address, orderId, orderIdHint, {
     from: account
   });
-const expireOrder = async ({ account, orderId }) => {
+const expireOrder = async ({ account, orderId, orderType }) => {
   const noHint = 0;
   await dex.editOrder(base.address, secondary.address, orderId, false, '1', {
     from: account
   });
-  return dex.processExpired(base.address, secondary.address, false, orderId, noHint, '1', {
-    from: account
-  });
+  return dex.processExpired(
+    base.address,
+    secondary.address,
+    false,
+    orderId,
+    noHint,
+    '1',
+    orderType,
+    {
+      from: account
+    }
+  );
 };
 
 const matchOrder = async ({ maxPrice, account }) => {
@@ -228,7 +237,8 @@ describe('insert after removal test', function() {
           before(async function() {
             return expireOrder({
               account: accounts[DEFAULT_ACCOUNT_INDEX],
-              orderId: 1
+              orderId: 1,
+              orderType: testHelper.orderTypes.LIMIT_ORDER
             });
           });
 
@@ -284,7 +294,8 @@ describe('insert after removal test', function() {
             return expireOrder({
               account: accounts[DEFAULT_ACCOUNT_INDEX],
               orderId: 2,
-              orderIdHint: 0
+              orderIdHint: 0,
+              orderType: testHelper.orderTypes.MARKET_ORDER
             });
           });
 
