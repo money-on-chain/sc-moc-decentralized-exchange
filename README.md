@@ -4,7 +4,9 @@
 1. [Main Concepts](#main-concepts)
    1. [Tokens Pair](#tokens-pair)
    1. [Secondary token - Base token](#secondary-token-base-token)
+   1. [Price Providers](#price-providers)
    1. [Limit Order](#limit-order)
+   1. [Market Order](#market-order)
    1. [Orderbook](#orderbook)
    1. [Tick](#tick)
    1. [Pending Queue](#pending-queue)
@@ -32,16 +34,35 @@ The way to exchange a token is through a pair that contains it. A pair, or a tok
 
 In a pair, the secondary token is seen as the good and the base token is seen as the medium of payment i.e. if a buy order is placed the sender is buying secondary tokens in exchange for base tokens meanwhile if a sell order is placed the sender is selling secondary tokens in exchange for base tokens.
 
+## Price Providers
+
+They are contracts that allow you to check the price of the secondary token expressed in units of the primary token. It is an interface of an oracle for example [Maker Dao Price Feed](https://developer.makerdao.com/feeds/) .
+
 ## Limit Orders
 
-Limit Orders (LO from now on) are the only type of orders that can be inserted at the moment. This type of orders are defined by an amount and the price to be paid/charged.
+Limit Orders (LO from now on) are a type of orders defined by an amount and the price to be paid/charged.
 The price is always expresed in how much minimum units of base currency is being paid/charged for a minimum unit of the secondary token(take into account that the price is in fixed-point notation so the user has decimals to use for a finer grained management of what it wants to pay). That being said the price may not be the actual price in which the order matches but it is rather a limit (if the user is buying the price is an upper limit of how much he will be paying and if the user is selling the price is an lower limit of how much will be charging).
 In the other hand, the amount is always the amount to be locked by the user , i.e. if the user is buying the locking amount of the base token and if the user is selling the locking amount of the secondary token. This amount already includes the commission charged so the amount to be exchanged will actually be less than the locked one.
-The order can be executed partially too, i.e. an order can be matched with N orders in M different ticks.
+The order can be executed partially too, i.e. an order can be matched with N orders in M different ticks. The orders can be matched with limit and market orders.
+
+## Market Orders
+
+Market Orders (MO from now on) are a type of orders defined by an **exchangeable amount** of tokens and the **multiply factor** to be used to compute the final price of the order.
+The multiply factor allows determining the competitiveness of market orders and is used to calculate the price of the token:
+
+```
+Order Token Price = Market Price * Multiply Factor
+```
+
+The market price is always expresed in how much units of base currency is being paid/charged for a minimum unit of the secondary token. The market price is obtained with [price providers](#price-providers)
+In the other hand, the exchangeable amount is the amount to be locked by the user minus fee , i.e. if the user is buying the exchangeable amount of the base token and if the user is selling the locking amount of the secondary token.
+The order can be executed partially too, i.e. an order can be matched with N orders in M different ticks. The orders can be matched with limit and market orders.
 
 ## Orderbook
 
-An orderbook is a data structure where the orders are saved. There exists two orderbook for each pair, one for sell orders and the other for buy orders. Both have to be ordered by price at all times to minimize the gas paid in a tick. In particular, the buy orderbook has to be ordered with a descending price and the sell orderbook has to be ordered with an increasing price so the most competitive orders are at the start of it.
+An orderbook is a data structure where the orders are saved. There exists two orderbook for each pair, one for sell limit orders and the other for buy limit orders. Both have to be ordered by price at all times to minimize the gas paid in a tick. In particular, the buy orderbook has to be ordered with a descending price and the sell orderbook has to be ordered with an increasing price so the most competitive orders are at the start of it.
+
+The two orderbooks also save market orders. One of them for sell orders and the other for buy market orders. Both have to be ordered by **multiplyFactor** at all times to minimize the gas paid in a tick. The buy orderbook has to be ordered with a descending multiplyFactor and the sell orderbook has to be ordered with an increasing multiplyFactor so the most competitive orders are at the start of it.
 
 ## Emergent price
 
@@ -183,7 +204,7 @@ Using unsigned int256 as the norm for all values, sets an upper limit to ~76 dec
 
 ## Governance and Upgradability
 
-DEX and CommisionManger contracts subscribes to a governance implementation that allows an external contract to authorize changers to:
+DEX and CommissionManager contracts subscribes to a governance implementation that allows an external contract to authorize changers to:
 
 - Set single parameters values (for example, adjusting commission fee)
 
@@ -191,7 +212,7 @@ DEX and CommisionManger contracts subscribes to a governance implementation that
 
 - Pause/Un-pause the whole system (intended as temporal halts for future upgrades)
 
-For further detail on Governance mechanism refer to [Moc Governance project](https://gitlab.com/atixlabs/moc---gobernanza)
+For further detail on Governance mechanism refer to [Areopagus-Governance](https://github.com/money-on-chain/Areopagus-Governance)
 
 ## Block gas limit prevention
 

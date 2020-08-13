@@ -43,12 +43,12 @@ describe('Running tick functions tests', function() {
       }));
       await testHelper.setBalancesAndAllowances({ dex, base, secondary, userData, accounts });
       await Promise.all([
-        dex.insertSellOrder(...getCommonInsertionParams()),
-        dex.insertSellOrder(...getCommonInsertionParams()),
-        dex.insertSellOrder(...getCommonInsertionParams()),
-        dex.insertBuyOrder(...getCommonInsertionParams()),
-        dex.insertBuyOrder(...getCommonInsertionParams()),
-        dex.insertBuyOrder(...getCommonInsertionParams())
+        dex.insertSellLimitOrder(...getCommonInsertionParams()),
+        dex.insertSellLimitOrder(...getCommonInsertionParams()),
+        dex.insertSellLimitOrder(...getCommonInsertionParams()),
+        dex.insertBuyLimitOrder(...getCommonInsertionParams()),
+        dex.insertBuyLimitOrder(...getCommonInsertionParams()),
+        dex.insertBuyLimitOrder(...getCommonInsertionParams())
       ]);
       pair = [base.address, secondary.address];
     };
@@ -80,6 +80,7 @@ describe('Running tick functions tests', function() {
           });
         });
         contract('GIVEN that there are two buy orders and two sell orders', function(accounts) {
+          // eslint-disable-next-line mocha/no-sibling-hooks
           before(initContractsAndOrders(accounts));
           describe(`AND that the specific preconditions to ${action} are fulfilled`, function() {
             if (fulfillPreconditions) before(fulfillPreconditions);
@@ -116,8 +117,8 @@ describe('Running tick functions tests', function() {
                 if (shouldCheckMovingPendingOrders) {
                   describe('WHEN the tick advances to inserting pending orders in that pair', function() {
                     before(async function() {
-                      await dex.insertSellOrder(...getCommonInsertionParams());
-                      await dex.insertSellOrder(...getCommonInsertionParams());
+                      await dex.insertSellLimitOrder(...getCommonInsertionParams());
+                      await dex.insertSellLimitOrder(...getCommonInsertionParams());
                       // Finish matching and start moving of pending orders
                       await dex.matchOrders(base.address, secondary.address, 3);
                     });

@@ -1,7 +1,8 @@
 /* eslint-disable mocha/no-async-describe */
 
 const _ = require('lodash');
-const { orderBookMatcher } = require('./testHelpers/orderBookMatcher');
+const BigNumber = require('bignumber.js');
+const { orderBookMatcherBothTypes } = require('./testHelpers/orderBookMatcher');
 const testHelperBuilder = require('./testHelpers/testHelper');
 
 describe('Dex: Single matching tests', function() {
@@ -10,7 +11,7 @@ describe('Dex: Single matching tests', function() {
     testHelper = testHelperBuilder();
   });
 
-  const matcher = _.curry(orderBookMatcher)(() => testHelper);
+  const matcher = _.curry(orderBookMatcherBothTypes)(() => testHelper);
   [
     {
       description: 'single match, both orders filled',
@@ -169,7 +170,7 @@ describe('Dex: Single matching tests', function() {
     },
     {
       description:
-        'single match, sell order filled, sell.price < matchPrice < buy.price. The correct lockingAmount is substracted from the sell order',
+        'single match, buy order filled, sell.price < matchPrice < buy.price. The correct lockingAmount is substracted from the sell order',
       buyOrders: {
         description: 'GIVEN there is a buy order',
         orders: [{ lockingAmount: 100, price: 20 }]
@@ -308,6 +309,155 @@ describe('Dex: Single matching tests', function() {
         description: 'AND the buy orderbook still has an order',
         orders: [{ id: 1, lockedAmount: 10, price: 1 }]
       }
+    },
+    {
+      description: 'single match, buy orders filled, small price difference',
+      config: {
+        commissionRate: 0 // no commission
+      },
+      accounts: {
+        1: {
+          baseBalance: 200000,
+          baseAllowance: 200000,
+          secondaryBalance: 200000,
+          secondaryAllowance: 200000
+        },
+        2: {
+          baseBalance: 200000,
+          baseAllowance: 200000,
+          secondaryBalance: 200000,
+          secondaryAllowance: 200000
+        }
+      },
+      buyOrders: {
+        description: 'GIVEN there is a buy order',
+        orders: [{ lockingAmount: 200, price: 2.02, accountIndex: 1, commission: 0 }]
+      },
+      sellOrders: {
+        description: 'AND a sell order at the same price',
+        orders: [{ lockingAmount: 1000, price: 1.98, accountIndex: 2, commission: 0 }]
+      },
+      buyerMatches: {
+        description: 'THEN the buyer is filled',
+        matches: [
+          {
+            orderId: 1,
+            amountSent: new BigNumber('198.019801980198019800'),
+            change: new BigNumber('200').minus('198.019801980198019800'),
+            received: new BigNumber('99.009900990099009900'),
+            commission: 0,
+            matchPrice: 2,
+            filled: true
+          }
+        ]
+      },
+      sellerMatches: {
+        description: 'AND the seller has still amount left',
+        matches: [
+          {
+            orderId: 2,
+            amountSent: new BigNumber('99.009900990099009900'),
+            commission: 0,
+            received: new BigNumber('198.019801980198019800'),
+            surplus: new BigNumber('1.980198019801980198'),
+            remainingAmount: new BigNumber('1000').minus('99.009900990099009900'),
+            matchPrice: 2
+          }
+        ]
+      },
+      remainingSellOrders: {
+        description: 'AND the sell orderbook still has an order',
+        orders: [
+          {
+            id: 2,
+            lockedAmount: new BigNumber('1000').minus('99.009900990099009900'),
+            price: 1.98
+          }
+        ]
+      },
+      remainingBuyOrders: {
+        description: 'AND the buy orderbook is empty',
+        orders: []
+      },
+      expectedAccounts: [{ balance: 20, allowance: 20 }, { balance: 20, allowance: 20 }]
+    },
+    {
+      description: 'single match, sell orders filled, small price difference',
+      config: {
+        commissionRate: 0 // no commission
+      },
+      accounts: {
+        1: {
+          baseBalance: 200000,
+          baseAllowance: 200000,
+          secondaryBalance: 200000,
+          secondaryAllowance: 200000
+        },
+        2: {
+          baseBalance: 200000,
+          baseAllowance: 200000,
+          secondaryBalance: 200000,
+          secondaryAllowance: 200000
+        }
+      },
+      buyOrders: {
+        description: 'GIVEN there is a buy order',
+        orders: [{ lockingAmount: 2000, price: 2.02, accountIndex: 1, commission: 0 }]
+      },
+      sellOrders: {
+        description: 'AND a sell order at the same price with an amount with a very high precision',
+        orders: [
+          {
+            lockingAmount: new BigNumber('100.001001001001001001'),
+            price: 1.98,
+            accountIndex: 2,
+            commission: 0
+          }
+        ]
+      },
+      buyerMatches: {
+        description: 'THEN the buyer has still amount left',
+        matches: [
+          {
+            orderId: 1,
+            amountSent: new BigNumber('200.002002002002002002'),
+            change: new BigNumber('202.002022022022022022').minus('200.002002002002002002'),
+            received: new BigNumber('100.001001001001001001'),
+            remainingAmount: new BigNumber('2000').minus('202.002022022022022022'),
+            commission: 0,
+            matchPrice: 2
+          }
+        ]
+      },
+      sellerMatches: {
+        description: 'AND the seller is filled',
+        matches: [
+          {
+            orderId: 2,
+            amountSent: new BigNumber('100.001001001001001001'),
+            commission: 0,
+            received: new BigNumber('200.002002002002002002'),
+            surplus: new BigNumber('200.002002002002002002').minus('198.001981981981981981'),
+            matchPrice: 2,
+            filled: true
+          }
+        ]
+      },
+      remainingSellOrders: {
+        description: 'AND the sell orderbook still has an order',
+        orders: []
+      },
+      remainingBuyOrders: {
+        description: 'AND the buy orderbook is empty',
+        orders: [
+          {
+            id: 1,
+            lockedAmount: new BigNumber('2000').minus('202.002022022022022022'),
+            price: 2.02
+          }
+        ]
+      },
+      expectedAccounts: [{ balance: 20, allowance: 20 }, { balance: 20, allowance: 20 }]
     }
   ].forEach(matcher);
 });

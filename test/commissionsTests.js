@@ -16,6 +16,7 @@ let txReceipt;
 let testHelper;
 let wadify;
 let gov;
+let pair;
 let DEFAULT_ACCOUNT_INDEX;
 
 const assertDexCommissionBalances = ({ expectedBaseTokenBalance, expectedSecondaryTokenBalance }) =>
@@ -57,6 +58,7 @@ const initContractsAndAllowance = async accounts => {
   ]);
   dex = testHelper.decorateGovernedSetters(dex);
   dex = testHelper.decorateOrderInsertions(dex, accounts, { base, secondary });
+  pair = [base.address, secondary.address];
   await testHelper.setBalancesAndAllowances({ accounts });
 };
 
@@ -70,8 +72,8 @@ describe('Commissions tests', function() {
     describe('GIVEN there are two buy and sell order that fully match', function() {
       before(async function() {
         await initContractsAndAllowance(accounts);
-        await dex.insertBuyOrder({ amount: 10, price: 10 }); // orderId: 1
-        await dex.insertSellOrder({ amount: 1, price: 10 }); // orderId: 2
+        await dex.insertBuyLimitOrder({ amount: 10, price: 10 }); // orderId: 1
+        await dex.insertSellLimitOrder({ amount: 1, price: 10 }); // orderId: 2
       });
       describe('WHEN instructed to match orders', function() {
         before(async function() {
@@ -112,8 +114,8 @@ describe('Commissions tests', function() {
     describe('GIVEN there is a buy order that match partially', function() {
       before(async function() {
         await initContractsAndAllowance(accounts);
-        await dex.insertBuyOrder({ amount: 17 }); // orderId: 1
-        await dex.insertSellOrder({ amount: 12 }); // orderId: 2
+        await dex.insertBuyLimitOrder({ amount: 17 }); // orderId: 1
+        await dex.insertSellLimitOrder({ amount: 12 }); // orderId: 2
       });
       describe('WHEN instructed to match orders', function() {
         before(async function() {
@@ -123,7 +125,7 @@ describe('Commissions tests', function() {
             testHelper.DEFAULT_STEPS_FOR_MATCHING
           );
         });
-        it('THEN full match events is emitted', async function() {
+        it('THEN all the match events is emitted', async function() {
           await assertBuyerMatch(txReceipt, {
             orderId: 1,
             received: 10.8,
@@ -150,7 +152,7 @@ describe('Commissions tests', function() {
       });
       describe('AND WHEN instructed to match with a new order that fully matches the modified one', function() {
         before(async function() {
-          await dex.insertSellOrder({ amount: 5 }); // orderId: 3
+          await dex.insertSellLimitOrder({ amount: 5 }); // orderId: 3
           txReceipt = await dex.matchOrders(
             base.address,
             secondary.address,
@@ -186,9 +188,12 @@ describe('Commissions tests', function() {
     describe('GIVEN there are orders for 2 different token pairs', function() {
       before(async function() {
         await initContractsAndAllowance(accounts);
+        // set initial price
+        const priceProvider = await testHelper.getTokenPriceProviderFake().new();
         await dex.addTokenPair(
           base.address,
           otherSecondary.address,
+          priceProvider.address,
           testHelper.DEFAULT_PRICE_PRECISION.toString(),
           testHelper.DEFAULT_PRICE_PRECISION.toString(),
           gov
@@ -198,10 +203,10 @@ describe('Commissions tests', function() {
           secondary: otherSecondary
         });
 
-        await dex.insertBuyOrder({ amount: 15, secondary: otherSecondary }); // orderId: 1
-        await dex.insertSellOrder({ amount: 15, secondary: otherSecondary }); // orderId: 2
-        await dex.insertBuyOrder({ amount: 20 }); // orderId: 3
-        await dex.insertSellOrder({ amount: 20 }); // orderId: 4
+        await dex.insertBuyLimitOrder({ amount: 15, secondary: otherSecondary }); // orderId: 1
+        await dex.insertSellLimitOrder({ amount: 15, secondary: otherSecondary }); // orderId: 2
+        await dex.insertBuyLimitOrder({ amount: 20 }); // orderId: 3
+        await dex.insertSellLimitOrder({ amount: 20 }); // orderId: 4
       });
       describe('WHEN instructed to match orders', function() {
         before(async function() {
@@ -264,8 +269,8 @@ describe('Commissions tests', function() {
     describe('GIVEN there are two buy and sell order that fully match with different prices', function() {
       before(async function() {
         await initContractsAndAllowance(accounts);
-        await dex.insertBuyOrder({ amount: 60, price: 20 }); // orderId: 1
-        await dex.insertSellOrder({ amount: 3, price: 10 }); // orderId: 2
+        await dex.insertBuyLimitOrder({ amount: 60, price: 20 }); // orderId: 1
+        await dex.insertSellLimitOrder({ amount: 3, price: 10 }); // orderId: 2
       });
       describe('WHEN instructed to match orders', function() {
         before(async function() {
@@ -309,7 +314,10 @@ describe('Commissions tests', function() {
       describe('GIVEN there is a buy order', function() {
         before(async function() {
           await initContractsAndAllowance(accounts);
-          await dex.insertBuyOrder({ amount: 17 }); // orderId: 1
+          await dex.insertBuyLimitOrder({ amount: 17 }); // orderId: 1
+        });
+        it('AND the buy orderbook length is updated accordingly', async function() {
+          return testHelper.assertBig(await dex.buyOrdersLength(...pair), 1, 'buyOrdersLength');
         });
         describe('WHEN the order is canceled', function() {
           before(async function() {
@@ -342,6 +350,9 @@ describe('Commissions tests', function() {
               expectedSecondaryTokenBalance: 0
             })
           );
+          it('AND the buy orderbook length is updated accordingly', async function() {
+            return testHelper.assertBig(await dex.buyOrdersLength(...pair), 0, 'buyOrdersLength');
+          });
         });
       });
     }
@@ -353,13 +364,16 @@ describe('Commissions tests', function() {
       describe('GIVEN there is a sell order that match partially', function() {
         before(async function() {
           await initContractsAndAllowance(accounts);
-          await dex.insertBuyOrder({ amount: 12 }); // orderId: 1
-          await dex.insertSellOrder({ amount: 17 }); // orderId: 2
+          await dex.insertBuyLimitOrder({ amount: 12 }); // orderId: 1
+          await dex.insertSellLimitOrder({ amount: 17 }); // orderId: 2
           await dex.matchOrders(
             base.address,
             secondary.address,
             testHelper.DEFAULT_STEPS_FOR_MATCHING
           );
+        });
+        it('AND the sell orderbook length is updated accordingly', async function() {
+          return testHelper.assertBig(await dex.sellOrdersLength(...pair), 1, 'sellOrdersLength');
         });
         describe('WHEN the sell order is canceled', function() {
           before(async function() {
@@ -392,6 +406,9 @@ describe('Commissions tests', function() {
               expectedSecondaryTokenBalance: 1.325
             })
           );
+          it('AND the sell orderbook length is updated accordingly', async function() {
+            return testHelper.assertBig(await dex.sellOrdersLength(...pair), 0, 'sellOrdersLength');
+          });
         });
       });
     }

@@ -11,7 +11,10 @@ const {
   DEFAULT_PRICE_PRECISION,
   DEFAULT_COMMISSION_RATE,
   DEFAULT_CANCELATION_PENALTY_RATE,
-  DEFAULT_EXPIRATION_PENALTY_RATE
+  DEFAULT_EXPIRATION_PENALTY_RATE,
+  DEFAULT_MIN_MO_MULTIPLY_FACTOR,
+  DEFAULT_MAX_MO_MULTIPLY_FACTOR,
+  RATE_PRECISION
 } = require('./constants');
 
 ZWeb3.initialize(web3.currentProvider);
@@ -37,12 +40,16 @@ const MoCDexFake = artifacts.require('MoCDexFake');
 const DocToken = artifacts.require('DocToken');
 const BProToken = artifacts.require('BProToken');
 const WRBTC = artifacts.require('WRBTC');
+const TestToken = artifacts.require('TestToken');
 const ERC20WithBlacklist = artifacts.require('ERC20WithBlacklist');
 const TickStateFake = artifacts.require('TickStateFake');
 const Governor = artifacts.require('Governor');
 const Stopper = artifacts.require('Stopper');
 const OwnerBurnableToken = artifacts.require('OwnerBurnableToken');
 const CommissionManager = artifacts.require('CommissionManager');
+const TokenPriceProviderFake = artifacts.require('TokenPriceProviderFake');
+const PriceProviderLastClosingPrice = artifacts.require('TokenPriceProviderLastClosingPrice');
+const PriceProviderFallback = artifacts.require('TokenPriceProviderFallback');
 
 const getBaseToken = () => DocToken;
 const getSecondaryToken = () => this.using.secondaryToken || BProToken;
@@ -53,13 +60,18 @@ const getOwnerBurnableToken = () => OwnerBurnableToken;
 const getBase = () => DocToken.deployed();
 const getSecondary = () => this.using.secondary || BProToken.deployed();
 const getWRBTC = () => this.using.wrbtc || WRBTC.deployed();
+const getTestToken = () => this.using.testToken || TestToken.deployed();
 const getDex = () =>
   this.using.dex || MoCDecentralizedExchange.at(getProxyAddress('MoCDecentralizedExchange'));
 const getCommissionManager = () =>
   this.using.commissionManager || CommissionManager.at(getProxyAddress('CommissionManager'));
+
 const getTickState = () => this.using.tickState || TickStateFake.deployed();
 const getGovernor = () => Governor.at(getProxyAddress('Governor'));
 const getStopper = () => Stopper.at(getProxyAddress('Stopper'));
+const getTokenPriceProviderFake = () => TokenPriceProviderFake;
+const getPriceProviderLastClosingPrice = () => PriceProviderLastClosingPrice;
+const getPriceProviderFallback = () => PriceProviderFallback;
 
 const createTickStateFake = async ({ ordersForTick, maxBlocksForTick, minBlocksForTick }) => {
   this.using.tickState = await TickStateFake.new();
@@ -88,6 +100,8 @@ const createContracts = async ({
   maxOrderLifespan,
   customBeneficiaryAddress,
   commission,
+  minMultiplyFactor,
+  maxMultiplyFactor,
   tokenPair
 }) => {
   const project = await TestHelper();
@@ -109,6 +123,9 @@ const createContracts = async ({
     getGovernor(),
     getStopper()
   ]);
+
+  const priceProviderFake = await getTokenPriceProviderFake().new();
+
   const { commissionRate, cancelationPenaltyRate, expirationPenaltyRate } = commission || {};
 
   const commissionManagerProxy = await project.createProxy(CommissionManagerProxy);
@@ -124,6 +141,13 @@ const createContracts = async ({
   );
   this.using.commissionManager = commissionManager;
 
+  const minMultiplyFactorRatePrecision = (
+    (minMultiplyFactor || DEFAULT_MIN_MO_MULTIPLY_FACTOR) * RATE_PRECISION
+  ).toString();
+  const maxMultiplyFactorRatePrecision = (
+    (maxMultiplyFactor || DEFAULT_MAX_MO_MULTIPLY_FACTOR) * RATE_PRECISION
+  ).toString();
+
   // base is assumed to be doc
   await dex.initialize(
     base.address,
@@ -132,6 +156,8 @@ const createContracts = async ({
     maxBlocksForTick || DEFAULT_MAX_BLOCKS_FOR_TICK,
     minBlocksForTick || DEFAULT_MIN_BLOCKS_FOR_TICK,
     minOrderAmount || DEFAULT_MIN_ORDER_AMOUNT,
+    minMultiplyFactorRatePrecision,
+    maxMultiplyFactorRatePrecision,
     maxOrderLifespan || DEFAULT_MAX_ORDER_LIFESPAN,
     governor.address,
     stopper.address
@@ -141,9 +167,12 @@ const createContracts = async ({
 
   if (tokenPair) {
     const { pricePrecision, initialPrice } = tokenPair;
+    // set initial price
+    await priceProviderFake.poke(initialPrice || DEFAULT_PRICE_PRECISION.toString());
     await addTokenPair(dex)(
       base.address,
       secondary.address,
+      priceProviderFake.address,
       pricePrecision || DEFAULT_PRICE_PRECISION.toString(),
       initialPrice || DEFAULT_PRICE_PRECISION.toString(),
       governor
@@ -168,6 +197,10 @@ module.exports = () => {
     getTickState,
     getGovernor,
     getStopper,
-    getOwnerBurnableToken
+    getOwnerBurnableToken,
+    getTestToken,
+    getTokenPriceProviderFake,
+    getPriceProviderLastClosingPrice,
+    getPriceProviderFallback
   };
 };

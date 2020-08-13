@@ -56,10 +56,10 @@ describe('Depletion of the Pending Queue in the after match', function() {
       before(async function() {
         // 4 orders so the matching has at least 2 steps to run
         await Promise.all([
-          dex.insertBuyOrder({ from: buyer }),
-          dex.insertBuyOrder({ from: buyer }),
-          dex.insertSellOrder({ from: seller }),
-          dex.insertSellOrder({ from: seller })
+          dex.insertBuyLimitOrder({ from: buyer }),
+          dex.insertBuyLimitOrder({ from: buyer }),
+          dex.insertSellLimitOrder({ from: seller }),
+          dex.insertSellLimitOrder({ from: seller })
         ]);
 
         // running the two steps of the simulation
@@ -121,11 +121,15 @@ describe('Depletion of the Pending Queue in the after match', function() {
 
   contract('SCENARIO: 1 pending order', function(accounts) {
     const [, , seller] = accounts;
+    // eslint-disable-next-line mocha/no-sibling-hooks
     before(initContractsAndAllowance(accounts));
     givenTheTickIsRunning(accounts, function() {
       describe('AND there is a sell order pending', function() {
         before(function() {
-          return dex.insertSellOrder({ from: seller, pending: true });
+          return dex.insertSellLimitOrder({
+            from: seller,
+            pending: true
+          });
         });
 
         it('THEN the pending sell orderbook length is 1', testPendingSellLength(1));
@@ -140,7 +144,10 @@ describe('Depletion of the Pending Queue in the after match', function() {
 
           it(
             'THEN the pending order was moved into the main orderbook',
-            testSellOrderAtIndex({ expectedId: 5, expectedIndex: 0 })
+            testSellOrderAtIndex({
+              expectedId: 5,
+              expectedIndex: 0
+            })
           );
           it('AND the sell pending queue becomes empty', testPendingSellLength(0));
           it('AND the sell orderbook has one order', testMainSellLength(1));
@@ -154,12 +161,21 @@ describe('Depletion of the Pending Queue in the after match', function() {
     'SCENARIO: 2 pending sell order inserted with decreasing price; we move them in the order which they were inserted',
     function(accounts) {
       const [, , seller] = accounts;
+      // eslint-disable-next-line mocha/no-sibling-hooks
       before(initContractsAndAllowance(accounts));
       givenTheTickIsRunning(accounts, function() {
         describe('AND there are two sell orders pending', function() {
           before(async function() {
-            await dex.insertSellOrder({ from: seller, pending: true, price: DEFAULT_PRICE * 2 });
-            await dex.insertSellOrder({ from: seller, pending: true, price: DEFAULT_PRICE });
+            await dex.insertSellLimitOrder({
+              from: seller,
+              pending: true,
+              price: DEFAULT_PRICE * 2
+            });
+            await dex.insertSellLimitOrder({
+              from: seller,
+              pending: true,
+              price: DEFAULT_PRICE
+            });
           });
 
           describe('WHEN calling matchOrders with just one step', function() {
@@ -199,15 +215,28 @@ describe('Depletion of the Pending Queue in the after match', function() {
 
   contract('SCENARIO: N pending orders', function(accounts) {
     const [, buyer, seller] = accounts;
+    // eslint-disable-next-line mocha/no-sibling-hooks
     before(initContractsAndAllowance(accounts));
     givenTheTickIsRunning(accounts, function() {
       describe('AND there are 2 pending buy orders and 2 pending sell orders', function() {
         before(function() {
           return Promise.all([
-            dex.insertBuyOrder({ from: buyer, pending: true }),
-            dex.insertBuyOrder({ from: buyer, pending: true }),
-            dex.insertSellOrder({ from: seller, pending: true }),
-            dex.insertSellOrder({ from: seller, pending: true })
+            dex.insertBuyLimitOrder({
+              from: buyer,
+              pending: true
+            }),
+            dex.insertBuyLimitOrder({
+              from: buyer,
+              pending: true
+            }),
+            dex.insertSellLimitOrder({
+              from: seller,
+              pending: true
+            }),
+            dex.insertSellLimitOrder({
+              from: seller,
+              pending: true
+            })
           ]);
         });
         it('THEN the pending buy queue length is two', testPendingBuyLength(2));
@@ -219,7 +248,10 @@ describe('Depletion of the Pending Queue in the after match', function() {
 
           it(
             'THEN the first pending buy order was moved into the main orderbook',
-            testBuyOrderAtIndex({ expectedId: 5, expectedIndex: 0 })
+            testBuyOrderAtIndex({
+              expectedId: 5,
+              expectedIndex: 0
+            })
           );
           it(
             'AND the other pending buy order remains in the pending queue',
@@ -233,20 +265,29 @@ describe('Depletion of the Pending Queue in the after match', function() {
 
             it(
               'THEN the second buy order was moved into the main orderbook',
-              testBuyOrderAtIndex({ expectedId: 6, expectedIndex: 1 })
+              testBuyOrderAtIndex({
+                expectedId: 6,
+                expectedIndex: 1
+              })
             );
             it('AND the buy orderbook has exactly two orders', testMainBuyLength(2));
             it('AND pending buy queue is empty', testPendingBuyLength(0));
             it(
               'AND the first sell order was moved to the main orderbook',
-              testSellOrderAtIndex({ expectedId: 7, expectedIndex: 0 })
+              testSellOrderAtIndex({
+                expectedId: 7,
+                expectedIndex: 0
+              })
             );
             it('AND the sell orderbook has one order', testMainSellLength(1));
             it('AND the sell pending queue has one order', testPendingSellLength(1));
             it('AND the contract is still moving pending orders', testIsMovingOrders());
             describe('AND GIVEN a new buy order is inserted', function() {
               before(function() {
-                return dex.insertBuyOrder({ from: buyer, pending: true });
+                return dex.insertBuyLimitOrder({
+                  from: buyer,
+                  pending: true
+                });
               });
 
               describe('WHEN calling matchOrders with just one steps', function() {
@@ -256,7 +297,10 @@ describe('Depletion of the Pending Queue in the after match', function() {
 
                 it(
                   'THEN the new pending buy order was moved into the main orderbook',
-                  testBuyOrderAtIndex({ expectedId: 9, expectedIndex: 2 })
+                  testBuyOrderAtIndex({
+                    expectedId: 9,
+                    expectedIndex: 2
+                  })
                 );
                 it('AND the buy orderbook has exactly three orders', testMainBuyLength(3));
                 it('AND pending buy queue is empty again', testPendingBuyLength(0));
@@ -268,7 +312,7 @@ describe('Depletion of the Pending Queue in the after match', function() {
 
                 describe('AND GIVEN a new buy order is inserted with a more competitive price', function() {
                   before(function() {
-                    return dex.insertBuyOrder({
+                    return dex.insertBuyLimitOrder({
                       from: buyer,
                       pending: true,
                       price: DEFAULT_PRICE * 2
@@ -281,7 +325,10 @@ describe('Depletion of the Pending Queue in the after match', function() {
 
                     it(
                       'THEN the new pending buy order was moved into the main orderbook as the first order',
-                      testBuyOrderAtIndex({ expectedId: 10, expectedIndex: 0 })
+                      testBuyOrderAtIndex({
+                        expectedId: 10,
+                        expectedIndex: 0
+                      })
                     );
                     it('AND the buy orderbook has exactly four orders', testMainBuyLength(4));
                     it('AND pending buy queue is empty again', testPendingBuyLength(0));
@@ -295,17 +342,25 @@ describe('Depletion of the Pending Queue in the after match', function() {
                       it('AND the sell orderbook has two orders', testMainSellLength(2));
                       it(
                         'THEN the last pending sell order was moved into the main orderbook',
-                        testSellOrderAtIndex({ expectedId: 8, expectedIndex: 1 })
+                        testSellOrderAtIndex({
+                          expectedId: 8,
+                          expectedIndex: 1
+                        })
                       );
                       it('AND the contract is receiving orders again', testIsReceivingOrders());
                       describe('AND WHEN a new order is inserted', function() {
                         before(function() {
-                          return dex.insertBuyOrder({ from: buyer });
+                          return dex.insertBuyLimitOrder({
+                            from: buyer
+                          });
                         });
 
                         it(
                           'THEN the order ends directly in the main orderbook',
-                          testBuyOrderAtIndex({ expectedId: 11, expectedIndex: 4 })
+                          testBuyOrderAtIndex({
+                            expectedId: 11,
+                            expectedIndex: 4
+                          })
                         );
                         it('AND the pending queue remains empty', testPendingBuyLength(0));
                       });

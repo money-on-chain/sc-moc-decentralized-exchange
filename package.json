@@ -1,6 +1,6 @@
 {
   "name": "decentralized-exchange-sc",
-  "version": "1.0.4",
+  "version": "1.2.0",
   "private": true,
   "homepage": "https://gitlab.com/atixlabs/moc/sc-moc-decentralized-exchange",
   "description": "Suite of smart contracts that implement a Decentralized Exchange",
@@ -13,6 +13,7 @@
     "fast-test": "truffle test",
     "debugtx": "./scripts/debugtx $1",
     "eslint": "eslint ./ --ext .js",
+    "eslint-fix": "./node_modules/.bin/eslint ./ --ext .js --fix",
     "truffle-test": "./node_modules/truffle/build/cli.bundled.js test",
     "truffle-contract-size": "./node_modules/truffle/build/cli.bundled.js run contract-size",
     "coverage": "SOLIDITY_COVERAGE=true npm run test",

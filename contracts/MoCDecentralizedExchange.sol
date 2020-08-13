@@ -5,7 +5,6 @@ import "openzeppelin-eth/contracts/math/Math.sol";
 import "./RestrictiveOrderListing.sol";
 import "partial-execution/contracts/PartialExecution.sol";
 
-
 contract EventfulExchange {
   /**
 @dev Cloned from MoCExchangeLib.sol or the event it is not recognized and emitted from that lib
@@ -108,7 +107,6 @@ contract EventfulExchange {
   );
 }
 
-
 contract MoCDecentralizedExchange is EventfulExchange, RestrictiveOrderListing, PartialExecution {
   using SafeMath for uint256;
   using MoCExchangeLib for MoCExchangeLib.Pair;
@@ -131,7 +129,11 @@ contract MoCDecentralizedExchange is EventfulExchange, RestrictiveOrderListing, 
 @param _secondaryToken Address of the secondary token of the pair
 @param steps Maximum steps to be done
 */
-  function matchOrders(address _baseToken, address _secondaryToken, uint256 steps) external whenNotPaused {
+  function matchOrders(
+    address _baseToken,
+    address _secondaryToken,
+    uint256 steps
+  ) external whenNotPaused {
     executeGroup(getGroupIdForPair(_baseToken, _secondaryToken), steps);
   }
 
@@ -144,7 +146,12 @@ contract MoCDecentralizedExchange is EventfulExchange, RestrictiveOrderListing, 
 the moving of pending orders, pointing succesively to the orders that should be
 the previous to the one moved
 */
-  function matchOrdersWithHints(address _baseToken, address _secondaryToken, uint256 steps, uint256[] calldata hintIds) external whenNotPaused {
+  function matchOrdersWithHints(
+    address _baseToken,
+    address _secondaryToken,
+    uint256 steps,
+    uint256[] calldata hintIds
+  ) external whenNotPaused {
     MoCExchangeLib.TickPaginationMemory storage pageMemory = getTokenPair(_baseToken, _secondaryToken).pageMemory;
     pageMemory.hintIds = hintIds;
 
@@ -154,55 +161,44 @@ the previous to the one moved
   }
 
   /**
-@notice Process expired Orders for the given orderbook, returning funds to the owner while applying commission
-@dev iterates _steps times over the orderbook starting from _orderId and process any encountered expired order
-@param _baseToken Base token to identify the orderbook
-@param _secondaryToken Secondary token to identify the orderbook
-@param _isBuy true if buy order, needed to identify the orderbook
-@param _orderId Order id to start expiring process. If zero, will start from ordebook top.
-@param _previousOrderIdHint previous order id hint in the orderbook to _orderId, used as on optimization to search for.
-If zero, will start from ordebook top.
-@param _steps Number of iterations to look for expired orders to process. Use one, if just looking to process _orderId only
-*/
+    @notice Process expired Orders for the given orderbook, returning funds to the owner while applying commission
+    @dev iterates _steps times over the orderbook starting from _orderId and process any encountered expired order
+    @param _baseToken Base token to identify the orderbook
+    @param _secondaryToken Secondary token to identify the orderbook
+    @param _evaluateBuyOrders true if buy orders have to be processed, false if sell orders have to
+    @param _orderId Order id to start expiring process. If zero, will start from ordebook top.
+    @param _previousOrderIdHint previous order id hint in the orderbook to _orderId, used as on optimization to search for.
+    If zero, will start from ordebook top.
+    @param _steps Number of iterations to look for expired orders to process. Use one, if just looking to process _orderId only
+    @param _orderType Order type to expire
+    */
   function processExpired(
     address _baseToken,
     address _secondaryToken,
-    bool _isBuy,
+    bool _evaluateBuyOrders,
     uint256 _orderId,
     uint256 _previousOrderIdHint,
-    uint256 _steps
+    uint256 _steps,
+    MoCExchangeLib.OrderType _orderType
   ) external whenNotPaused {
     MoCExchangeLib.Pair storage pair = getTokenPair(_baseToken, _secondaryToken);
-    MoCExchangeLib.Token storage token = _isBuy ? pair.baseToken : pair.secondaryToken;
-    MoCExchangeLib.Order storage toEvaluate = _orderId == 0 ? token.orderbook.first() : token.orderbook.get(_orderId);
-    uint256 nextOrderId = toEvaluate.next;
-    uint256 previousOrderId = _previousOrderIdHint;
-    uint256 currStep = 0;
-    bool hasProcess = false;
-    while (currStep < _steps && toEvaluate.id != 0) {
-      currStep++;
-      if (MoCExchangeLib.isExpired(toEvaluate, pair.tickState.number)) {
-        // Event if process expiring could return fail as transaction fails, the behaviour is the same,
-        // order needs to be removed and the process must continue.
-        MoCExchangeLib.processExpiredOrder(
-          commissionManager,
-          token,
-          toEvaluate.id,
-          toEvaluate.exchangeableAmount,
-          toEvaluate.reservedCommission,
-          toEvaluate.owner
-        );
-        nextOrderId = toEvaluate.next;
-        // TODO: Given this is a loop, we could track the actual prev instead of just the id
-        token.orderbook.removeOrder(toEvaluate, previousOrderId);
-        hasProcess = true;
-      } else {
-        previousOrderId = toEvaluate.id;
-        nextOrderId = toEvaluate.next;
-      }
-      toEvaluate = token.orderbook.get(nextOrderId);
-    }
-    require(hasProcess, "No expired order found");
+    MoCExchangeLib.processExpired(pair, commissionManager, _evaluateBuyOrders, _orderId, _previousOrderIdHint, _steps, _orderType);
+  }
+
+  /**
+    @notice Process expired Orders for the given orderbook, returning funds to the owner while applying commission
+    @dev iterates _steps times over the orderbook starting from _orderId and process any encountered expired order
+    @param _baseToken Base token to identify the orderbook
+    @param _secondaryToken Secondary token to identify the orderbook
+    @param _evaluateBuyOrders true if buy orders have to be evaluated, false if sell orders have to
+  */
+  function areOrdersToExpire(
+    address _baseToken,
+    address _secondaryToken,
+    bool _evaluateBuyOrders
+  ) external view returns (bool) {
+    MoCExchangeLib.Pair storage pair = getTokenPair(_baseToken, _secondaryToken);
+    return MoCExchangeLib.areOrdersToExpire(pair, _evaluateBuyOrders);
   }
 
   /**
@@ -231,12 +227,24 @@ If zero, will start from ordebook top.
       uint256 lastTickBlock,
       uint256 lastClosingPrice,
       bool disabled,
-      uint256 EMAPrice,
-      uint256 smoothingFactor
+      uint256 emaPrice,
+      uint256 smoothingFactor,
+      uint256 marketPrice
     )
   {
-    (tickNumber, nextTickBlock, lastTickBlock, lastClosingPrice, disabled, EMAPrice, smoothingFactor) = getStatus(_baseToken, _secondaryToken);
+    (tickNumber, nextTickBlock, lastTickBlock, lastClosingPrice, disabled, emaPrice, smoothingFactor) = getStatus(_baseToken, _secondaryToken);
     (emergentPrice, lastBuyMatchId, lastBuyMatchAmount, lastSellMatchId) = getEmergentPrice(_baseToken, _secondaryToken);
+    marketPrice = getMarketPrice(_baseToken, _secondaryToken);
+  }
+
+  /**
+    @notice Getter for every value related to a pair
+    @param _baseToken Address of the base token of the pair
+    @param _secondaryToken Address of the secondary token of the pair
+    @return lastClosingPrice - the last price from a successful matching
+  */
+  function getLastClosingPrice(address _baseToken, address _secondaryToken) external view returns (uint256 lastClosingPrice) {
+    (, , , lastClosingPrice, , , ) = getStatus(_baseToken, _secondaryToken);
   }
 
   /**
@@ -248,10 +256,12 @@ tick must not be running; the contract must not be paused; the caller should be 
 @param _previousOrderIdHint Order that comes immediately before the newly cancelled order;
 0 is considered as a hint to look from the beggining
 */
-  function cancelBuyOrder(address _baseToken, address _secondaryToken, uint256 _orderId, uint256 _previousOrderIdHint)
-    public
-    whenTickIsNotRunning(_baseToken, _secondaryToken)
-  {
+  function cancelBuyOrder(
+    address _baseToken,
+    address _secondaryToken,
+    uint256 _orderId,
+    uint256 _previousOrderIdHint
+  ) public whenTickIsNotRunning(_baseToken, _secondaryToken) {
     OrderListing.cancelBuyOrder(_baseToken, _secondaryToken, _orderId, _previousOrderIdHint);
   }
 
@@ -264,10 +274,12 @@ tick must not be running; the contract must not be paused; the caller should be 
 @param _previousOrderIdHint Order that comes immediately before the newly cancelled order;
 0 is considered as a hint to look from the beggining
 */
-  function cancelSellOrder(address _baseToken, address _secondaryToken, uint256 _orderId, uint256 _previousOrderIdHint)
-    public
-    whenTickIsNotRunning(_baseToken, _secondaryToken)
-  {
+  function cancelSellOrder(
+    address _baseToken,
+    address _secondaryToken,
+    uint256 _orderId,
+    uint256 _previousOrderIdHint
+  ) public whenTickIsNotRunning(_baseToken, _secondaryToken) {
     OrderListing.cancelSellOrder(_baseToken, _secondaryToken, _orderId, _previousOrderIdHint);
   }
 
@@ -309,12 +321,27 @@ and disabled first
   function getEmergentPrice(address _baseToken, address _secondaryToken)
     public
     view
-    returns (uint256 emergentPrice, uint256 lastBuyMatchId, uint256 lastBuyMatchAmount, uint256 lastSellMatchId)
+    returns (
+      uint256 emergentPrice,
+      uint256 lastBuyMatchId,
+      uint256 lastBuyMatchAmount,
+      uint256 lastSellMatchId
+    )
   {
     MoCExchangeLib.Pair storage pair = tokenPair(_baseToken, _secondaryToken);
     if (!pair.isValid()) return (0, 0, 0, 0);
 
     return pair.getEmergentPrice();
+  }
+
+  /**
+  @notice Get the current market price
+  @param _baseToken Address of the base token of the pair
+  @param _secondaryToken Address of the secondary token of the pair
+  */
+  function getMarketPrice(address _baseToken, address _secondaryToken) public view returns (uint256) {
+    MoCExchangeLib.Pair storage pair = tokenPair(_baseToken, _secondaryToken);
+    return MoCExchangeLib.getMarketPrice(pair);
   }
 
   /**
@@ -340,13 +367,20 @@ associated pair with the groupId.
 
 @param _baseToken Address of the base token of the pair
 @param _secondaryToken Address of the secondary token of the pair
+@param _priceProvider Address of the oracle price provider
 @param _priceComparisonPrecision Precision to be used in the pair price
 @param _initialPrice Price used initially until a new tick with matching orders is run
 */
-  function addTokenPair(address _baseToken, address _secondaryToken, uint256 _priceComparisonPrecision, uint256 _initialPrice) public {
+  function addTokenPair(
+    address _baseToken,
+    address _secondaryToken,
+    address _priceProvider,
+    uint256 _priceComparisonPrecision,
+    uint256 _initialPrice
+  ) public {
     // The TokenPairListing, called by TokenPairConverter, validates the caller is an
     // authorized changer
-    TokenPairConverter.addTokenPair(_baseToken, _secondaryToken, _priceComparisonPrecision, _initialPrice);
+    TokenPairConverter.addTokenPair(_baseToken, _secondaryToken, _priceProvider, _priceComparisonPrecision, _initialPrice);
     bytes32 groupId = getGroupIdForPair(_baseToken, _secondaryToken);
     bytes32[] memory taskList = new bytes32[](uint256(TaskTypes.length));
     taskList[uint256(TaskTypes.SIMULATION)] = getTaskId(groupId, TaskTypes.SIMULATION);
@@ -371,10 +405,7 @@ for the execution of a tick of a given pair
   function onSimulationStart(bytes32 _groupId, bytes32) private {
     MoCExchangeLib.Pair storage pair = getTokenPair(_groupId);
     assert(pair.tickStage == MoCExchangeLib.TickStage.RECEIVING_ORDERS);
-    pair.tickStage = MoCExchangeLib.TickStage.RUNNING_SIMULATION;
-
-    pair.pageMemory.lastBuyMatch = pair.baseToken.orderbook.getNextValidOrder(pair.tickState.number, 0);
-    pair.pageMemory.lastSellMatch = pair.secondaryToken.orderbook.getNextValidOrder(pair.tickState.number, 0);
+    MoCExchangeLib.onSimulationStart(pair);
   }
 
   /**
@@ -383,7 +414,11 @@ Has one discarded param; kept to have a fixed signature
 @param _groupId Id that represent the group of tasks which should be done
 for the execution of a tick of a given pair
 */
-  function simulationStepFunction(bytes32 _groupId, bytes32, uint256) private returns (bool) {
+  function simulationStepFunction(
+    bytes32 _groupId,
+    bytes32,
+    uint256
+  ) private returns (bool) {
     MoCExchangeLib.Pair storage pair = getTokenPair(_groupId);
     assert(pair.tickStage == MoCExchangeLib.TickStage.RUNNING_SIMULATION);
 
@@ -400,13 +435,7 @@ for the execution of a tick of a given pair
 */
   function onSimulationFinish(bytes32 _groupId, bytes32) private {
     MoCExchangeLib.Pair storage pair = getTokenPair(_groupId);
-    uint256 factorPrecision = 10**18; // FIXME how do i access this constant from another file?
-    assert(pair.tickStage == MoCExchangeLib.TickStage.RUNNING_SIMULATION);
-    if (pair.pageMemory.matchesAmount > 0) {
-      pair.pageMemory.emergentPrice = Math.average(pair.pageMemory.lastBuyMatch.price, pair.pageMemory.lastSellMatch.price);
-      pair.lastClosingPrice = pair.pageMemory.emergentPrice;
-      pair.EMAPrice = MoCExchangeLib.calculateNewEMA(pair.EMAPrice, pair.lastClosingPrice, pair.smoothingFactor, factorPrecision);
-    }
+    MoCExchangeLib.onSimulationFinish(pair);
   }
 
   /**
@@ -428,7 +457,11 @@ Has two discarded param; kept to have a fixed signature
 expired orders; to overcome this you should call processExpired and the continue with the tick
 @return True if there are still orders to match
 */
-  function matchOrdersStepFunction(bytes32 _groupId, bytes32, uint256) private returns (bool) {
+  function matchOrdersStepFunction(
+    bytes32 _groupId,
+    bytes32,
+    uint256
+  ) private returns (bool) {
     MoCExchangeLib.Pair storage pair = getTokenPair(_groupId);
     return MoCExchangeLib.matchOrders(pair, commissionManager);
   }
@@ -456,31 +489,16 @@ It is important that this is the absolute LAST task of the ticks group
 for the execution of a tick of a given pair
 @return True if there are still pending orders to move; false otherwise
 */
-  function movePendingOrdersStepFunction(bytes32 _groupId, bytes32, uint256) private returns (bool shouldKeepGoing) {
+  function movePendingOrdersStepFunction(
+    bytes32 _groupId,
+    bytes32,
+    uint256
+  ) private returns (bool shouldKeepGoing) {
     MoCExchangeLib.Pair storage pair = getTokenPair(_groupId);
-    assert(pair.tickStage == MoCExchangeLib.TickStage.MOVING_PENDING_ORDERS);
-    // Cannot return shouldKeepGoing based on movedBuyOrder to avoid DOS attacks where someone
-    // inserts new pending orders as soon as we finished inserting the other orders
-    bool movedBuyOrder = MoCExchangeLib.movePendingOrderFrom(
-      pair.baseToken,
-      pair.pageMemory,
-      address(pair.baseToken.token),
-      address(pair.secondaryToken.token),
-      true
-    );
-    if (!movedBuyOrder) {
-      MoCExchangeLib.movePendingOrderFrom(
-        pair.secondaryToken,
-        pair.pageMemory,
-        address(pair.baseToken.token),
-        address(pair.secondaryToken.token),
-        false
-      );
-    }
-    return pendingSellOrdersLength(pair) != 0 || pendingBuyOrdersLength(pair) != 0;
+    return MoCExchangeLib.movePendingOrdersStepFunction(pair);
   }
 
-  /**
+/**
 @notice Hook that gets triggered when the tick of a given pair starts.
 @dev Emits an event that marks the start of a tick
 @param _groupId Id that represent the group of tasks which should be done
@@ -493,26 +511,15 @@ for the execution of a tick of a given pair
   }
 
   /**
-@notice Hook that gets triggered when the tick of a given pair finishes.
-@dev Marks the state of the tick as finished(it is receiving orders again),
-sets the nextTick configs and cleans the pageMemory
-@param _groupId Id that represent the group of tasks which should be done
-for the execution of a tick of a given pair
-*/
+  @notice Hook that gets triggered when the tick of a given pair finishes.
+  @dev Marks the state of the tick as finished(it is receiving orders again),
+  sets the nextTick configs and cleans the pageMemory
+  @param _groupId Id that represent the group of tasks which should be done
+  for the execution of a tick of a given pair
+  */
   function onTickFinish(bytes32 _groupId) private {
     MoCExchangeLib.Pair storage pair = getTokenPair(_groupId);
-    assert(pair.tickStage == MoCExchangeLib.TickStage.MOVING_PENDING_ORDERS);
-    pair.tickStage = MoCExchangeLib.TickStage.RECEIVING_ORDERS;
-    pair.tickState.nextTick(
-      address(pair.baseToken.token),
-      address(pair.secondaryToken.token),
-      tickConfig,
-      pair.pageMemory.emergentPrice,
-      pair.pageMemory.matchesAmount
-    );
-
-    // make sure nothing from this page is reused in the next
-    delete (pair.pageMemory);
+    MoCExchangeLib.onTickFinish(pair, tickConfig);
   }
 
   /**

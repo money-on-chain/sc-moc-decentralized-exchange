@@ -37,9 +37,16 @@ describe('unordered insertion tests', function() {
         await [...Array(10).keys()].reduce(
           (acc, it) =>
             acc.then(() =>
-              dex.insertSellOrder(base.address, secondary.address, wadify(10), pricefy(it + 1), 5, {
-                from: accounts[DEFAULT_ACCOUNT_INDEX]
-              })
+              dex.insertSellLimitOrder(
+                base.address,
+                secondary.address,
+                wadify(10),
+                pricefy(it + 1),
+                5,
+                {
+                  from: accounts[DEFAULT_ACCOUNT_INDEX]
+                }
+              )
             ),
           Promise.resolve()
         );
@@ -57,15 +64,23 @@ describe('unordered insertion tests', function() {
   });
 
   contract('Unordered insertion of 10 buy orders', function(accounts) {
+    // eslint-disable-next-line mocha/no-sibling-hooks
     before(initContractsAndAllowance(accounts));
     describe('GIVEN ten buy orders are inserted in inverse order', function() {
       before(async function() {
         await [...Array(10).keys()].reduce(
           (acc, it) =>
             acc.then(() =>
-              dex.insertBuyOrder(base.address, secondary.address, wadify(10), pricefy(10 - it), 5, {
-                from: accounts[DEFAULT_ACCOUNT_INDEX]
-              })
+              dex.insertBuyLimitOrder(
+                base.address,
+                secondary.address,
+                wadify(10),
+                pricefy(10 - it),
+                5,
+                {
+                  from: accounts[DEFAULT_ACCOUNT_INDEX]
+                }
+              )
             ),
           Promise.resolve()
         );
@@ -83,13 +98,14 @@ describe('unordered insertion tests', function() {
   });
 
   contract('Unordered insertion of 10 sell orders but only 5 different prices', function(accounts) {
+    // eslint-disable-next-line mocha/no-sibling-hooks
     before(initContractsAndAllowance(accounts));
     describe('GIVEN ten sell orders are inserted with 5 different prices', function() {
       before(async function() {
         await [...Array(10).keys()].reduce(
           (acc, it) =>
             acc.then(() =>
-              dex.insertSellOrder(
+              dex.insertSellLimitOrder(
                 base.address,
                 secondary.address,
                 wadify(it + 1),
@@ -127,13 +143,14 @@ describe('unordered insertion tests', function() {
   });
 
   contract('Unordered insertion of 10 buy orders but only 5 different prices', function(accounts) {
+    // eslint-disable-next-line mocha/no-sibling-hooks
     before(initContractsAndAllowance(accounts));
     describe('GIVEN ten buy orders are inserted with 5 different prices', function() {
       before(async function() {
         await [...Array(10).keys()].reduce(
           (acc, it) =>
             acc.then(() =>
-              dex.insertBuyOrder(
+              dex.insertBuyLimitOrder(
                 base.address,
                 secondary.address,
                 wadify(it + 1),

@@ -72,7 +72,7 @@ const convertFieldsIntoContractPrecision = (wadify, pricefy) => ({
     orderId: orderId.toString()
   };
   if (matchPrice) Object.assign(withPrecision, { matchPrice: pricefy(matchPrice) });
-  if (filled) Object.assign(withPrecision, { remainingAmount: pricefy(0) });
+  if (filled) Object.assign(withPrecision, { remainingAmount: wadify(0) });
 
   return args
     ? Object.keys(args).reduce(
@@ -111,15 +111,20 @@ const assertOrder = m => (order, expected) => {
     reservedCommission: { assert: m.assertBigWad },
     price: { assert: m.assertBigPrice }
   };
-  Object.keys(asserters).forEach(function(field) {
-    if (expected[field]) {
-      asserters[field].assert(order[field], expected[field], `order ${field} is incorrect`);
-    }
-  });
+  return Promise.all(
+    Object.keys(asserters).map(async function(field) {
+      if (expected[field])
+        return asserters[field].assert(
+          order[field],
+          expected[field],
+          `order ${field} is incorrect`
+        );
+    })
+  );
 };
 
 const assertNewOrderEvent = function(wadify, pricefy, eventName) {
-  return ({ price, amount, ...props }, getContext) => {
+  return ({ price, amount, multiplyFactor, ...props }, getContext) => {
     const { tx, baseAddress, secondaryAddress } = getContext();
 
     const usualProps = {
@@ -128,7 +133,7 @@ const assertNewOrderEvent = function(wadify, pricefy, eventName) {
     };
     if (amount) Object.assign(usualProps, { amount: wadify(amount) });
     if (price) Object.assign(usualProps, { price: pricefy(price) });
-
+    if (multiplyFactor) Object.assign(usualProps, { multiplyFactor: pricefy(multiplyFactor) });
     const eventProps = Object.assign(usualProps, props);
     return expectEvent.inLogs(tx.logs, eventName, eventProps);
   };

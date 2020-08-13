@@ -1,6 +1,6 @@
 const _ = require('lodash');
 const { expectEvent } = require('openzeppelin-test-helpers');
-const { orderBookMatcher } = require('../testHelpers/orderBookMatcher');
+const { orderBookMatcherBothTypes } = require('../testHelpers/orderBookMatcher');
 const testHelperBuilder = require('../testHelpers/testHelper');
 
 // base scenario setup for both situations
@@ -119,13 +119,16 @@ describe('Security: ERC20 Transfer revert', function() {
 
   // Works as a control case
   contract('Dex: GIVEN all users are able to operate', function(accounts) {
-    return orderBookMatcher(getTestHelper(accounts), expectedScenario, accounts);
+    return orderBookMatcherBothTypes(getTestHelper(accounts), expectedScenario, accounts);
   });
 
   contract('Dex: GIVEN a user gets black-listed from secondary Token', function(accounts) {
     const getTestHelperAndBlackList = async () => {
       const testHelper = await getTestHelper(accounts)();
+      const dex = await testHelper.getDex();
       const secondary = await testHelper.getSecondary();
+      const base = await testHelper.getBase();
+      await testHelper.setOracleMarketPrice(dex, base.address, secondary.address, 2);
       await secondary.blacklist(accounts[2]);
       return testHelper;
     };
@@ -152,6 +155,6 @@ describe('Security: ERC20 Transfer revert', function() {
         }
       }
     ];
-    return orderBookMatcher(getTestHelperAndBlackList, blacklistedScenario, accounts);
+    return orderBookMatcherBothTypes(getTestHelperAndBlackList, blacklistedScenario, accounts);
   });
 });

@@ -15,6 +15,8 @@ let DEFAULT_PRICE_PRECISION;
 let DEFAULT_MAX_BLOCKS_FOR_TICK;
 let DEFAULT_ACCOUNT_INDEX;
 let testHelper;
+let priceProviderSecondary;
+let priceProviderOtherSecondary;
 
 const setContracts = async function(accounts) {
   testHelper = testHelperBuilder();
@@ -44,6 +46,10 @@ const setContracts = async function(accounts) {
     OwnerBurnableToken.new(),
     testHelper.getGovernor()
   ]);
+
+  priceProviderSecondary = await testHelper.getTokenPriceProviderFake().new();
+  priceProviderOtherSecondary = await testHelper.getTokenPriceProviderFake().new();
+
   getEmergentPriceValue = async (baseAddress, secondaryAddress) =>
     (await dex.getEmergentPrice.call(baseAddress, secondaryAddress)).emergentPrice;
   dex = await testHelper.decorateGovernedSetters(dex);
@@ -63,10 +69,10 @@ describe('multiple tokens tests', function() {
         });
         it('THEN the emergent price is zero, just as expected', async function() {
           const { emergentPrice, lastBuyMatchId, lastBuyMatchAmount, lastSellMatchId } = result;
-          testHelper.assertBig(emergentPrice, 0, 'Emergent price');
-          testHelper.assertBig(lastBuyMatchId, 0, 'Last Buy Match Id');
-          testHelper.assertBig(lastBuyMatchAmount, 0, 'Last Buy Match Amount');
-          testHelper.assertBig(lastSellMatchId, 0, 'Last Sell Match Id');
+          await testHelper.assertBig(emergentPrice, 0, 'Emergent price');
+          await testHelper.assertBig(lastBuyMatchId, 0, 'Last Buy Match Id');
+          await testHelper.assertBig(lastBuyMatchAmount, 0, 'Last Buy Match Amount');
+          return testHelper.assertBig(lastSellMatchId, 0, 'Last Sell Match Id');
         });
       });
     });
@@ -74,6 +80,7 @@ describe('multiple tokens tests', function() {
 
   contract('order IDs are token-pair independent', function(accounts) {
     let user;
+    // eslint-disable-next-line mocha/no-sibling-hooks
     before(async function() {
       await setContracts(accounts);
       user = accounts[DEFAULT_ACCOUNT_INDEX];
@@ -100,14 +107,15 @@ describe('multiple tokens tests', function() {
       await dex.addTokenPair(
         doc.address,
         secondary.address,
+        priceProviderSecondary.address,
         (10 ** 4).toString(),
         (10 ** 4).toString(),
         governor
       );
-      await dex.insertBuyOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
+      await dex.insertBuyLimitOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
         from: user
       });
-      await dex.insertSellOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
+      await dex.insertSellLimitOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
         from: user
       });
     });
@@ -115,16 +123,24 @@ describe('multiple tokens tests', function() {
       await dex.addTokenPair(
         doc.address,
         otherSecondary.address,
+        priceProviderOtherSecondary.address,
         (10 ** 4).toString(),
         (10 ** 4).toString(),
         governor
       );
-      await dex.insertBuyOrder(doc.address, otherSecondary.address, wadify(1), pricefy(1), 5, {
+      await dex.insertBuyLimitOrder(doc.address, otherSecondary.address, wadify(1), pricefy(1), 5, {
         from: user
       });
-      await dex.insertSellOrder(doc.address, otherSecondary.address, wadify(1), pricefy(1), 5, {
-        from: user
-      });
+      await dex.insertSellLimitOrder(
+        doc.address,
+        otherSecondary.address,
+        wadify(1),
+        pricefy(1),
+        5,
+        {
+          from: user
+        }
+      );
     });
     it('THEN order IDs are token-pair independent', async function() {
       const ids = await Promise.all([
@@ -134,14 +150,17 @@ describe('multiple tokens tests', function() {
         dex.getSellOrderAtIndex(doc.address, otherSecondary.address, 0)
       ]).then(orders => orders.map(it => it.id));
       const correctIds = [1, 2, 3, 4];
-      ids.forEach(function(element, index) {
-        testHelper.assertBig(element, correctIds[index]);
-      });
+      return Promise.all(
+        ids.map(function(element, index) {
+          return testHelper.assertBig(element, correctIds[index]);
+        })
+      );
     });
   });
 
   contract('The matching should be independent for two token pairs', function(accounts) {
     const [, buyer, seller] = accounts;
+    // eslint-disable-next-line mocha/no-sibling-hooks
     before('GIVEN the user has balance and allowance on all the tokens', async function() {
       await setContracts(accounts);
       const userData = {
@@ -176,30 +195,46 @@ describe('multiple tokens tests', function() {
         await dex.addTokenPair(
           doc.address,
           secondary.address,
+          priceProviderSecondary.address,
           DEFAULT_PRICE_PRECISION.toString(),
           DEFAULT_PRICE_PRECISION.toString(),
           governor
         );
-        await dex.insertBuyOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
+        await dex.insertBuyLimitOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
           from: buyer
         });
-        await dex.insertSellOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
+        await dex.insertSellLimitOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
           from: seller
         });
 
         await dex.addTokenPair(
           doc.address,
           otherSecondary.address,
+          priceProviderOtherSecondary.address,
           DEFAULT_PRICE_PRECISION.toString(),
           DEFAULT_PRICE_PRECISION.toString(),
           governor
         );
-        await dex.insertBuyOrder(doc.address, otherSecondary.address, wadify(2), pricefy(2), 5, {
-          from: buyer
-        });
-        await dex.insertSellOrder(doc.address, otherSecondary.address, wadify(1), pricefy(2), 5, {
-          from: seller
-        });
+        await dex.insertBuyLimitOrder(
+          doc.address,
+          otherSecondary.address,
+          wadify(2),
+          pricefy(2),
+          5,
+          {
+            from: buyer
+          }
+        );
+        await dex.insertSellLimitOrder(
+          doc.address,
+          otherSecondary.address,
+          wadify(1),
+          pricefy(2),
+          5,
+          {
+            from: seller
+          }
+        );
       });
       describe('Emergent price is generated independently for two token pairs', function() {
         it('WHEN calling getEmergentPrice, THEN the emergent prices are independent', async function() {
@@ -268,6 +303,7 @@ describe('multiple tokens tests', function() {
       function convertToPrecision(input, precision) {
         return new BN(input).mul(new BN(precision));
       }
+      // eslint-disable-next-line mocha/no-sibling-hooks
       before('GIVEN the user has balance and allowance on all the tokens', async function() {
         await setContracts(accounts);
         const userData = {
@@ -301,11 +337,12 @@ describe('multiple tokens tests', function() {
         await dex.addTokenPair(
           doc.address,
           secondary.address,
+          priceProviderSecondary.address,
           scenario.comparisonPrecision,
           scenario.comparisonPrecision,
           governor
         );
-        await dex.insertBuyOrder(
+        await dex.insertBuyLimitOrder(
           doc.address,
           secondary.address,
           wadify(1),
@@ -315,7 +352,7 @@ describe('multiple tokens tests', function() {
             from: buyer
           }
         );
-        await dex.insertSellOrder(
+        await dex.insertSellLimitOrder(
           doc.address,
           secondary.address,
           wadify(1),
@@ -331,6 +368,7 @@ describe('multiple tokens tests', function() {
         await dex.addTokenPair(
           doc.address,
           otherBase.address,
+          priceProviderOtherSecondary.address,
           DEFAULT_PRICE_PRECISION.toString(),
           DEFAULT_PRICE_PRECISION.toString(),
           governor
@@ -338,12 +376,13 @@ describe('multiple tokens tests', function() {
         await dex.addTokenPair(
           otherBase.address,
           otherSecondary.address,
+          priceProviderOtherSecondary.address,
           scenario.alternateComparisonPrecision,
           scenario.alternateComparisonPrecision,
           governor
         );
 
-        await dex.insertBuyOrder(
+        await dex.insertBuyLimitOrder(
           otherBase.address,
           otherSecondary.address,
           wadify(2),
@@ -353,7 +392,7 @@ describe('multiple tokens tests', function() {
             from: buyer
           }
         );
-        await dex.insertSellOrder(
+        await dex.insertSellLimitOrder(
           otherBase.address,
           otherSecondary.address,
           wadify(1),
@@ -365,10 +404,10 @@ describe('multiple tokens tests', function() {
         );
       });
       it('THEN emergent prices have different precision', async function() {
-        testHelper.assertBigWithPrecision(
+        await testHelper.assertBigWithPrecision(
           scenario.comparisonPrecision
         )(await getEmergentPriceValue(doc.address, secondary.address), 1);
-        testHelper.assertBigWithPrecision(
+        return testHelper.assertBigWithPrecision(
           scenario.alternateComparisonPrecision
         )(await getEmergentPriceValue(otherBase.address, otherSecondary.address), 2);
       });
@@ -384,21 +423,24 @@ describe('multiple tokens tests', function() {
           );
         });
         it('THEN the first pair is matched', async function() {
-          testHelper.assertBigWithPrecision(
+          await testHelper.assertBigWithPrecision(
             scenario.comparisonPrecision
           )(await getEmergentPriceValue(doc.address, secondary.address), 0);
-          testHelper.assertBig(await dex.buyOrdersLength(doc.address, secondary.address), 0);
-          testHelper.assertBig(await dex.sellOrdersLength(doc.address, secondary.address), 0);
+          await testHelper.assertBig(await dex.buyOrdersLength(doc.address, secondary.address), 0);
+          return testHelper.assertBig(
+            await dex.sellOrdersLength(doc.address, secondary.address),
+            0
+          );
         });
         it('AND the second pair is not matched', async function() {
-          testHelper.assertBigWithPrecision(
+          await testHelper.assertBigWithPrecision(
             scenario.alternateComparisonPrecision
           )(await getEmergentPriceValue(otherBase.address, otherSecondary.address), 2);
-          testHelper.assertBig(
+          await testHelper.assertBig(
             await dex.buyOrdersLength(otherBase.address, otherSecondary.address),
             1
           );
-          testHelper.assertBig(
+          return testHelper.assertBig(
             await dex.sellOrdersLength(otherBase.address, otherSecondary.address),
             1
           );
@@ -412,14 +454,14 @@ describe('multiple tokens tests', function() {
           );
         });
         it('THEN the second pair is matched', async function() {
-          testHelper.assertBigWithPrecision(
+          await testHelper.assertBigWithPrecision(
             scenario.alternateComparisonPrecision
           )(await getEmergentPriceValue(otherBase.address, otherSecondary.address), 0);
-          testHelper.assertBig(
+          await testHelper.assertBig(
             await dex.buyOrdersLength(otherBase.address, otherSecondary.address),
             0
           );
-          testHelper.assertBig(
+          return testHelper.assertBig(
             await dex.sellOrdersLength(otherBase.address, otherSecondary.address),
             0
           );

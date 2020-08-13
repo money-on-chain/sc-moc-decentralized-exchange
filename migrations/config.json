@@ -30,6 +30,17 @@
       "RifToken": {
         "address": "0x19F64674D8A5B4E652319F5e239eFd3bc969A1fE"
       }
+    },
+    "externalPriceProvider": {
+      "DocToken": {
+        "BproToken": "",
+        "WRBTC": "",
+        "TestToken": ""
+      },
+      "WRBTC": {
+        "BproToken": "",
+        "TestToken": ""
+      }
     }
   },
   "development": {
@@ -44,7 +55,18 @@
       "0x8c61e1063E0b6f6C5123428935F34AfA2b5C2e95",
       "0xb1aF5b992251096AA6b12326CEb368Bcd333DDCe"
     ],
-    "beneficiaryAddress": "0xC2C22CeE68625D65105fE98a92B283b79845F609"
+    "beneficiaryAddress": "0xC2C22CeE68625D65105fE98a92B283b79845F609",
+    "externalPriceProvider": {
+      "DocToken": {
+        "BproToken": "",
+        "WRBTC": "",
+        "TestToken": ""
+      },
+      "WRBTC": {
+        "BproToken": "",
+        "TestToken": ""
+      }
+    }
   },
   "coverage": {
     "deployGovernance": true,
@@ -69,6 +91,8 @@
     "COMMISSION_RATE": 0.005,
     "CANCELATION_PENALTY_RATE": 0.25,
     "EXPIRATION_PENALTY_RATE": 0.5,
-    "TOKENS_TO_MINT": 1e10
+    "TOKENS_TO_MINT": 1e10,
+    "MIN_MO_MULTIPLY_FACTOR": 0.01,
+    "MAX_MO_MULTIPLY_FACTOR": 1.99
   }
 }

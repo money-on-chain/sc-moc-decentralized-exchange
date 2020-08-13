@@ -5,6 +5,7 @@ const DEFAULT_INITIAL_PRICE = 10;
 let testHelper;
 let wadify;
 let pricefy;
+let priceProvider;
 
 const decorateDex = function(dex, governor) {
   return Object.assign({}, dex, {
@@ -17,13 +18,14 @@ const createNewPair = (dex, governor) =>
     await dex.addTokenPair(
       baseToken.address,
       secondaryToken.address,
+      priceProvider.address,
       pricefy(1),
       pricefy(lastClosingPrice),
       governor
     );
     if (price && user) {
       await Promise.all([
-        dex.insertBuyOrder(
+        dex.insertBuyLimitOrder(
           baseToken.address,
           secondaryToken.address,
           wadify(1),
@@ -33,7 +35,7 @@ const createNewPair = (dex, governor) =>
             from: user
           }
         ),
-        dex.insertSellOrder(
+        dex.insertSellLimitOrder(
           baseToken.address,
           secondaryToken.address,
           wadify(1),
@@ -49,7 +51,7 @@ const createNewPair = (dex, governor) =>
 
 const assertLastClosingPrice = async function(dex, base, secondary, expectedClosingPrice) {
   const { lastClosingPrice } = await dex.getTokenPairStatus.call(base.address, secondary.address);
-  testHelper.assertBigPrice(lastClosingPrice, expectedClosingPrice, 'Last closing price');
+  return testHelper.assertBigPrice(lastClosingPrice, expectedClosingPrice, 'Last closing price');
 };
 
 describe('Last closing price tests', function() {
@@ -68,12 +70,13 @@ describe('Last closing price tests', function() {
       maxBlocksForTick: 2,
       minBlocksForTick: 1
     });
-    [dex, doc, secondary, otherSecondary, governor] = await Promise.all([
+    [dex, doc, secondary, otherSecondary, governor, priceProvider] = await Promise.all([
       testHelper.getDex(),
       testHelper.getBase(),
       testHelper.getSecondary(),
       OwnerBurnableToken.new(),
-      testHelper.getGovernor()
+      testHelper.getGovernor(),
+      testHelper.getTokenPriceProviderFake().new()
     ]);
     dex = testHelper.decorateGovernedSetters(dex);
     dex = decorateDex(dex, governor);
@@ -132,10 +135,10 @@ describe('Last closing price tests', function() {
             })
           ]);
           await dex.createNewPair(doc, secondary, DEFAULT_INITIAL_PRICE);
-          await dex.insertBuyOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
+          await dex.insertBuyLimitOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
             from: user
           });
-          await dex.insertSellOrder(doc.address, secondary.address, wadify(1), pricefy(3), 5, {
+          await dex.insertSellLimitOrder(doc.address, secondary.address, wadify(1), pricefy(3), 5, {
             from: user
           });
           ({ emergentPrice } = await dex.getTokenPairStatus.call(doc.address, secondary.address));
@@ -148,7 +151,7 @@ describe('Last closing price tests', function() {
         describe('AND there is a token pair with orders that do not match', function() {
           describe('WHEN running the matching process', function() {
             it('THEN emergentPrice is zero', function() {
-              testHelper.assertBig(emergentPrice, 0, 'Last closing price');
+              return testHelper.assertBig(emergentPrice, 0, 'Last closing price');
             });
             it('THEN the last closing price for the pair should be the same', async function() {
               await assertLastClosingPrice(dex, doc, secondary, DEFAULT_INITIAL_PRICE);

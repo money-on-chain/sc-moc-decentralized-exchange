@@ -57,10 +57,10 @@ describe('Depletion of the Pending Queue in the after match using hints', functi
       before(async function() {
         // 4 orders so the matching has at least 2 steps to run
         await Promise.all([
-          dex.insertBuyOrder({ from: buyer }),
-          dex.insertBuyOrder({ from: buyer }),
-          dex.insertSellOrder({ from: seller }),
-          dex.insertSellOrder({ from: seller })
+          dex.insertBuyLimitOrder({ from: buyer }),
+          dex.insertBuyLimitOrder({ from: buyer }),
+          dex.insertSellLimitOrder({ from: seller }),
+          dex.insertSellLimitOrder({ from: seller })
         ]);
 
         // running the two steps of the simulation
@@ -122,11 +122,15 @@ describe('Depletion of the Pending Queue in the after match using hints', functi
 
   contract('SCENARIO: 1 pending order', function(accounts) {
     const [, , seller] = accounts;
+    // eslint-disable-next-line mocha/no-sibling-hooks
     before(initContractsAndAllowance(accounts));
     givenTheTickIsRunning(accounts, function() {
       describe('AND there is a sell order pending', function() {
         before(function() {
-          return dex.insertSellOrder({ from: seller, pending: true });
+          return dex.insertSellLimitOrder({
+            from: seller,
+            pending: true
+          });
         });
 
         describe('WHEN calling matchOrders with just the enough steps and the hint to put it at the start', function() {
@@ -140,7 +144,10 @@ describe('Depletion of the Pending Queue in the after match using hints', functi
 
           it(
             'THEN the pending order was moved into the main orderbook',
-            testSellOrderAtIndex({ expectedId: 5, expectedIndex: 0 })
+            testSellOrderAtIndex({
+              expectedId: 5,
+              expectedIndex: 0
+            })
           );
           it('AND the sell pending queue becomes empty', testPendingSellLength(0));
           it('AND the sell orderbook has one order', testMainSellLength(1));
@@ -158,23 +165,24 @@ describe('Depletion of the Pending Queue in the after match using hints', functi
       const amountOfOrders = 60;
       const orderIndexOffset = ordersInTheOrderbookBefore;
       const orderIdOffset = ordersInTheOrderbookBefore + 4 + 1;
+      // eslint-disable-next-line mocha/no-sibling-hooks
       before(initContractsAndAllowance(accounts));
       givenTheTickIsRunning(accounts, function() {
         describe('AND there are still sell orders pending', function() {
           before(async function() {
             // Insert one extra at the start to keep the tick going
-            await dex.insertSellOrder({ from: seller, pending: true });
+            await dex.insertSellLimitOrder({ from: seller, pending: true });
 
             await [...Array(ordersInTheOrderbookBefore)].reduce(async previousPromise => {
               await previousPromise;
-              await dex.insertSellOrder({ from: seller, pending: true });
+              await dex.insertSellLimitOrder({ from: seller, pending: true });
               await dex.matchOrders(...pair, 1, { gas: 6e6 });
             }, Promise.resolve());
 
             // Insert amountOfOrders - 1 to keep exactly amountOfOrders pending
             return Promise.all(
               [...Array(amountOfOrders - 1)].map(() =>
-                dex.insertSellOrder({ from: seller, pending: true })
+                dex.insertSellLimitOrder({ from: seller, pending: true })
               )
             );
           });
@@ -193,12 +201,17 @@ describe('Depletion of the Pending Queue in the after match using hints', functi
                 const hints = [...Array(amountOfOrders).keys()].map(
                   index => index + orderIdOffset - 1
                 );
-                return dex.matchOrdersWithHints(...pair, amountOfOrders, hints, { gas: 6e6 });
+                return dex.matchOrdersWithHints(...pair, amountOfOrders, hints, {
+                  gas: 6e6
+                });
               });
 
               it(
                 'THEN the first pending order was moved into the main orderbook',
-                testSellOrderAtIndex({ expectedId: orderIdOffset, expectedIndex: orderIndexOffset })
+                testSellOrderAtIndex({
+                  expectedId: orderIdOffset,
+                  expectedIndex: orderIndexOffset
+                })
               );
               it(
                 'THEN the last pending order was moved into the main orderbook',
@@ -224,18 +237,19 @@ describe('Depletion of the Pending Queue in the after match using hints', functi
     'SCENARIO: 3 pending order with a hint pointing to orders in the queue and another is created later; the last hint can be missing',
     function(accounts) {
       const [, , seller] = accounts;
+      // eslint-disable-next-line mocha/no-sibling-hooks
       before(initContractsAndAllowance(accounts));
       givenTheTickIsRunning(accounts, function() {
         describe('AND there are still 3 sell order pending', function() {
           let hints;
           before(async function() {
             await Promise.all([
-              dex.insertSellOrder({ from: seller, pending: true }), // Order 5
-              dex.insertSellOrder({ from: seller, pending: true }), // Order 6
-              dex.insertSellOrder({ from: seller, pending: true }) // Order 7
+              dex.insertSellLimitOrder({ from: seller, pending: true }), // Order 5
+              dex.insertSellLimitOrder({ from: seller, pending: true }), // Order 6
+              dex.insertSellLimitOrder({ from: seller, pending: true }) // Order 7
             ]);
             hints = [0, 5, 6]; // The hints are calculated before the insertion of the last one
-            await dex.insertSellOrder({ from: seller, pending: true }); // Order 8
+            await dex.insertSellLimitOrder({ from: seller, pending: true }); // Order 8
           });
 
           describe('WHEN calling matchOrders with just the enough steps and the hints calculated before inserting the last one', function() {
@@ -272,16 +286,25 @@ describe('Depletion of the Pending Queue in the after match using hints', functi
     accounts
   ) {
     const [, , seller] = accounts;
+    // eslint-disable-next-line mocha/no-sibling-hooks
     before(initContractsAndAllowance(accounts));
     givenTheTickIsRunning(accounts, function() {
       describe('AND there are three sell orders pending', function() {
         before(async function() {
           // Order 5
-          await dex.insertSellOrder({ from: seller, pending: true, price: DEFAULT_PRICE * 4 });
+          await dex.insertSellLimitOrder({
+            from: seller,
+            pending: true,
+            price: DEFAULT_PRICE * 4
+          });
           // Order 6
-          await dex.insertSellOrder({ from: seller, pending: true, price: DEFAULT_PRICE * 2 });
+          await dex.insertSellLimitOrder({
+            from: seller,
+            pending: true,
+            price: DEFAULT_PRICE * 2
+          });
           // Order 7
-          await dex.insertSellOrder({ from: seller, pending: true, price: DEFAULT_PRICE });
+          await dex.insertSellLimitOrder({ from: seller, pending: true, price: DEFAULT_PRICE });
         });
 
         describe('WHEN calling matchOrders with just the enough steps and the hint to put it at the start', function() {
@@ -311,16 +334,17 @@ describe('Depletion of the Pending Queue in the after match using hints', functi
 
   contract('SCENARIO: N pending orders', function(accounts) {
     const [, buyer, seller] = accounts;
+    // eslint-disable-next-line mocha/no-sibling-hooks
     before(initContractsAndAllowance(accounts));
     givenTheTickIsRunning(accounts, function() {
       describe('AND there are 2 pending buy orders and 2 pending sell orders', function() {
         before(function() {
           return Promise.all([
-            dex.insertBuyOrder({ from: buyer, pending: true }),
-            dex.insertBuyOrder({ from: buyer, pending: true }),
+            dex.insertBuyLimitOrder({ from: buyer, pending: true }),
+            dex.insertBuyLimitOrder({ from: buyer, pending: true }),
 
-            dex.insertSellOrder({ from: seller, pending: true }),
-            dex.insertSellOrder({ from: seller, pending: true })
+            dex.insertSellLimitOrder({ from: seller, pending: true }),
+            dex.insertSellLimitOrder({ from: seller, pending: true })
           ]);
         });
         it('THEN the pending buy queue length is two', testPendingBuyLength(2));
@@ -359,7 +383,7 @@ describe('Depletion of the Pending Queue in the after match using hints', functi
             it('AND the contract is still moving pending orders', testIsMovingOrders());
             describe('AND GIVEN a new buy order is inserted', function() {
               before(function() {
-                return dex.insertBuyOrder({ from: buyer, pending: true });
+                return dex.insertBuyLimitOrder({ from: buyer, pending: true });
               });
               describe('WHEN calling matchOrders with just one steps and the correct hint', function() {
                 before(function() {
@@ -380,7 +404,7 @@ describe('Depletion of the Pending Queue in the after match using hints', functi
 
                 describe('AND GIVEN a new buy order is inserted with a more competitive price', function() {
                   before(function() {
-                    return dex.insertBuyOrder({
+                    return dex.insertBuyLimitOrder({
                       from: buyer,
                       pending: true,
                       price: DEFAULT_PRICE * 2
@@ -412,7 +436,7 @@ describe('Depletion of the Pending Queue in the after match using hints', functi
                       it('AND the contract is receiving orders again', testIsReceivingOrders());
                       describe('AND WHEN a new order is inserted', function() {
                         before(function() {
-                          return dex.insertBuyOrder({ from: buyer });
+                          return dex.insertBuyLimitOrder({ from: buyer });
                         });
 
                         it(

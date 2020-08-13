@@ -12,8 +12,27 @@ let wadify;
 let pricefy;
 let fixBuyerMatchPrecisions;
 let fixSellerMatchPrecisions;
+let testHelper;
+let BaseToken;
+let SecondaryToken;
+let MoCDecentralizedExchange;
+let dex;
+let transaction;
+let secondaryToken;
+let baseToken;
+let DEFAULT_ACCOUNT_INDEX;
+let DEFAULT_BALANCES_AND_ALLOWANCES;
+const MARKET_PRICE = 2;
 const filterEvents = (tx, eventName) =>
   tx.logs.filter(it => it.event === eventName).map(it => it.args);
+
+const mapOrderExpectation = ({ id, owner, exchangeableAmount, reservedCommission, price }) => ({
+  id,
+  owner,
+  exchangeableAmount,
+  reservedCommission,
+  multiplyFactor: price / MARKET_PRICE
+});
 
 const makeOrderExpectation = order => ({
   id: order.id,
@@ -23,19 +42,119 @@ const makeOrderExpectation = order => ({
   price: order.price
 });
 
-const getExpectation = order =>
-  order.expectation ? order.expectation : makeOrderExpectation(order);
-const orderBookMatcher = (getMocHelper, scenario) => {
-  let testHelper;
-  let BaseToken;
-  let SecondaryToken;
-  let MoCDecentralizedExchange;
-  let dex;
-  let transaction;
-  let secondaryToken;
-  let baseToken;
-  let DEFAULT_ACCOUNT_INDEX;
-  let DEFAULT_BALANCES_AND_ALLOWANCES;
+const getLimitExpectation = order => order.expectation || makeOrderExpectation(order);
+
+const getMarketExpectation = order => mapOrderExpectation(getLimitExpectation(order));
+
+const insertSellLimitOrder = (
+  baseTokenAddress,
+  secondaryTokenAddress,
+  orderLockingAmount,
+  orderPrice,
+  orderLifespan,
+  sender
+) =>
+  dex.insertSellLimitOrder(
+    baseTokenAddress,
+    secondaryTokenAddress,
+    wadify(orderLockingAmount),
+    pricefy(orderPrice),
+    orderLifespan,
+    { from: sender }
+  );
+
+const insertBuyLimitOrder = (
+  baseTokenAddress,
+  secondaryTokenAddress,
+  orderLockingAmount,
+  orderPrice,
+  orderLifespan,
+  sender
+) =>
+  dex.insertBuyLimitOrder(
+    baseTokenAddress,
+    secondaryTokenAddress,
+    wadify(orderLockingAmount),
+    pricefy(orderPrice),
+    orderLifespan,
+    { from: sender }
+  );
+
+const insertSellMarketOrder = (
+  baseTokenAddress,
+  secondaryTokenAddress,
+  orderLockingAmount,
+  orderPrice,
+  orderLifespan,
+  sender
+) =>
+  dex.insertMarketOrder(
+    baseTokenAddress,
+    secondaryTokenAddress,
+    wadify(orderLockingAmount),
+    // This may fail if the difference between the price and the
+    // market price is too big, causing the multiplier to be out
+    // of range
+    pricefy(orderPrice / MARKET_PRICE),
+    orderLifespan,
+    false,
+    { from: sender }
+  );
+
+const insertBuyMarketOrder = (
+  baseTokenAddress,
+  secondaryTokenAddress,
+  orderLockingAmount,
+  orderPrice,
+  orderLifespan,
+  sender
+) =>
+  dex.insertMarketOrder(
+    baseTokenAddress,
+    secondaryTokenAddress,
+    wadify(orderLockingAmount),
+    // This may fail if the difference between the price and the
+    // market price is too big, causing the multiplier to be out
+    // of range
+    pricefy(orderPrice / MARKET_PRICE),
+    orderLifespan,
+    true,
+    { from: sender }
+  );
+
+const expectInsertionEventMarket = isBuy => (
+  receipt,
+  { baseTokenAddress, secondaryTokenAddress, price, commission, lockingAmount }
+) =>
+  expectEvent.inTransaction(receipt.tx, MoCDecentralizedExchange, 'NewOrderInserted', {
+    baseTokenAddress,
+    secondaryTokenAddress,
+    exchangeableAmount: wadify(lockingAmount).sub(wadify(commission || 0)),
+    reservedCommission: wadify(commission || 0),
+    multiplyFactor: pricefy(price / MARKET_PRICE), // This field is actually the priceMultiplier
+    isBuy
+  });
+const expectInsertionEventLimit = isBuy => (
+  receipt,
+  { baseTokenAddress, secondaryTokenAddress, price, commission, lockingAmount }
+) =>
+  expectEvent.inTransaction(receipt.tx, MoCDecentralizedExchange, 'NewOrderInserted', {
+    baseTokenAddress,
+    secondaryTokenAddress,
+    exchangeableAmount: wadify(lockingAmount).sub(wadify(commission || 0)),
+    reservedCommission: wadify(commission || 0),
+    price: pricefy(price),
+    isBuy
+  });
+
+const orderBookMatcherGeneric = (
+  insertSellOrder,
+  insertBuyOrder,
+  expectInsertionSellEvent,
+  expectInsertionBuyEvent,
+  getExpectationBuy,
+  getExpectationSell
+) => (getMocHelper, scenario) => {
   contract(scenario.description, function(accounts) {
     // eslint-disable-next-line mocha/no-top-level-hooks
     before(async function() {
@@ -57,7 +176,6 @@ const orderBookMatcher = (getMocHelper, scenario) => {
         testHelper.getSecondaryToken(),
         testHelper.getMoCDex()
       ];
-
       ({
         wadify,
         pricefy,
@@ -71,6 +189,12 @@ const orderBookMatcher = (getMocHelper, scenario) => {
         testHelper.getBase(),
         testHelper.getSecondary()
       ]);
+      await testHelper.setOracleMarketPrice(
+        dex,
+        baseToken.address,
+        secondaryToken.address,
+        MARKET_PRICE
+      );
       dex = await testHelper.decorateGetOrderAtIndex(dex);
       if (!scenario.accounts) {
         // it's easier to set the accounts here instead of
@@ -90,32 +214,23 @@ const orderBookMatcher = (getMocHelper, scenario) => {
         scenario.buyOrders.orders.map(async function(order) {
           const from = accounts[order.accountIndex || DEFAULT_ACCOUNT_INDEX];
           const transferParams = { from, to: dex.address, value: wadify(order.lockingAmount) };
-          await dex
-            .insertBuyOrder(
-              baseToken.address,
-              secondaryToken.address,
-              wadify(order.lockingAmount),
-              pricefy(order.price),
-              5,
-              {
-                from
-              }
-            )
-            .then(function(tx) {
-              return Promise.all([
-                currifiedInTransaction(_, BaseToken, 'Transfer', transferParams)(tx),
-                currifiedInTransaction(_, MoCDecentralizedExchange, 'NewOrderInserted', {
-                  baseTokenAddress: baseToken.address,
-                  secondaryTokenAddress: secondaryToken.address,
-                  exchangeableAmount: wadify(order.lockingAmount).sub(
-                    wadify(order.commission || 0)
-                  ),
-                  reservedCommission: wadify(order.commission || 0),
-                  price: pricefy(order.price),
-                  isBuy: true
-                })(tx)
-              ]);
-            });
+          await insertBuyOrder(
+            baseToken.address,
+            secondaryToken.address,
+            order.lockingAmount,
+            order.price,
+            5,
+            from
+          ).then(function(tx) {
+            return Promise.all([
+              currifiedInTransaction(_, BaseToken, 'Transfer', transferParams)(tx),
+              expectInsertionBuyEvent(tx, {
+                baseTokenAddress: baseToken.address,
+                secondaryTokenAddress: secondaryToken.address,
+                ...order
+              })
+            ]);
+          });
         })
       );
     });
@@ -125,32 +240,23 @@ const orderBookMatcher = (getMocHelper, scenario) => {
         scenario.sellOrders.orders.map(async function(order) {
           const from = accounts[order.accountIndex || DEFAULT_ACCOUNT_INDEX];
           const transferParams = { from, to: dex.address, value: wadify(order.lockingAmount) };
-          await dex
-            .insertSellOrder(
-              baseToken.address,
-              secondaryToken.address,
-              wadify(order.lockingAmount),
-              pricefy(order.price),
-              5,
-              {
-                from
-              }
-            )
-            .then(function(tx) {
-              return Promise.all([
-                currifiedInTransaction(_, SecondaryToken, 'Transfer', transferParams)(tx),
-                currifiedInTransaction(_, MoCDecentralizedExchange, 'NewOrderInserted', {
-                  baseTokenAddress: baseToken.address,
-                  secondaryTokenAddress: secondaryToken.address,
-                  exchangeableAmount: wadify(order.lockingAmount).sub(
-                    wadify(order.commission || 0)
-                  ),
-                  reservedCommission: wadify(order.commission || 0),
-                  price: pricefy(order.price),
-                  isBuy: false
-                })(tx)
-              ]);
-            });
+          await insertSellOrder(
+            baseToken.address,
+            secondaryToken.address,
+            order.lockingAmount,
+            order.price,
+            5,
+            from
+          ).then(function(tx) {
+            return Promise.all([
+              currifiedInTransaction(_, SecondaryToken, 'Transfer', transferParams)(tx),
+              expectInsertionSellEvent(tx, {
+                baseTokenAddress: baseToken.address,
+                secondaryTokenAddress: secondaryToken.address,
+                ...order
+              })
+            ]);
+          });
         })
       );
     });
@@ -201,14 +307,14 @@ const orderBookMatcher = (getMocHelper, scenario) => {
         const tickEndEvents = filterEvents(transaction, 'TickEnd');
         expect(tickEndEvents).to.have.lengthOf(1, 'wrong amount of events of end of tick');
         const [event] = tickEndEvents;
-        testHelper.assertTickEnd(transaction, event, scenario.tickEnd.matches);
+        return testHelper.assertTickEnd(transaction, event, scenario.tickEnd.matches);
       });
     }
 
     if (scenario.remainingSellOrders) {
       it(scenario.remainingSellOrders.description, async function() {
         const ordersLength = await dex.sellOrdersLength(baseToken.address, secondaryToken.address);
-        testHelper.assertBig(
+        await testHelper.assertBig(
           ordersLength,
           scenario.remainingSellOrders.orders.length,
           'sell orders length'
@@ -220,9 +326,9 @@ const orderBookMatcher = (getMocHelper, scenario) => {
               secondaryToken.address,
               index
             );
-            testHelper.assertOrder(
+            return testHelper.assertOrder(
               order,
-              getExpectation(scenario.remainingSellOrders.orders[index])
+              getExpectationSell(scenario.remainingSellOrders.orders[index])
             );
           })
         );
@@ -232,7 +338,7 @@ const orderBookMatcher = (getMocHelper, scenario) => {
         const expectedBalance =
           scenario.remainingSellOrders.dexSecondaryBalance ||
           scenario.remainingSellOrders.orders.reduce((acc, it) => acc + it.lockedAmount, 0);
-        testHelper.assertBigWad(
+        return testHelper.assertBigWad(
           await secondaryToken.balanceOf(dex.address),
           expectedBalance,
           'exchange contract Secondary balance'
@@ -243,7 +349,7 @@ const orderBookMatcher = (getMocHelper, scenario) => {
     if (scenario.remainingBuyOrders) {
       it(scenario.remainingBuyOrders.description, async function() {
         const ordersLength = await dex.buyOrdersLength(baseToken.address, secondaryToken.address);
-        testHelper.assertBig(
+        await testHelper.assertBig(
           ordersLength,
           scenario.remainingBuyOrders.orders.length,
           'buy orders length'
@@ -255,9 +361,9 @@ const orderBookMatcher = (getMocHelper, scenario) => {
               secondaryToken.address,
               index
             );
-            testHelper.assertOrder(
+            return testHelper.assertOrder(
               order,
-              getExpectation(scenario.remainingBuyOrders.orders[index])
+              getExpectationBuy(scenario.remainingBuyOrders.orders[index])
             );
           })
         );
@@ -267,7 +373,7 @@ const orderBookMatcher = (getMocHelper, scenario) => {
         const expectedBalance =
           scenario.remainingBuyOrders.dexBaseBalance ||
           scenario.remainingBuyOrders.orders.reduce((acc, it) => acc + it.lockedAmount, 0);
-        testHelper.assertBigWad(
+        return testHelper.assertBigWad(
           await baseToken.balanceOf(dex.address),
           expectedBalance,
           'exchange contract base balance'
@@ -289,4 +395,43 @@ const orderBookMatcher = (getMocHelper, scenario) => {
     }
   });
 };
-module.exports = { orderBookMatcher };
+
+const orderBookMatcherMarket = orderBookMatcherGeneric(
+  insertSellMarketOrder,
+  insertBuyMarketOrder,
+  expectInsertionEventMarket(false),
+  expectInsertionEventMarket(true),
+  getMarketExpectation,
+  getMarketExpectation
+);
+
+const orderBookMatcherLimit = orderBookMatcherGeneric(
+  insertSellLimitOrder,
+  insertBuyLimitOrder,
+  expectInsertionEventLimit(false),
+  expectInsertionEventLimit(true),
+  getLimitExpectation,
+  getLimitExpectation
+);
+
+const orderBookMatcherCombined = orderBookMatcherGeneric(
+  insertSellMarketOrder,
+  insertBuyLimitOrder,
+  expectInsertionEventMarket(false),
+  expectInsertionEventLimit(true),
+  getLimitExpectation,
+  getMarketExpectation
+);
+
+const orderBookMatcherBothTypes = (getMocHelper, scenario) => {
+  describe('Orderbook matching - Limit order', function() {
+    orderBookMatcherLimit(getMocHelper, scenario);
+  });
+  describe('Orderbook matching - Market order', function() {
+    orderBookMatcherMarket(getMocHelper, scenario);
+  });
+  describe('Orderbook matching - Combined order', function() {
+    orderBookMatcherCombined(getMocHelper, scenario);
+  });
+};
+module.exports = { orderBookMatcherBothTypes, orderBookMatcherMarket, orderBookMatcherLimit };

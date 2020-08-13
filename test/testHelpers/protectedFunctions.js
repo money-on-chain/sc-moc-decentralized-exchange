@@ -6,16 +6,25 @@ const MinOrderAmountChanger = artifacts.require('MinOrderAmountChanger');
 const MaxOrderLifespanChanger = artifacts.require('MaxOrderLifespanChanger');
 const BeneficiaryAddressChanger = artifacts.require('BeneficiaryAddressChanger');
 const CommissionRateChanger = artifacts.require('CommissionRateChanger');
+const MarketOrderSettingsChanger = artifacts.require('MarketOrderSettingsChanger');
 const CancelationPenaltyRateChanger = artifacts.require('CancelationPenaltyRateChanger');
 const ExpirationPenaltyRateChanger = artifacts.require('ExpirationPenaltyRateChanger');
 const TokenPairDisabler = artifacts.require('TokenPairDisabler');
 const TokenPairEnabler = artifacts.require('TokenPairEnabler');
 
-const addTokenPair = dex => async (baseToken, secondaryToken, precision, price, governor) => {
+const addTokenPair = dex => async (
+  baseToken,
+  secondaryToken,
+  priceProvider,
+  precision,
+  price,
+  governor
+) => {
   const changer = await AddTokenPairChanger.new(
     dex.address,
     [baseToken],
     [secondaryToken],
+    [priceProvider],
     [precision],
     [price]
   );
@@ -55,6 +64,15 @@ const setCommissionRate = dex => async (commissionRate, governor) => {
   return governor.executeChange(changer.address);
 };
 
+const setMinMaxMultiplyFactor = dex => async (minMultiplyFactor, maxMultiplyFactor, governor) => {
+  const changer = await MarketOrderSettingsChanger.new(
+    dex.address,
+    minMultiplyFactor,
+    maxMultiplyFactor
+  );
+  return governor.executeChange(changer.address);
+};
+
 const setCancelationPenaltyRate = dex => async (cancelationPenaltyRate, governor) => {
   const changer = await CancelationPenaltyRateChanger.new(dex.address, cancelationPenaltyRate);
   return governor.executeChange(changer.address);
@@ -82,6 +100,7 @@ const decorateGovernedSetters = dex =>
     setMinOrderAmount: setMinOrderAmount(dex),
     setBeneficiaryAddress: setBeneficiaryAddress(dex),
     setCommissionRate: setCommissionRate(dex),
+    setMinMaxMultiplyFactor: setMinMaxMultiplyFactor(dex),
     setCancelationPenaltyRate: setCancelationPenaltyRate(dex),
     setExpirationPenaltyRate: setExpirationPenaltyRate(dex),
     setMaxOrderLifespan: setMaxOrderLifespan(dex),

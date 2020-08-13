@@ -7,17 +7,55 @@ let assertNewOrderEvent;
 const createTokenPair = async function(
   dex,
   governor,
+  priceProvider,
   { base, secondary, lastClosingPrice, pricePrecision }
 ) {
+  await priceProvider.poke(
+    pricePrecision ? (10 ** pricePrecision).toString() : DEFAULT_PRICE_PRECISION.toString()
+  );
   await dex.addTokenPair(
     base.address,
     secondary.address,
+    priceProvider.address,
     pricePrecision ? (10 ** pricePrecision).toString() : DEFAULT_PRICE_PRECISION.toString(),
     lastClosingPrice,
     governor
   );
 };
 
+// simplify insertion function
+const doInsertLimitOrder = async function(
+  dex,
+  amount,
+  pairAddresses,
+  from,
+  wadify,
+  pricefy,
+  isBuy
+) {
+  return isBuy
+    ? dex.insertBuyLimitOrder(...pairAddresses, wadify(amount), pricefy(1), 5, {
+        from
+      })
+    : dex.insertSellLimitOrder(...pairAddresses, wadify(amount), pricefy(1), 5, {
+        from
+      });
+};
+
+// simplify insertion function
+const doInsertMarketOrder = async function(
+  dex,
+  amount,
+  pairAddresses,
+  from,
+  wadify,
+  pricefy,
+  isBuy
+) {
+  return dex.insertMarketOrder(...pairAddresses, wadify(amount), pricefy(1), 5, isBuy, {
+    from
+  });
+};
 describe('FEATURE: Min amount for order', function() {
   // it's kinda sketchy that these variables are referenced in the test data definitions
   // at the end of the file, but initialized in the before hook for each one of them.
@@ -42,14 +80,15 @@ describe('FEATURE: Min amount for order', function() {
     minAmount,
     setup,
     setupMessage,
-    goesToPendingQueue
+    goesToPendingQueue,
+    doInsertOrder
   }) {
     return async function() {
       contract('GIVEN a contract with several token pairs', function(accounts) {
         let base;
         let secondary;
-        let doInsertOrder;
         let pairAddresses;
+        let priceProvider;
 
         before(async function() {
           // create dex contract and necessary tokens
@@ -59,22 +98,23 @@ describe('FEATURE: Min amount for order', function() {
             owner: accounts[0]
           });
           const OwnerBurnableToken = await testHelper.getOwnerBurnableToken();
-          [dex, commonBase, someToken, otherToken, governor] = await Promise.all([
+          [dex, commonBase, someToken, otherToken, governor, priceProvider] = await Promise.all([
             testHelper.getDex(),
             testHelper.getBase(),
             OwnerBurnableToken.new(),
             OwnerBurnableToken.new(),
-            testHelper.getGovernor()
+            testHelper.getGovernor(),
+            testHelper.getTokenPriceProviderFake().new()
           ]);
           dex = testHelper.decorateGovernedSetters(dex, governor);
 
           // create two new token pairs
-          await createTokenPair(dex, governor, {
+          await createTokenPair(dex, governor, priceProvider, {
             base: commonBase,
             secondary: someToken,
             lastClosingPrice: pricefy(3)
           });
-          await createTokenPair(dex, governor, {
+          await createTokenPair(dex, governor, priceProvider, {
             base: someToken,
             secondary: otherToken,
             lastClosingPrice: pricefy(50)
@@ -89,17 +129,6 @@ describe('FEATURE: Min amount for order', function() {
             accounts
           });
           from = accounts[testHelper.DEFAULT_ACCOUNT_INDEX];
-
-          // simplify insertion function
-          doInsertOrder = async function() {
-            return isBuy
-              ? dex.insertBuyOrder(...pairAddresses, wadify(amount), pricefy(1), 5, {
-                  from
-                })
-              : dex.insertSellOrder(...pairAddresses, wadify(amount), pricefy(1), 5, {
-                  from
-                });
-          };
         });
 
         describe(`AND a min amount of ${minAmount} in common base`, function() {
@@ -111,13 +140,24 @@ describe('FEATURE: Min amount for order', function() {
             before(setup(pair));
             if (shouldFail) {
               it(`WHEN trying to insert an order with amount: ${amount}, THEN it should revert`, async function() {
-                return expectRevert(doInsertOrder(), 'Amount too low');
+                return expectRevert(
+                  doInsertOrder(dex, amount, pairAddresses, from, wadify, pricefy, isBuy),
+                  'Amount too low'
+                );
               });
             } else {
               describe(`WHEN inserting an order with amount: ${amount}`, function() {
                 let tx;
                 before(async function() {
-                  tx = await doInsertOrder();
+                  tx = await doInsertOrder(
+                    dex,
+                    amount,
+                    pairAddresses,
+                    from,
+                    wadify,
+                    pricefy,
+                    isBuy
+                  );
                 });
 
                 if (!goesToPendingQueue) {
@@ -144,21 +184,64 @@ describe('FEATURE: Min amount for order', function() {
 
   const goToRunningMatchingStage = pairGetter => async () => {
     const pair = pairGetter().map(it => it.address);
-    await dex.insertBuyOrder(...pair, wadify(1), pricefy(1), 5, { from });
-    await dex.insertBuyOrder(...pair, wadify(1), pricefy(1), 5, { from });
+    await dex.insertBuyLimitOrder(...pair, wadify(1), pricefy(1), 5, { from });
+    await dex.insertBuyLimitOrder(...pair, wadify(1), pricefy(1), 5, { from });
 
-    await dex.insertSellOrder(...pair, wadify(1), pricefy(1), 5, { from });
-    await dex.insertSellOrder(...pair, wadify(1), pricefy(1), 5, { from });
+    await dex.insertSellLimitOrder(...pair, wadify(1), pricefy(1), 5, { from });
+    await dex.insertSellLimitOrder(...pair, wadify(1), pricefy(1), 5, { from });
     await dex.matchOrders(...pair, 1);
   };
 
-  // TODO: when the simulation is paginated, we should consider inserting an order
-  // during pagination of the simulation vs during the pagination of the matching
-  // as different tests, since the simulation generates the emergent price.
-  // We should also define wether the validation should be done against the last tick's
-  // emergent price or the newly generated one.
+  const testValidBothInsertion = function({
+    pair,
+    amount,
+    shouldFail,
+    isBuy,
+    minAmount,
+    setup,
+    setupMessage,
+    goesToPendingQueue
+  }) {
+    return function() {
+      describe(
+        'Test Valid Insertion - Limit Orders',
+        testValidInsertion({
+          pair,
+          amount,
+          shouldFail,
+          isBuy,
+          minAmount,
+          setup,
+          setupMessage,
+          goesToPendingQueue,
+          doInsertOrder: doInsertLimitOrder
+        })
+      );
+      describe(
+        'Test Valid Insertion - Market Orders',
+
+        testValidInsertion({
+          pair,
+          amount,
+          shouldFail,
+          isBuy,
+          minAmount,
+          setup,
+          setupMessage,
+          goesToPendingQueue,
+          doInsertOrder: doInsertMarketOrder
+        })
+      );
+    };
+  };
+
   [
-    {
+    // TODO: when the simulation is paginated, we should consider inserting an order
+    // during pagination of the simulation vs during the pagination of the matching
+    // as different tests, since the simulation generates the emergent price.
+    // We should also define wether the validation should be done against the last tick's
+    // emergent price or the newly generated one.
+    ({
       description: 'Minimum order amount is enforced when the pair is receiving orders',
       setup: () => () => {},
       setupMessage: 'AND the pair is receiving orders',
@@ -169,13 +252,13 @@ describe('FEATURE: Min amount for order', function() {
       setup: goToRunningMatchingStage,
       setupMessage: 'AND the pair is running the matching',
       goesToPendingQueue: true
-    }
+    })
   ].forEach(function(scenario) {
     describe(scenario.description, function() {
       describe('RULE: Amounts below the min should revert', function() {
         describe(
           'CASE: order with the common base as its token',
-          testValidInsertion({
+          testValidBothInsertion({
             ...scenario,
             pair: () => [commonBase, someToken],
             amount: 0.01,
@@ -187,7 +270,7 @@ describe('FEATURE: Min amount for order', function() {
 
         describe(
           'CASE: order with a secondary token with direct conversion into the common base',
-          testValidInsertion({
+          testValidBothInsertion({
             ...scenario,
             pair: () => [commonBase, someToken],
             amount: 0.1,
@@ -199,7 +282,7 @@ describe('FEATURE: Min amount for order', function() {
 
         describe(
           'CASE: order with a base other than the common base as its token',
-          testValidInsertion({
+          testValidBothInsertion({
             ...scenario,
             pair: () => [someToken, otherToken],
             amount: 0.01,
@@ -211,7 +294,7 @@ describe('FEATURE: Min amount for order', function() {
 
         describe(
           'CASE: order with a secondary token without direct conversion into the common base',
-          testValidInsertion({
+          testValidBothInsertion({
             ...scenario,
             pair: () => [someToken, otherToken],
             amount: 0.01,
@@ -225,7 +308,7 @@ describe('FEATURE: Min amount for order', function() {
       describe('RULE: Amounts above the min should be inserted', function() {
         describe(
           'CASE: order with the common base as its token',
-          testValidInsertion({
+          testValidBothInsertion({
             ...scenario,
             pair: () => [commonBase, someToken],
             amount: 1.5,
@@ -236,7 +319,7 @@ describe('FEATURE: Min amount for order', function() {
 
         describe(
           'CASE: amount in a secondary with direct conversion into the common base',
-          testValidInsertion({
+          testValidBothInsertion({
             ...scenario,
             pair: () => [commonBase, someToken],
             amount: 0.5,
@@ -247,7 +330,7 @@ describe('FEATURE: Min amount for order', function() {
 
         describe(
           'CASE: amount in some other base',
-          testValidInsertion({
+          testValidBothInsertion({
             ...scenario,
             pair: () => [someToken, otherToken],
             amount: 1,
@@ -258,7 +341,7 @@ describe('FEATURE: Min amount for order', function() {
 
         describe(
           'CASE: amount in some secondary without direct conversion into the common base',
-          testValidInsertion({
+          testValidBothInsertion({
             ...scenario,
             pair: () => [someToken, otherToken],
             amount: 0.05,
@@ -269,7 +352,7 @@ describe('FEATURE: Min amount for order', function() {
       });
       describe(
         'RULE: with min amount 0, every order should enter',
-        testValidInsertion({
+        testValidBothInsertion({
           ...scenario,
           pair: () => [someToken, otherToken],
           amount: 0.0000001,
@@ -280,7 +363,7 @@ describe('FEATURE: Min amount for order', function() {
 
       describe(
         'RULE: an order with amount same as min should enter',
-        testValidInsertion({
+        testValidBothInsertion({
           ...scenario,
           pair: () => [someToken, otherToken],
           amount: 1,

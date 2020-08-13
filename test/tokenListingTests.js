@@ -18,6 +18,7 @@ let newBase;
 let newSecondary;
 let user;
 let commissionManager;
+let priceProviderSecondary;
 
 const testHelper = testHelperBuilder();
 const { wadify, pricefy } = testHelper;
@@ -29,6 +30,8 @@ const MAX_BLOCKS_FOR_TICK = 12;
 const MIN_BLOCKS_FOR_TICK = 4;
 const DEFAULT_PRICE_PRECISION = (10 ** 4).toString();
 const COMMISSION_RATE = '0';
+const MIN_MULTIPLY_FACTOR = '15000000000000000';
+const MAX_MULTIPLY_FACTOR = '350000000000000000';
 const ERROR_MSG_ALREADY_INITIALIZED = 'Contract instance has already been initialized.';
 const ERROR_MSG_INVALID_BASE_TOKEN = 'Invalid Pair';
 const ERROR_MSG_PAIR_DOESNT_EXIST = 'Token pair does not exist';
@@ -57,6 +60,7 @@ const setContracts = async function() {
     testHelper.getGovernor(),
     testHelper.getStopper()
   ]);
+  priceProviderSecondary = await testHelper.getTokenPriceProviderFake().new();
 };
 const initializeDex = async function(temporaryOwner, beneficiaryAddress) {
   await setContracts();
@@ -68,6 +72,7 @@ const initializeDex = async function(temporaryOwner, beneficiaryAddress) {
     governor.address,
     temporaryOwner
   );
+
   await dex.initialize(
     doc.address,
     commissionManager.address,
@@ -75,6 +80,8 @@ const initializeDex = async function(temporaryOwner, beneficiaryAddress) {
     MAX_BLOCKS_FOR_TICK,
     MIN_BLOCKS_FOR_TICK,
     MIN_ORDER_AMOUNT,
+    MIN_MULTIPLY_FACTOR,
+    MAX_MULTIPLY_FACTOR,
     MAX_ORDER_LIFESPAN,
     governor.address,
     stopper.address
@@ -98,6 +105,8 @@ describe('token listing tests', function() {
           MAX_BLOCKS_FOR_TICK,
           MIN_BLOCKS_FOR_TICK,
           MIN_ORDER_AMOUNT,
+          MIN_MULTIPLY_FACTOR,
+          MAX_MULTIPLY_FACTOR,
           MAX_ORDER_LIFESPAN,
           governor.address,
           stopper.address
@@ -108,6 +117,7 @@ describe('token listing tests', function() {
   });
 
   contract('listing a token pair and then inserting an order: happy path', function(accounts) {
+    // eslint-disable-next-line mocha/no-sibling-hooks
     before(async function() {
       await initializeDex(accounts[0], accounts[1]);
       user = accounts[testHelper.DEFAULT_ACCOUNT_INDEX];
@@ -119,6 +129,7 @@ describe('token listing tests', function() {
       await dex.addTokenPair(
         doc.address,
         secondary.address,
+        priceProviderSecondary.address,
         DEFAULT_PRICE_PRECISION,
         DEFAULT_PRICE_PRECISION,
         governor
@@ -138,7 +149,7 @@ describe('token listing tests', function() {
         });
       });
       it('WHEN a buy order is inserted for that pair', async function() {
-        await dex.insertBuyOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
+        await dex.insertBuyLimitOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
           from: user
         });
       });
@@ -146,7 +157,7 @@ describe('token listing tests', function() {
         testHelper.assertBig(await dex.buyOrdersLength(doc.address, secondary.address), 1);
       });
       it('AND WHEN a sell order is inserted for that pair', async function() {
-        await dex.insertSellOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
+        await dex.insertSellLimitOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
           from: user
         });
       });
@@ -159,16 +170,20 @@ describe('token listing tests', function() {
   contract('listing two token pair and then inserting an order: happy path', function(accounts) {
     newBase = secondary;
     newSecondary = thirdToken;
+    let priceProviderNewBaseNewSec;
+    // eslint-disable-next-line mocha/no-sibling-hooks
     before(async function() {
       await initializeDex(accounts[0], accounts[1]);
       user = accounts[testHelper.DEFAULT_ACCOUNT_INDEX];
       newBase = secondary;
       newSecondary = thirdToken;
+      priceProviderNewBaseNewSec = await testHelper.getTokenPriceProviderFake().new();
     });
     it('GIVEN there is a token pair listed', async function() {
       await dex.addTokenPair(
         doc.address,
         secondary.address,
+        priceProviderSecondary.address,
         DEFAULT_PRICE_PRECISION,
         DEFAULT_PRICE_PRECISION,
         governor
@@ -178,6 +193,7 @@ describe('token listing tests', function() {
       await dex.addTokenPair(
         newBase.address,
         newSecondary.address,
+        priceProviderNewBaseNewSec.address,
         DEFAULT_PRICE_PRECISION,
         DEFAULT_PRICE_PRECISION,
         governor
@@ -197,17 +213,31 @@ describe('token listing tests', function() {
         });
       });
       it('WHEN a buy order is inserted for that pair', async function() {
-        await dex.insertBuyOrder(newBase.address, newSecondary.address, wadify(1), pricefy(1), 5, {
-          from: user
-        });
+        await dex.insertBuyLimitOrder(
+          newBase.address,
+          newSecondary.address,
+          wadify(1),
+          pricefy(1),
+          5,
+          {
+            from: user
+          }
+        );
       });
       it('THEN the buy orderbook for that pair has length 1', async function() {
         testHelper.assertBig(await dex.buyOrdersLength(newBase.address, newSecondary.address), 1);
       });
       it('AND WHEN a sell order is inserted for that pair', async function() {
-        await dex.insertSellOrder(newBase.address, newSecondary.address, wadify(1), pricefy(1), 5, {
-          from: user
-        });
+        await dex.insertSellLimitOrder(
+          newBase.address,
+          newSecondary.address,
+          wadify(1),
+          pricefy(1),
+          5,
+          {
+            from: user
+          }
+        );
       });
       it('THEN the sell orderbook for that pair has length 1', async function() {
         testHelper.assertBig(await dex.sellOrdersLength(newBase.address, newSecondary.address), 1);
@@ -218,6 +248,7 @@ describe('token listing tests', function() {
   contract(
     'listing a token pair: base token is not DOC and the pair DOC-token does not exist',
     function(accounts) {
+      // eslint-disable-next-line mocha/no-sibling-hooks
       before(setContracts);
       it('GIVEN the dex contract is initialized', function() {
         return initializeDex(accounts[0], accounts[1]);
@@ -227,6 +258,7 @@ describe('token listing tests', function() {
           dex.addTokenPair(
             wrbtc.address,
             secondary.address,
+            priceProviderSecondary.address,
             DEFAULT_PRICE_PRECISION,
             DEFAULT_PRICE_PRECISION,
             governor
@@ -238,6 +270,7 @@ describe('token listing tests', function() {
         await dex.addTokenPair(
           doc.address,
           wrbtc.address,
+          priceProviderSecondary.address,
           DEFAULT_PRICE_PRECISION,
           DEFAULT_PRICE_PRECISION,
           governor
@@ -247,6 +280,7 @@ describe('token listing tests', function() {
         await dex.addTokenPair(
           doc.address,
           secondary.address,
+          priceProviderSecondary.address,
           DEFAULT_PRICE_PRECISION,
           DEFAULT_PRICE_PRECISION,
           governor
@@ -256,6 +290,7 @@ describe('token listing tests', function() {
         await dex.addTokenPair(
           wrbtc.address,
           secondary.address,
+          priceProviderSecondary.address,
           DEFAULT_PRICE_PRECISION,
           DEFAULT_PRICE_PRECISION,
           governor
@@ -275,6 +310,7 @@ describe('token listing tests', function() {
           dex.addTokenPair(
             doc.address,
             doc.address,
+            priceProviderSecondary.address,
             DEFAULT_PRICE_PRECISION,
             DEFAULT_PRICE_PRECISION,
             governor
@@ -293,6 +329,7 @@ describe('token listing tests', function() {
           dex.addTokenPair(
             doc.address,
             secondary.address,
+            priceProviderSecondary.address,
             DEFAULT_PRICE_PRECISION,
             DEFAULT_PRICE_PRECISION,
             governor
@@ -317,6 +354,7 @@ describe('token listing tests', function() {
         await dex.addTokenPair(
           doc.address,
           secondary.address,
+          priceProviderSecondary.address,
           DEFAULT_PRICE_PRECISION,
           DEFAULT_PRICE_PRECISION,
           governor
@@ -324,7 +362,7 @@ describe('token listing tests', function() {
       });
       it('WHEN a buy order is inserted with an invalid base token, THEN it should revert', async function() {
         await expectRevert(
-          dex.insertBuyOrder(dex.address, secondary.address, wadify(1), pricefy(1), 5, {
+          dex.insertBuyLimitOrder(dex.address, secondary.address, wadify(1), pricefy(1), 5, {
             from: user
           }),
           ERROR_MSG_PAIR_DOESNT_EXIST
@@ -332,7 +370,7 @@ describe('token listing tests', function() {
       });
       it('WHEN a sell order is inserted with an invalid base token, THEN it should revert', async function() {
         await expectRevert(
-          dex.insertSellOrder(dex.address, secondary.address, wadify(1), pricefy(1), 5, {
+          dex.insertSellLimitOrder(dex.address, secondary.address, wadify(1), pricefy(1), 5, {
             from: user
           }),
           ERROR_MSG_PAIR_DOESNT_EXIST
@@ -340,7 +378,7 @@ describe('token listing tests', function() {
       });
       it('WHEN a buy order is inserted with an invalid secondary token, THEN it should revert', function() {
         return expectRevert(
-          dex.insertBuyOrder(doc.address, dex.address, wadify(1), pricefy(1), 5, {
+          dex.insertBuyLimitOrder(doc.address, dex.address, wadify(1), pricefy(1), 5, {
             from: user
           }),
           ERROR_MSG_PAIR_DOESNT_EXIST
@@ -348,7 +386,7 @@ describe('token listing tests', function() {
       });
       it('WHEN a sell order is inserted with an invalid secondary token, THEN it should revert', function() {
         return expectRevert(
-          dex.insertSellOrder(doc.address, dex.address, wadify(1), pricefy(1), 5, {
+          dex.insertSellLimitOrder(doc.address, dex.address, wadify(1), pricefy(1), 5, {
             from: user
           }),
           ERROR_MSG_PAIR_DOESNT_EXIST
@@ -360,6 +398,7 @@ describe('token listing tests', function() {
           dex.addTokenPair(
             doc.address,
             secondary.address,
+            priceProviderSecondary.address,
             (10 ** 5).toString(),
             (10 ** 5).toString(),
             governor
@@ -373,6 +412,7 @@ describe('token listing tests', function() {
           dex.addTokenPair(
             secondary.address,
             doc.address,
+            priceProviderSecondary.address,
             (10 ** 5).toString(),
             (10 ** 5).toString(),
             governor

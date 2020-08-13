@@ -11,11 +11,13 @@ const MinOrderAmountChanger = artifacts.require('MinOrderAmountChanger');
 const MaxOrderLifespanChanger = artifacts.require('MaxOrderLifespanChanger');
 const BeneficiaryAddressChanger = artifacts.require('BeneficiaryAddressChanger');
 const CommissionRateChanger = artifacts.require('CommissionRateChanger');
+const MarketOrderSettingsChanger = artifacts.require('MarketOrderSettingsChanger');
 const CancelationPenaltyRateChanger = artifacts.require('CancelationPenaltyRateChanger');
 const ExpirationPenaltyRateChanger = artifacts.require('ExpirationPenaltyRateChanger');
 const TokenPairDisabler = artifacts.require('TokenPairDisabler');
 const TokenPairEnabler = artifacts.require('TokenPairEnabler');
-const EMAPriceChanger = artifacts.require('EMAPriceChanger');
+const EmaPriceChanger = artifacts.require('EmaPriceChanger');
+const PriceProviderChanger = artifacts.require('PriceProviderChanger');
 const SmoothingFactorChanger = artifacts.require('SmoothingFactorChanger');
 
 let testHelper;
@@ -27,6 +29,7 @@ describe('Governed functions tests', function() {
   let base;
   let secondary;
   let governor;
+  let newPriceProvider;
   before(async function() {
     testHelper = testHelperBuilder();
     [dex, commissionManager, base, secondary, governor] = await Promise.all([
@@ -36,6 +39,7 @@ describe('Governed functions tests', function() {
       testHelper.getSecondary(),
       testHelper.getGovernor()
     ]);
+    newPriceProvider = await testHelper.getTokenPriceProviderFake().new();
   });
 
   const testGoverned = function({
@@ -86,7 +90,7 @@ describe('Governed functions tests', function() {
     then: () =>
       it('THEN the expected orders for tick has changed', async function() {
         const { expectedOrdersForTick } = await dex.tickConfig();
-        testHelper.assertBig(expectedOrdersForTick, 5, 'Expected orders for tick');
+        return testHelper.assertBig(expectedOrdersForTick, 5, 'Expected orders for tick');
       }),
     getChanger: () => ExpectedOrdersForTickChanger.new(dex.address, 5)
   });
@@ -99,7 +103,7 @@ describe('Governed functions tests', function() {
     then: () =>
       it('THEN the max blocks for tick has changed', async function() {
         const { maxBlocksForTick } = await dex.tickConfig();
-        testHelper.assertBig(maxBlocksForTick, 200, 'max blocks for tick');
+        return testHelper.assertBig(maxBlocksForTick, 200, 'max blocks for tick');
       }),
     getChanger: () => MaxBlocksForTickChanger.new(dex.address, 200)
   });
@@ -112,7 +116,7 @@ describe('Governed functions tests', function() {
     then: () =>
       it('THEN the min blocks for tick has changed', async function() {
         const { minBlocksForTick } = await dex.tickConfig();
-        testHelper.assertBig(minBlocksForTick, 5, 'min blocks for tick');
+        return testHelper.assertBig(minBlocksForTick, 5, 'min blocks for tick');
       }),
     getChanger: () => MinBlocksForTickChanger.new(dex.address, 5)
   });
@@ -128,7 +132,7 @@ describe('Governed functions tests', function() {
           base.address,
           secondary.address
         );
-        testHelper.assertBig(lastClosingPrice, 17, 'Last closing price');
+        return testHelper.assertBig(lastClosingPrice, 17, 'Last closing price');
       }),
     getChanger: () => LastClosingPriceChanger.new(dex.address, base.address, secondary.address, 17)
   });
@@ -141,7 +145,7 @@ describe('Governed functions tests', function() {
     then: () =>
       it('THEN the minimum order amount has changed', async function() {
         const minOrderAmount = await dex.minOrderAmount();
-        testHelper.assertBigWad(minOrderAmount, 2, 'Min order amount');
+        return testHelper.assertBigWad(minOrderAmount, 2, 'Min order amount');
       }),
     getChanger: () => MinOrderAmountChanger.new(dex.address, testHelper.wadify(2))
   });
@@ -154,7 +158,7 @@ describe('Governed functions tests', function() {
     then: () =>
       it('THEN the max order lifespan has changed', async function() {
         const maxOrderLifespan = await dex.maxOrderLifespan();
-        testHelper.assertBig(maxOrderLifespan, 9, 'Max order lifespan');
+        return testHelper.assertBig(maxOrderLifespan, 9, 'Max order lifespan');
       }),
     getChanger: () => MaxOrderLifespanChanger.new(dex.address, 9)
   });
@@ -168,7 +172,7 @@ describe('Governed functions tests', function() {
     then: () =>
       it('THEN the address of the beneficiary has changed', async function() {
         const beneficiaryAddress = await commissionManager.beneficiaryAddress();
-        testHelper.assertAddresses(
+        return testHelper.assertAddresses(
           ANY_ADDRESS,
           beneficiaryAddress.toLowerCase(),
           'Address of the beneficiary'
@@ -184,9 +188,45 @@ describe('Governed functions tests', function() {
     then: () =>
       it('THEN the commission rate has changed', async function() {
         const commissionRate = await commissionManager.commissionRate();
-        testHelper.assertBigWad(commissionRate, 0.012, 'Commission rate');
+        return testHelper.assertBigWad(commissionRate, 0.012, 'Commission rate');
       }),
     getChanger: () => CommissionRateChanger.new(commissionManager.address, testHelper.wadify(0.012))
+  });
+
+  testGoverned({
+    action: 'set the min multiply factor',
+    functionName: 'setMinMultiplyFactor',
+    getContract: () => dex,
+    getParams: () => [testHelper.wadify(0.015)],
+    then: () =>
+      it('THEN the min multiply factor has changed', async function() {
+        const minMultiplyFactor = await dex.minMultiplyFactor();
+        testHelper.assertBigWad(minMultiplyFactor, 0.015, 'Min multiply factor');
+      }),
+    getChanger: () =>
+      MarketOrderSettingsChanger.new(
+        dex.address,
+        testHelper.wadify(0.015),
+        testHelper.wadify(9.012)
+      )
+  });
+
+  testGoverned({
+    action: 'set the max multiply factor',
+    functionName: 'setMaxMultiplyFactor',
+    getContract: () => dex,
+    getParams: () => [testHelper.wadify(19.015)],
+    then: () =>
+      it('THEN the max multiply factor has changed', async function() {
+        const maxMultiplyFactor = await dex.maxMultiplyFactor();
+        testHelper.assertBigWad(maxMultiplyFactor, 19.015, 'Max multiply factor');
+      }),
+    getChanger: () =>
+      MarketOrderSettingsChanger.new(
+        dex.address,
+        testHelper.wadify(0.015),
+        testHelper.wadify(19.015)
+      )
   });
 
   testGoverned({
@@ -197,7 +237,7 @@ describe('Governed functions tests', function() {
     then: () =>
       it('THEN the cancelation penalty rate has changed', async function() {
         const cancelationPenaltyRate = await commissionManager.cancelationPenaltyRate();
-        testHelper.assertBigWad(cancelationPenaltyRate, 0.225, 'Cancelation penalty rate');
+        return testHelper.assertBigWad(cancelationPenaltyRate, 0.225, 'Cancelation penalty rate');
       }),
     getChanger: () =>
       CancelationPenaltyRateChanger.new(commissionManager.address, testHelper.wadify(0.225))
@@ -211,7 +251,7 @@ describe('Governed functions tests', function() {
     then: () =>
       it('THEN the expiration penalty rate has changed', async function() {
         const expirationPenaltyRate = await commissionManager.expirationPenaltyRate();
-        testHelper.assertBigWad(expirationPenaltyRate, 0.75, 'Expiration penalty rate');
+        return testHelper.assertBigWad(expirationPenaltyRate, 0.75, 'Expiration penalty rate');
       }),
     getChanger: () =>
       ExpirationPenaltyRateChanger.new(commissionManager.address, testHelper.wadify(0.75))
@@ -252,17 +292,40 @@ describe('Governed functions tests', function() {
 
   testGoverned({
     action: 'setting ema price',
-    functionName: 'setTokenPairEMAPrice',
+    functionName: 'setTokenPairEmaPrice',
     getParams: () => [base.address, secondary.address, testHelper.wadify(3)],
     then: () =>
-      it('THEN the token pair shold have a different EMAPrice', async function() {
+      it('THEN the token pair shuold have a different EmaPrice', async function() {
         const tokenPairStatus = await dex.getTokenPairStatus(base.address, secondary.address);
         // eslint-disable-next-line no-unused-expressions
-        testHelper.assertBigWad(tokenPairStatus.EMAPrice, 3, 'EMA Price');
+        return testHelper.assertBigWad(tokenPairStatus.emaPrice, 3, 'EMA Price');
       }),
     getContract: () => dex,
     getChanger: () =>
-      EMAPriceChanger.new(dex.address, base.address, secondary.address, testHelper.wadify(3))
+      EmaPriceChanger.new(dex.address, base.address, secondary.address, testHelper.wadify(3))
+  });
+
+  testGoverned({
+    action: 'setting price provider',
+    functionName: 'setPriceProvider',
+    getParams: () => [base.address, secondary.address, newPriceProvider.address],
+    then: () =>
+      it('THEN the token pair shuold have a new price provider', async function() {
+        const currentPriceProvider = await dex.getPriceProvider(base.address, secondary.address);
+        return testHelper.assertAddresses(
+          newPriceProvider.address.toLowerCase(),
+          currentPriceProvider.toLowerCase(),
+          'Address of the price provider'
+        );
+      }),
+    getContract: () => dex,
+    getChanger: () =>
+      PriceProviderChanger.new(
+        dex.address,
+        base.address,
+        secondary.address,
+        newPriceProvider.address
+      )
   });
 
   testGoverned({
@@ -270,10 +333,10 @@ describe('Governed functions tests', function() {
     functionName: 'setTokenPairSmoothingFactor',
     getParams: () => [base.address, secondary.address, testHelper.wadify(0.72)],
     then: () =>
-      it('THEN the token pair shold have a different smoothing factor', async function() {
+      it('THEN the token pair should have a different smoothing factor', async function() {
         const tokenPairStatus = await dex.getTokenPairStatus(base.address, secondary.address);
         // eslint-disable-next-line no-unused-expressions
-        testHelper.assertBigWad(tokenPairStatus.smoothingFactor, 0.72, 'Smoothing factor');
+        return testHelper.assertBigWad(tokenPairStatus.smoothingFactor, 0.72, 'Smoothing factor');
       }),
     getContract: () => dex,
     getChanger: () =>

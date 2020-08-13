@@ -12,6 +12,9 @@ module.exports = {
   DEFAULT_MIN_ORDER_AMOUNT: new BN(0).toString(),
   DEFAULT_MAX_ORDER_LIFESPAN: 10,
   DEFAULT_COMMISSION_RATE: new BN(0).toString(),
+  DEFAULT_MIN_MO_MULTIPLY_FACTOR: 0.01,
+  // Purposely put a very high max to help make more extreme tests
+  DEFAULT_MAX_MO_MULTIPLY_FACTOR: 199,
   DEFAULT_CANCELATION_PENALTY_RATE: new BN(0).toString(),
   DEFAULT_EXPIRATION_PENALTY_RATE: new BN(0).toString(),
   DEFAULT_ACCOUNT_INDEX: 1,
@@ -31,5 +34,9 @@ module.exports = {
     RUNNING_MATCHING: 2,
     MOVING_PENDING_ORDERS: 3
   },
-  MAX_PENDING_TXS: 20
+  MAX_PENDING_TXS: 20,
+  orderTypes: {
+    LIMIT_ORDER: new BN(0),
+    MARKET_ORDER: new BN(1)
+  }
 };

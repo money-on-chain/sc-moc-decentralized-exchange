@@ -17,6 +17,7 @@ let base;
 let secondary;
 let report;
 let pair;
+const MARKET_PRICE = 2;
 
 const setContractsAndBalances = async function(accounts) {
   await testHelper.createContracts({
@@ -103,8 +104,8 @@ describe('volume tests and gas cost report generation, using a 1% commission rat
               // intentionally sequential
               // eslint-disable-next-line no-await-in-loop
               ...(await Promise.all([
-                dex.insertSellOrder(...pair, wadify(1), pricefy(1), 5, { from: getFrom(i) }),
-                dex.insertBuyOrder(...pair, wadify(1), pricefy(1), 5, { from: getFrom(i + 1) })
+                dex.insertSellLimitOrder(...pair, wadify(1), pricefy(1), 5, { from: getFrom(i) }),
+                dex.insertBuyLimitOrder(...pair, wadify(1), pricefy(1), 5, { from: getFrom(i + 1) })
               ])).map(tx => tx.receipt),
               ...receipts
             ];
@@ -133,7 +134,7 @@ describe('volume tests and gas cost report generation, using a 1% commission rat
     });
   });
 
-  const totalOrdersPerType = 21;
+  const totalOrdersPerType = 19;
   const descriptionUniqueTest = `match ${totalOrdersPerType} vs ${totalOrdersPerType} orders, orderbook with half expired in between`;
   contract(descriptionUniqueTest, function(accounts) {
     let logObject;
@@ -152,13 +153,15 @@ describe('volume tests and gas cost report generation, using a 1% commission rat
       let promises = [];
       for (let i = totalOrdersPerType; i > 0; i--) {
         promises.push(
-          dex.insertBuyOrder(...pair, wadify(1), pricefy(1), 5, { from: getFrom(i + 1) })
+          dex.insertBuyLimitOrder(...pair, wadify(1), pricefy(1), 5, { from: getFrom(i + 1) })
         );
       }
       await Promise.all(promises);
       promises = [];
       for (let i = totalOrdersPerType; i > 0; i--) {
-        promises.push(dex.insertSellOrder(...pair, wadify(1), pricefy(1), 5, { from: getFrom(i) }));
+        promises.push(
+          dex.insertSellLimitOrder(...pair, wadify(1), pricefy(1), 5, { from: getFrom(i) })
+        );
       }
       await Promise.all(promises);
       promises = [];
@@ -196,12 +199,16 @@ describe('volume tests and gas cost report generation, using a 1% commission rat
         totalOrders: 10
       },
       {
-        description: '20 sells against 1 buy',
-        totalOrders: 20
+        description: '12 sells against 1 buy',
+        totalOrders: 12
       },
       {
-        description: '22 sells against 1 buy',
-        totalOrders: 22
+        description: '15 sells against 1 buy',
+        totalOrders: 15
+      },
+      {
+        description: '17 sells against 1 buy',
+        totalOrders: 17
       }
     ].forEach(({ description, totalOrders }) => {
       contract(description, function(accounts) {
@@ -218,12 +225,12 @@ describe('volume tests and gas cost report generation, using a 1% commission rat
             receipts = [
               // intentionally sequential
               // eslint-disable-next-line no-await-in-loop
-              (await dex.insertSellOrder(...pair, wadify(1), pricefy(1), 5, { from })).receipt,
+              (await dex.insertSellLimitOrder(...pair, wadify(1), pricefy(1), 5, { from })).receipt,
               ...receipts
             ];
           }
           logObject.sellOrdersInsertion = receipts.reduce((sum, curr) => curr.gasUsed + sum, 0);
-          logObject.buyOrdersInsertion = (await dex.insertBuyOrder(
+          logObject.buyOrdersInsertion = (await dex.insertBuyLimitOrder(
             ...pair,
             wadify(totalOrders),
             pricefy(1),
@@ -246,6 +253,91 @@ describe('volume tests and gas cost report generation, using a 1% commission rat
               gas: 6.8e6
             })).receipt.gasUsed;
           });
+          it('THEN both orderbooks are empty', assertLengths());
+        });
+      });
+    });
+  });
+
+  describe('match n orders of each type(mo, lo) against 1 order', function() {
+    [
+      {
+        description: '10 sells against 1 buy',
+        totalOrdersByType: 5
+      },
+      {
+        description: '12 sells against 1 buy',
+        totalOrdersByType: 6
+      },
+      {
+        description: '15 sells against 1 buy',
+        totalOrdersByType: 7
+      },
+      {
+        description: '16 sells against 1 buy',
+        totalOrdersByType: 8
+      }
+    ].forEach(({ description, totalOrdersByType }) => {
+      contract(description, function(accounts) {
+        let logObject;
+        before(async function() {
+          await setContractsAndBalances(accounts);
+          let receipts = [];
+          report.testCases[description] = {};
+          logObject = report.testCases[description];
+          const from = accounts[DEFAULT_ACCOUNT_INDEX];
+          // this creates an orderbook with totalOrdersByType sell limit orders
+          // that match against a single buy order
+          for (let i = 0; i < totalOrdersByType; i++) {
+            receipts = [
+              // intentionally sequential
+              // eslint-disable-next-line no-await-in-loop
+              (await dex.insertSellLimitOrder(...pair, wadify(1), pricefy(1), 5, { from })).receipt,
+              ...receipts
+            ];
+          }
+          // this adds the totalOrdersByType sell marketOrder
+          for (let i = 0; i < totalOrdersByType; i++) {
+            receipts = [
+              // intentionally sequential
+              // eslint-disable-next-line no-await-in-loop
+              (await dex.insertMarketOrder(
+                ...pair,
+                wadify(1),
+                pricefy(1 / MARKET_PRICE),
+                5,
+                false,
+                { from }
+              )).receipt,
+              ...receipts
+            ];
+          }
+          logObject.sellOrdersInsertion = receipts.reduce((sum, curr) => curr.gasUsed + sum, 0);
+          logObject.buyOrdersInsertion = (await dex.insertBuyLimitOrder(
+            ...pair,
+            wadify(totalOrdersByType * 2),
+            pricefy(1),
+            5,
+            {
+              from
+            }
+          )).receipt.gasUsed;
+          logObject.insertionAvg =
+            logObject.sellOrdersInsertion +
+            logObject.buyOrdersInsertion / (totalOrdersByType * 2 + 1);
+        });
+        it(
+          `GIVEN there are ${totalOrdersByType} sell orders of each type and one buy order`,
+          assertLengths(1, totalOrdersByType * 2)
+        );
+        describe('WHEN matching orders', function() {
+          before(async function() {
+            // Use a ridicoulously big amount of steps to ensure to be completing the steps
+            logObject.match = (await dex.matchOrders(...pair, 3000, {
+              gas: 6.8e6
+            })).receipt.gasUsed;
+          });
+
           it('THEN both orderbooks are empty', assertLengths());
         });
       });

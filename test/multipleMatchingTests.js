@@ -1,5 +1,5 @@
 const _ = require('lodash');
-const { orderBookMatcher } = require('./testHelpers/orderBookMatcher');
+const { orderBookMatcherBothTypes } = require('./testHelpers/orderBookMatcher');
 const testHelperBuilder = require('./testHelpers/testHelper');
 
 const scenarios = [
@@ -20,7 +20,7 @@ const scenarios = [
       orders: [{ lockingAmount: 15, price: 10, commission: 0.15 }] // orderId: 3
     },
     buyerMatches: {
-      description: 'AND the first buyer matches with 30 change, the secondwithout change',
+      description: 'AND the first buyer matches with 30 change, the second without change',
       matches: [
         {
           orderId: 2,
@@ -228,5 +228,5 @@ describe('Dex: Multiple matching tests', function() {
   before(function() {
     testHelper = testHelperBuilder();
   });
-  scenarios.forEach(_.curry(orderBookMatcher)(() => testHelper));
+  scenarios.forEach(_.curry(orderBookMatcherBothTypes)(() => testHelper));
 });
