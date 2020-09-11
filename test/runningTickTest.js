@@ -85,7 +85,7 @@ describe('Running tick functions tests', function() {
           describe(`AND that the specific preconditions to ${action} are fulfilled`, function() {
             if (fulfillPreconditions) before(fulfillPreconditions);
 
-            describe('WHEN the simmulation is running in the pair', function() {
+            describe('WHEN the simulation is running in the pair', function() {
               before(async function() {
                 await dex.matchOrders(base.address, secondary.address, 1);
               });

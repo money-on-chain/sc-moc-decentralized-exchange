@@ -49,12 +49,15 @@ describe('Market Order insertion event tests', function() {
         );
       });
       it('THEN an event is emitted for the buy order', function() {
-        assertNewOrderEvent({ isBuy: true, expiresInTick: '11', multiplyFactor: 1.8 }, () => ({
-          tx,
-          baseAddress: base.address,
-          secondaryAddress: secondary.address,
-          MoCDex: testHelper.getMoCDex()
-        }));
+        assertNewOrderEvent(
+          { isBuy: true, expiresInTick: '11', multiplyFactor: 1.8, sender: from },
+          () => ({
+            tx,
+            baseAddress: base.address,
+            secondaryAddress: secondary.address,
+            MoCDex: testHelper.getMoCDex()
+          })
+        );
       });
     });
     describe('AND WHEN inserting a buy order with too much lifespan', function() {

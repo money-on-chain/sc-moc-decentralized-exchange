@@ -271,7 +271,7 @@ const orderBookMatcherGeneric = (
 
     // this is done concurrently. This is faster
     // but if more than one assert fails, it is undefined
-    // behaviour which one'll show up
+    // behaviour which one will show up
     describe('EXECUTION: ', function() {
       it(scenario.buyerMatches.description, function() {
         return Promise.all([

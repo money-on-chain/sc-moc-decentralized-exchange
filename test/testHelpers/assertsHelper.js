@@ -86,13 +86,13 @@ const fixBuyerMatchPrecisions = convertFieldsIntoContractPrecision;
 
 const fixSellerMatchPrecisions = convertFieldsIntoContractPrecision;
 
-const assertBuyerMatch = (wadify, pricefy) => (transaction, expecteds) =>
-  convertExpectedIntoContractPrecision(wadify, pricefy)(expecteds).map(
+const assertBuyerMatch = (wadify, pricefy) => (transaction, expected) =>
+  convertExpectedIntoContractPrecision(wadify, pricefy)(expected).map(
     currifiedInLogs(transaction, 'BuyerMatch')
   );
 
-const assertSellerMatch = (wadify, pricefy) => (transaction, expecteds) =>
-  convertExpectedIntoContractPrecision(wadify, pricefy)(expecteds).map(
+const assertSellerMatch = (wadify, pricefy) => (transaction, expected) =>
+  convertExpectedIntoContractPrecision(wadify, pricefy)(expected).map(
     currifiedInLogs(transaction, 'SellerMatch')
   );
 

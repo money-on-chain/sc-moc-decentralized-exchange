@@ -65,7 +65,7 @@ describe('multiple tokens tests - emergent price', function() {
     const userData = {
       '1': {
         baseAllowance: 1000000000000000000000, // this is specified with precision 18
-        baseBalance: 1000000000000000000000 // and doesnt matter, it just needs to be a big number
+        baseBalance: 1000000000000000000000 // and doesn't matter, it just needs to be a big number
       },
       '2': {
         secondaryBalance: 1000000000000000000000,
@@ -389,7 +389,7 @@ describe('multiple tokens tests - emergent price', function() {
         );
 
         await dex.insertMarketOrder(
-          // doesnt match
+          // doesn't match
           doc.address,
           otherSecondary.address,
           wadify(1),
@@ -422,7 +422,7 @@ describe('multiple tokens tests - emergent price', function() {
           }
         );
         await dex.insertSellLimitOrder(
-          // doesnt match
+          // doesn't match
           doc.address,
           otherSecondary.address,
           wadify(1),

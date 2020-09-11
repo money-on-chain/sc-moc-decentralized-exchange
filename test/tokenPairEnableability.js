@@ -151,7 +151,7 @@ describe('token enable/disable tests', function() {
         );
       });
 
-      it('THEN an event is emmited', async function() {
+      it('THEN an event is emitted', async function() {
         const matchEvents = testHelper.findEvents(result, 'TokenPairDisabled', {
           baseToken: base.address,
           secondaryToken: secondary.address
@@ -229,7 +229,7 @@ describe('token enable/disable tests', function() {
         testHelper.assertBig(await dex.buyOrdersLength(base.address, secondary.address), 2);
       });
 
-      it('THEN an event is emmited', async function() {
+      it('THEN an event is emitted', async function() {
         const matchEvents = testHelper.findEvents(result, 'TokenPairEnabled', {
           baseToken: base.address,
           secondaryToken: secondary.address

@@ -230,7 +230,7 @@ describe('Governed functions tests', function() {
   });
 
   testGoverned({
-    action: 'set the cancelation penalty rate',
+    action: 'set the cancellation penalty rate',
     functionName: 'setCancelationPenaltyRate',
     getContract: () => commissionManager,
     getParams: () => [testHelper.wadify(0.225)],
@@ -295,7 +295,7 @@ describe('Governed functions tests', function() {
     functionName: 'setTokenPairEmaPrice',
     getParams: () => [base.address, secondary.address, testHelper.wadify(3)],
     then: () =>
-      it('THEN the token pair shuold have a different EmaPrice', async function() {
+      it('THEN the token pair should have a different EmaPrice', async function() {
         const tokenPairStatus = await dex.getTokenPairStatus(base.address, secondary.address);
         // eslint-disable-next-line no-unused-expressions
         return testHelper.assertBigWad(tokenPairStatus.emaPrice, 3, 'EMA Price');
@@ -310,7 +310,7 @@ describe('Governed functions tests', function() {
     functionName: 'setPriceProvider',
     getParams: () => [base.address, secondary.address, newPriceProvider.address],
     then: () =>
-      it('THEN the token pair shuold have a new price provider', async function() {
+      it('THEN the token pair should have a new price provider', async function() {
         const currentPriceProvider = await dex.getPriceProvider(base.address, secondary.address);
         return testHelper.assertAddresses(
           newPriceProvider.address.toLowerCase(),
