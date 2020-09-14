@@ -76,7 +76,7 @@ describe('Withdraw commissions tests', function() {
           chargedCommission.add(previousBalance)
         );
       });
-      it('THEN the event is emited', function() {
+      it('THEN the event is emitted', function() {
         return expectEvent.inLogs(receipt.logs, 'CommissionWithdrawn', {
           withdrawnAmount: chargedCommission,
           token: base.address,
@@ -141,7 +141,7 @@ describe('Withdraw commissions tests', function() {
       it('THEN the beneficiary got 0 tokens', async function() {
         return testHelper.assertBig(await base.balanceOf(beneficiaryAddress), previousBalance);
       });
-      it('THEN the event is emited with 0 withdrawn amount', function() {
+      it('THEN the event is emitted with 0 withdrawn amount', function() {
         return expectEvent.inLogs(receipt.logs, 'CommissionWithdrawn', {
           withdrawnAmount: testHelper.wadify(0),
           token: base.address,

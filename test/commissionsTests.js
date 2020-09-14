@@ -309,7 +309,7 @@ describe('Commissions tests', function() {
   });
 
   contract(
-    'Dex: Commission 10%, cancelation penalty 25%, new buy order canceled',
+    'Dex: Commission 10%, cancellation penalty 25%, new buy order canceled',
     async accounts => {
       describe('GIVEN there is a buy order', function() {
         before(async function() {
@@ -359,7 +359,7 @@ describe('Commissions tests', function() {
   );
 
   contract(
-    'Dex: Commission 10%, cancelation penalty 25%, sell order partialy matched canceled',
+    'Dex: Commission 10%, cancellation penalty 25%, sell order partially matched canceled',
     async accounts => {
       describe('GIVEN there is a sell order that match partially', function() {
         before(async function() {

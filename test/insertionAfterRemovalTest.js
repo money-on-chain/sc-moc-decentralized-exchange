@@ -8,7 +8,7 @@
  * when the orderbook was actually empty the length registered a positive length deriving
  * in that a null order (keep in mind null order means price 0) was used as a "first" order.
  * So never a sell order was able to be inserted because an error of
- * "Price doesnt belong at the start" was thrown.
+ * "Price doesn't belong at the start" was thrown.
  */
 const testHelperBuilder = require('./testHelpers/testHelper');
 
@@ -339,7 +339,7 @@ describe('insert after removal test', function() {
             base.address,
             secondary.address,
             wadify(1),
-            pricefy(4 / MARKET_PRICE), // no matcheable
+            pricefy(4 / MARKET_PRICE), // no match possible
             5,
             false,
             {
@@ -384,7 +384,7 @@ describe('insert after removal test', function() {
             base.address,
             secondary.address,
             wadify(1),
-            pricefy(4), // no matcheable
+            pricefy(4), // no match possible
             5,
             {
               from: accounts[DEFAULT_ACCOUNT_INDEX]

@@ -65,7 +65,7 @@ describe('Token pair EMA Price tests', function() {
     };
   };
 
-  describe('RULE: When the pair has not runned any tick', function() {
+  describe('RULE: When the pair has not run any tick', function() {
     it('THEN the EmaPrice should be the same as the initial price', async function() {
       const tokenPairStatus = await dex.getTokenPairStatus(base.address, secondary.address);
       return testHelper.assertBig(
@@ -76,7 +76,7 @@ describe('Token pair EMA Price tests', function() {
     });
   });
 
-  describe('RULE: When the pair has runned one tick and some orders matched', function() {
+  describe('RULE: When the pair has run one tick and some orders matched', function() {
     contract(
       'GIVEN that there are three buy orders and three sell orders where there is matching price is 1',
       function(accounts) {

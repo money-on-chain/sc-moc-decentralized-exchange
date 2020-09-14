@@ -57,7 +57,7 @@ const setContracts = async function(accounts) {
 };
 
 describe('multiple tokens tests', function() {
-  contract('The emerget price answers zeros in case the pair does not exist', function(accounts) {
+  contract('The emergent price answers zeros in case the pair does not exist', function(accounts) {
     before(function() {
       return setContracts(accounts);
     });
@@ -309,7 +309,7 @@ describe('multiple tokens tests', function() {
         const userData = {
           '1': {
             baseAllowance: 1000000000, // this is specified with precision 18
-            baseBalance: 1000000000 // and doesnt matter, it just needs to be a big number
+            baseBalance: 1000000000 // and doesn't matter, it just needs to be a big number
           },
           '2': {
             secondaryBalance: 1000000000,

@@ -161,7 +161,7 @@ describe('FEATURE: Min amount for order', function() {
                 });
 
                 if (!goesToPendingQueue) {
-                  it('THEN an event for the insertion to the orderbook is emmitted', function() {
+                  it('THEN an event for the insertion to the orderbook is emitted', function() {
                     return assertNewOrderEvent({ isBuy }, () => ({
                       tx,
                       baseAddress: base.address,
@@ -170,7 +170,7 @@ describe('FEATURE: Min amount for order', function() {
                     }));
                   });
                 } else {
-                  it('THEN an event for the insertion to the pending queue is emmitted', function() {
+                  it('THEN an event for the insertion to the pending queue is emitted', function() {
                     return expectEvent.inLogs(tx.logs, 'NewOrderAddedToPendingQueue');
                   });
                 }

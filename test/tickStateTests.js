@@ -173,7 +173,7 @@ describe('Tick State test', function() {
       };
 
       contract(
-        'RULE: Running matching long after nextBlockTick should generate a nextBlockTick after the block number when it was runned and not the expected',
+        'RULE: Running matching long after nextBlockTick should generate a nextBlockTick after the block number when it was run and not the expected',
         function() {
           before(runMatching);
           it('WHEN more than the expected amount of blocks have passed', function() {
