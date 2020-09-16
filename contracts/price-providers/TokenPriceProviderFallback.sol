@@ -1,34 +1,25 @@
 pragma solidity 0.5.8;
 
-import "../interface/IPriceProvider.sol";
+import "./PriceProviderFallback.sol";
 import "../MoCDecentralizedExchange.sol";
 
-contract TokenPriceProviderFallback is IPriceProvider {
+/**
+  @notice if the externalPriceProvider price source is not available, falls back
+          to dex getLastClosingPrice method for the given pair
+*/
+contract TokenPriceProviderFallback is PriceProviderFallback {
   IPriceProvider public externalPriceProvider;
-  MoCDecentralizedExchange public dex;
-  address public baseToken;
-  address public secondaryToken;
 
   constructor(
     IPriceProvider _externalPriceProvider,
     MoCDecentralizedExchange _dex,
     address _baseToken,
     address _secondaryToken
-  ) public {
+  ) public PriceProviderFallback(_dex, _baseToken, _secondaryToken) {
     externalPriceProvider = _externalPriceProvider;
-    dex = _dex;
-    baseToken = _baseToken;
-    secondaryToken = _secondaryToken;
   }
 
-  function peek() external view returns (bytes32, bool) {
-    (bytes32 externalPrice, bool isValid) = externalPriceProvider.peek();
-    bytes32 finalPrice = isValid ? externalPrice : fallbackPrice();
-    return (finalPrice, true);
-  }
-
-  function fallbackPrice() internal view returns (bytes32) {
-    uint256 lastClosingPrice = dex.getLastClosingPrice(baseToken, secondaryToken);
-    return bytes32(lastClosingPrice);
+  function failablePeek() internal view returns (bytes32, bool) {
+    return externalPriceProvider.peek();
   }
 }
