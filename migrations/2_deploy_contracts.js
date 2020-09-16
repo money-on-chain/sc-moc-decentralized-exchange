@@ -25,7 +25,9 @@ const ERC20WithBlacklist = artifacts.require('ERC20WithBlacklist');
 const TickStateFake = artifacts.require('TickStateFake');
 const TokenPriceProviderFake = artifacts.require('TokenPriceProviderFake');
 const TokenPriceProviderLastClosingPrice = artifacts.require('TokenPriceProviderLastClosingPrice');
-const TokenPriceProviderFallback = artifacts.require('TokenPriceProviderFallback');
+const ExternalOraclePriceProviderFallback = artifacts.require(
+  'ExternalOraclePriceProviderFallback'
+);
 const MoCDexFake = artifacts.require('MoCDexFake');
 const CommissionManager = artifacts.require(FEE_MANAGER_NAME);
 
@@ -53,7 +55,7 @@ const deployPriceProvider = (
   console.log(`Deploying price provider with externañ${externalPriceProvider}`);
 
   return externalPriceProvider
-    ? TokenPriceProviderFallback.new(
+    ? ExternalOraclePriceProviderFallback.new(
         externalPriceProvider,
         dexAddress,
         baseTokenAddress,

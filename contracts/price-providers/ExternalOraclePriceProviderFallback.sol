@@ -7,7 +7,7 @@ import "../MoCDecentralizedExchange.sol";
   @notice if the externalPriceProvider price source is not available, falls back
           to dex getLastClosingPrice method for the given pair
 */
-contract TokenPriceProviderFallback is PriceProviderFallback {
+contract ExternalOraclePriceProviderFallback is PriceProviderFallback {
   IPriceProvider public externalPriceProvider;
 
   constructor(

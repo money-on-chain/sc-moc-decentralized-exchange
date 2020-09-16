@@ -76,7 +76,7 @@ describe('Price provider with fallback tests - defaults to last closing price wh
       });
       it('GIVEN there is a token pair without orders', async function() {
         priceProvider = await testHelper
-          .getPriceProviderFallback()
+          .getExternalOraclePriceProviderFallback()
           .new(externalProvider.address, dex.address, ...pair);
         await dex.createNewPair(pair, priceProvider, DEFAULT_INITIAL_PRICE);
       });
@@ -107,7 +107,7 @@ describe('Price provider with fallback tests - defaults to last closing price wh
           );
 
           priceProvider = await testHelper
-            .getPriceProviderFallback()
+            .getExternalOraclePriceProviderFallback()
             .new(externalProvider.address, dex.address, ...pair);
           await dex.createNewPair(pair, priceProvider, DEFAULT_INITIAL_PRICE);
 
@@ -140,13 +140,13 @@ describe('Price provider with fallback tests - defaults to last closing price wh
 
       it('GIVEN there is a token pair ', async function() {
         priceProvider = await testHelper
-          .getPriceProviderFallback()
+          .getExternalOraclePriceProviderFallback()
           .new(externalProvider.address, dex.address, ...pair);
         await dex.createNewPair(pair, priceProvider, DEFAULT_INITIAL_PRICE);
       });
       it('WHEN inserting a new pair with different initial price', async function() {
         otherPriceProvider = await testHelper
-          .getPriceProviderFallback()
+          .getExternalOraclePriceProviderFallback()
           .new(externalProvider.address, dex.address, ...otherPair);
         await dex.createNewPair(otherPair, priceProvider, DEFAULT_INITIAL_PRICE * 2);
       });
@@ -179,7 +179,9 @@ describe('Price provider with fallback tests - defaults to last closing price wh
 
           [priceProvider, otherPriceProvider] = await Promise.all(
             [pair, otherPair].map(p =>
-              testHelper.getPriceProviderFallback().new(externalProvider.address, dex.address, ...p)
+              testHelper
+                .getExternalOraclePriceProviderFallback()
+                .new(externalProvider.address, dex.address, ...p)
             )
           );
 
@@ -191,7 +193,7 @@ describe('Price provider with fallback tests - defaults to last closing price wh
         });
         describe('AND there are orders in two different token pairs', function() {
           describe('WHEN running the matching process', function() {
-            it('THEN the market price for the pair should be the expected ', function() {
+            it('THEN the market price for the pair should be the expected', function() {
               return assertMarketPrice(otherPriceProvider, 5);
             });
             it('AND the market price for the other pair should be the same', function() {

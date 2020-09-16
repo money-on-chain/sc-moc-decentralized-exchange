@@ -13,7 +13,7 @@ const MinOrderAmountChanger = require('../../build/contracts/MinOrderAmountChang
 const AddTokenPairChanger = require('../../build/contracts/AddTokenPairChanger.json');
 const PriceProviderChanger = require('../../build/contracts/PriceProviderChanger.json');
 const TokenPriceProviderLastClosingPrice = require('../../build/contracts/TokenPriceProviderLastClosingPrice.json');
-const TokenPriceProviderFallback = require('../../build/contracts/TokenPriceProviderFallback.json');
+const ExternalOraclePriceProviderFallback = require('../../build/contracts/ExternalOraclePriceProviderFallback.json');
 const TokenPriceProviderFake = require('../../build/contracts/TokenPriceProviderFake.json');
 
 const { deployContract, getConfig } = require('./networkHelper');
@@ -142,7 +142,7 @@ const deployPriceProviderFallback = async (
 ) => {
   const config = getConfig(network);
 
-  return deployContract(TokenPriceProviderFallback, network, [
+  return deployContract(ExternalOraclePriceProviderFallback, network, [
     externalPriceProvider,
     config.dex,
     baseTokenAddress,
