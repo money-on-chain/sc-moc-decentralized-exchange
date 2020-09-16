@@ -19,7 +19,7 @@ contract PriceProviderFallback is IPriceProvider {
     @param _baseToken base token of the pair to get the price from
     @param _secondaryToken secondary token of the pair to get the price from
   */
-  constructor(    
+  constructor(
     MoCDecentralizedExchange _dex,
     address _baseToken,
     address _secondaryToken
@@ -28,12 +28,6 @@ contract PriceProviderFallback is IPriceProvider {
     baseToken = _baseToken;
     secondaryToken = _secondaryToken;
   }
-
-  /**
-    @notice main source of this pair price
-    @return the price and true/false whether it's valid or not 
-  */
-  function failablePeek() internal view returns (bytes32, bool);
 
   /**
     @dev quesries for failablePeek, and if get's and not valid price
@@ -46,8 +40,15 @@ contract PriceProviderFallback is IPriceProvider {
     return (finalPrice, true);
   }
 
+  /**
+    @notice main source of this pair price
+    @return the price and true/false whether it's valid or not
+  */
+  function failablePeek() internal view returns (bytes32, bool);
+
   function fallbackPrice() internal view returns (bytes32) {
     uint256 lastClosingPrice = dex.getLastClosingPrice(baseToken, secondaryToken);
     return bytes32(lastClosingPrice);
   }
+
 }
