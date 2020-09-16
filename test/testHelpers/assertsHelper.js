@@ -154,6 +154,16 @@ const assertTickStage = m => (dex, pair) =>
     return m.assertBig(dex.getTickStage(...pair), expected);
   };
 
+const assertMarketPrice = m => async (priceProvider, expectedClosingPrice) => {
+  const lastClosingPrice = await priceProvider.peek();
+  assert(lastClosingPrice[1], 'Does not have price');
+  return m.assertBigPrice(
+    parseInt(lastClosingPrice[0], 16).toString(),
+    expectedClosingPrice,
+    'Last closing price'
+  );
+};
+
 module.exports = function({ DEFAULT_PRICE_PRECISION, WAD_PRECISION, wadify, pricefy }) {
   const me = {
     gtBig: gtBig(1),
@@ -176,6 +186,7 @@ module.exports = function({ DEFAULT_PRICE_PRECISION, WAD_PRECISION, wadify, pric
     fixSellerMatchPrecisions: fixSellerMatchPrecisions(wadify, pricefy),
     assertBuyerMatch: assertBuyerMatch(wadify, pricefy),
     assertSellerMatch: assertSellerMatch(wadify, pricefy),
-    assertTickStage: assertTickStage(me)
+    assertTickStage: assertTickStage(me),
+    assertMarketPrice: assertMarketPrice(me)
   };
 };
