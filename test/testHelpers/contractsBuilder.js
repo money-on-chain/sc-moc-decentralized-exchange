@@ -48,10 +48,12 @@ const Stopper = artifacts.require('Stopper');
 const OwnerBurnableToken = artifacts.require('OwnerBurnableToken');
 const CommissionManager = artifacts.require('CommissionManager');
 const TokenPriceProviderFake = artifacts.require('TokenPriceProviderFake');
+const MocStateFake = artifacts.require('MocStateFake');
 const PriceProviderLastClosingPrice = artifacts.require('TokenPriceProviderLastClosingPrice');
 const ExternalOraclePriceProviderFallback = artifacts.require(
   'ExternalOraclePriceProviderFallback'
 );
+const MocBproUsdPriceProviderFallback = artifacts.require('MocBproUsdPriceProviderFallback');
 
 const getBaseToken = () => DocToken;
 const getSecondaryToken = () => this.using.secondaryToken || BProToken;
@@ -72,8 +74,10 @@ const getTickState = () => this.using.tickState || TickStateFake.deployed();
 const getGovernor = () => Governor.at(getProxyAddress('Governor'));
 const getStopper = () => Stopper.at(getProxyAddress('Stopper'));
 const getTokenPriceProviderFake = () => TokenPriceProviderFake;
+const getMocStateFake = () => MocStateFake;
 const getPriceProviderLastClosingPrice = () => PriceProviderLastClosingPrice;
 const getExternalOraclePriceProviderFallback = () => ExternalOraclePriceProviderFallback;
+const getMocBproUsdPriceProviderFallback = () => MocBproUsdPriceProviderFallback;
 
 const createTickStateFake = async ({ ordersForTick, maxBlocksForTick, minBlocksForTick }) => {
   this.using.tickState = await TickStateFake.new();
@@ -202,7 +206,9 @@ module.exports = () => {
     getOwnerBurnableToken,
     getTestToken,
     getTokenPriceProviderFake,
+    getMocStateFake,
     getPriceProviderLastClosingPrice,
-    getExternalOraclePriceProviderFallback
+    getExternalOraclePriceProviderFallback,
+    getMocBproUsdPriceProviderFallback
   };
 };

@@ -3,7 +3,7 @@ const { BigNumber } = require('bignumber.js');
 const { expect, use } = require('chai');
 const { expectEvent } = require('openzeppelin-test-helpers');
 
-const { BN, isBN } = web3.utils;
+const { BN, isBN, hexToNumberString } = web3.utils;
 
 use(require('bn-chai')(BN));
 
@@ -154,13 +154,13 @@ const assertTickStage = m => (dex, pair) =>
     return m.assertBig(dex.getTickStage(...pair), expected);
   };
 
-const assertMarketPrice = m => async (priceProvider, expectedClosingPrice) => {
-  const lastClosingPrice = await priceProvider.peek();
-  assert(lastClosingPrice[1], 'Does not have price');
+const assertMarketPrice = m => async (priceProvider, expectedMarketPrice) => {
+  const actualMarketPrice = await priceProvider.peek();
+  assert(actualMarketPrice[1], 'Does not have price');
   return m.assertBigPrice(
-    parseInt(lastClosingPrice[0], 16).toString(),
-    expectedClosingPrice,
-    'Last closing price'
+    hexToNumberString(actualMarketPrice[0]),
+    expectedMarketPrice,
+    'Market Price'
   );
 };
 
