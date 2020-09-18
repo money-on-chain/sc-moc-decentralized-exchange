@@ -54,6 +54,7 @@ const ExternalOraclePriceProviderFallback = artifacts.require(
   'ExternalOraclePriceProviderFallback'
 );
 const MocBproUsdPriceProviderFallback = artifacts.require('MocBproUsdPriceProviderFallback');
+const MocBproBtcPriceProviderFallback = artifacts.require('MocBproBtcPriceProviderFallback');
 
 const getBaseToken = () => DocToken;
 const getSecondaryToken = () => this.using.secondaryToken || BProToken;
@@ -78,6 +79,7 @@ const getMocStateFake = () => MocStateFake;
 const getPriceProviderLastClosingPrice = () => PriceProviderLastClosingPrice;
 const getExternalOraclePriceProviderFallback = () => ExternalOraclePriceProviderFallback;
 const getMocBproUsdPriceProviderFallback = () => MocBproUsdPriceProviderFallback;
+const getMocBproBtcPriceProviderFallback = () => MocBproBtcPriceProviderFallback;
 
 const createTickStateFake = async ({ ordersForTick, maxBlocksForTick, minBlocksForTick }) => {
   this.using.tickState = await TickStateFake.new();
@@ -209,6 +211,7 @@ module.exports = () => {
     getMocStateFake,
     getPriceProviderLastClosingPrice,
     getExternalOraclePriceProviderFallback,
-    getMocBproUsdPriceProviderFallback
+    getMocBproUsdPriceProviderFallback,
+    getMocBproBtcPriceProviderFallback
   };
 };

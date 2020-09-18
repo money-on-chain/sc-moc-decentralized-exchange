@@ -1,3 +1,4 @@
+const { expectRevert } = require('openzeppelin-test-helpers');
 const testHelperBuilder = require('../testHelpers/testHelper');
 
 const DEFAULT_INITIAL_PRICE = 10;
@@ -65,12 +66,13 @@ describe('Moc State provider with fallback tests', function() {
     const nDoc = wadify(4 * DEFAULT_BTC_PRICE);
     // nTP BPro amount [using mocPrecision]
     const nTP = wadify(2);
-    // TPbtc = (nB-LB) / nTP = (10-4) / 2 = 3
     mocState = await testHelper.getMocStateFake().new(externalProvider.address, nB, nDoc, nTP);
   };
 
   let mocState;
   let priceProvider;
+  // TPbtc = (nB-LB) / nTP = (10-4) / 2 = 3
+  const expectedTPbtc = 3;
   describe('RULE: MocBproUsdPriceProvider should return BproUsd price', function() {
     contract('GIVEN Doc/Bpro pair is set tu use MocBproUsdPriceProvider', function(accounts) {
       before(async function() {
@@ -82,27 +84,65 @@ describe('Moc State provider with fallback tests', function() {
         await dex.createNewPair(pair, priceProvider, DEFAULT_INITIAL_PRICE);
       });
       describe('AND Moc Oracle has no valid price', function() {
-        before(async function() {
-          await externalProvider.pokeValidity(false);
+        before(function() {
+          return externalProvider.pokeValidity(false);
         });
-        it('THEN the market price should be de default as it fallbacks', async function() {
-          await assertMarketPrice(priceProvider, DEFAULT_INITIAL_PRICE);
+        it('THEN the MocState bproUsdPrice() should revert', function() {
+          return expectRevert(mocState.bproUsdPrice(), 'Oracle have no Bitcoin Price');
+        });
+        it('THEN the market price should be de default as it fallbacks', function() {
+          return assertMarketPrice(priceProvider, DEFAULT_INITIAL_PRICE);
         });
       });
       describe('AND Moc Oracle has a valid price', function() {
-        before(async function() {
-          await externalProvider.pokeValidity(true);
+        before(function() {
+          return externalProvider.pokeValidity(true);
         });
-        it('THEN the market price for the pair should be oracles times TechPrice', async function() {
-          // Assert all the prices are in place
-          const expectedTPbtc = 3;
-          await assertBigPrice(await mocState.bproTecPrice(), expectedTPbtc);
-          await assertMarketPrice(externalProvider, DEFAULT_BTC_PRICE);
-          await assertBigPrice(await mocState.getBitcoinPrice(), DEFAULT_BTC_PRICE);
-          await assertBigPrice(await mocState.bproUsdPrice(), DEFAULT_BTC_PRICE * expectedTPbtc);
+        it('THEN the market price for the pair should be oracles times TechPrice', function() {
+          // Assert all the prices are correct
+          return Promise.all([
+            assertBigPrice(mocState.bproTecPrice(), expectedTPbtc),
+            assertMarketPrice(externalProvider, DEFAULT_BTC_PRICE),
+            assertBigPrice(mocState.getBitcoinPrice(), DEFAULT_BTC_PRICE),
+            // bproUsdPrice = TPbtc * BtcUsd = 3 * 9k = 27k
+            assertBigPrice(mocState.bproUsdPrice(), DEFAULT_BTC_PRICE * expectedTPbtc),
+            assertMarketPrice(priceProvider, DEFAULT_BTC_PRICE * expectedTPbtc)
+          ]);
+        });
+      });
+    });
+  });
 
-          // bproUsdPrice = TPbtc * BtcUsd = 3 * 9k = 27k
-          await assertMarketPrice(priceProvider, DEFAULT_BTC_PRICE * expectedTPbtc);
+  describe('RULE: MocBproBtcPriceProvider should return BproBtc price', function() {
+    contract('GIVEN RBTC/Bpro pair is set tu use MocBproBtcPriceProvider', function(accounts) {
+      before(async function() {
+        await setContracts(accounts);
+        priceProvider = await testHelper
+          .getMocBproBtcPriceProviderFallback()
+          .new(mocState.address, dex.address, ...pair);
+
+        await dex.createNewPair(pair, priceProvider, DEFAULT_INITIAL_PRICE);
+      });
+      describe('AND Moc Oracle has no valid price', function() {
+        before(function() {
+          return externalProvider.pokeValidity(false);
+        });
+        it('THEN the MocState bproTecPrice() should revert', function() {
+          return expectRevert(mocState.bproTecPrice(), 'Oracle have no Bitcoin Price');
+        });
+        it('THEN the market price should be de default as it fallbacks', function() {
+          return assertMarketPrice(priceProvider, DEFAULT_INITIAL_PRICE);
+        });
+      });
+      describe('AND Moc Oracle has a valid price', function() {
+        before(function() {
+          return externalProvider.pokeValidity(true);
+        });
+        it('THEN the market price for the pair should the TechPrice', function() {
+          return Promise.all([
+            assertBigPrice(mocState.bproTecPrice(), expectedTPbtc),
+            assertMarketPrice(priceProvider, expectedTPbtc)
+          ]);
         });
       });
     });
