@@ -109,6 +109,32 @@ describe('Moc State provider with fallback tests', function() {
             assertMarketPrice(priceProvider, DEFAULT_BTC_PRICE * expectedTPbtc)
           ]);
         });
+        describe('AND Moc is in liquidation state (nB < lb)', function() {
+          before(function() {
+            // force (nB < lb) by setting nB = 2, while lb is on 3
+            return mocState.setNB(wadify(2));
+          });
+          it('THEN the market price for the pair should the default', async function() {
+            return Promise.all([
+              assertBigPrice(mocState.bproUsdPrice(), 0),
+              assertMarketPrice(priceProvider, DEFAULT_INITIAL_PRICE)
+            ]);
+          });
+        });
+        describe('AND BtcPrice is zero', function() {
+          before(async function() {
+            await externalProvider.poke(0);
+          });
+          after(function() {
+            return externalProvider.poke(pricefy(DEFAULT_BTC_PRICE));
+          });
+          it('THEN the market price for the pair should the default', async function() {
+            return Promise.all([
+              expectRevert.unspecified(mocState.bproUsdPrice()),
+              assertMarketPrice(priceProvider, DEFAULT_INITIAL_PRICE)
+            ]);
+          });
+        });
       });
     });
   });
@@ -143,6 +169,18 @@ describe('Moc State provider with fallback tests', function() {
             assertBigPrice(mocState.bproTecPrice(), expectedTPbtc),
             assertMarketPrice(priceProvider, expectedTPbtc)
           ]);
+        });
+        describe('AND Moc is in liquidation state (nB < lb)', function() {
+          before(function() {
+            // force (nB < lb) by setting nB = 2, while lb is on 3
+            return mocState.setNB(wadify(2));
+          });
+          it('THEN the market price for the pair should the default', async function() {
+            return Promise.all([
+              assertBigPrice(mocState.bproTecPrice(), 0),
+              assertMarketPrice(priceProvider, DEFAULT_INITIAL_PRICE)
+            ]);
+          });
         });
       });
     });

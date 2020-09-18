@@ -22,6 +22,11 @@ contract MocStateFake is IMocState {
     nTP = _nTP;
   }
 
+  /** @dev Only for test purposes, not actual part of MocState */
+  function setNB(uint256 _nB) external {
+    nB = _nB;
+  }
+
   /**
   * @dev Gets the BTCPriceProviderAddress
   * @return btcPriceProvider blocks there are in a day
