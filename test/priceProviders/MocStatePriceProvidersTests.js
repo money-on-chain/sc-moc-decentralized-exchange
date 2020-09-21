@@ -140,7 +140,7 @@ describe('Moc State provider with fallback tests', function() {
   });
 
   describe('RULE: MocBproBtcPriceProvider should return BproBtc price', function() {
-    contract('GIVEN RBTC/Bpro pair is set tu use MocBproBtcPriceProvider', function(accounts) {
+    contract('GIVEN RBTC/Bpro pair is set to use MocBproBtcPriceProvider', function(accounts) {
       before(async function() {
         await setContracts(accounts);
         priceProvider = await testHelper

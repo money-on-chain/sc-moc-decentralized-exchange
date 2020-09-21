@@ -15,6 +15,9 @@ const PriceProviderChanger = require('../../build/contracts/PriceProviderChanger
 const TokenPriceProviderLastClosingPrice = require('../../build/contracts/TokenPriceProviderLastClosingPrice.json');
 const ExternalOraclePriceProviderFallback = require('../../build/contracts/ExternalOraclePriceProviderFallback.json');
 const TokenPriceProviderFake = require('../../build/contracts/TokenPriceProviderFake.json');
+const MocBproBtcPriceProviderFallback = require('../../build/contracts/MocBproBtcPriceProviderFallback.json');
+const MocBproUsdPriceProviderFallback = require('../../build/contracts/MocBproUsdPriceProviderFallback.json');
+const UnityPriceProvider = require('../../build/contracts/UnityPriceProvider.json');
 
 const { deployContract, getConfig } = require('./networkHelper');
 
@@ -150,7 +153,33 @@ const deployPriceProviderFallback = async (
   ]);
 };
 
-const deployChangePriceProvider = async (
+const deployMocStatePriceProvider = priceProviderContract => (
+  network,
+  baseTokenAddress,
+  secondaryTokenAddress,
+  mocStateAddress
+) => {
+  const config = getConfig(network);
+
+  return deployContract(priceProviderContract, network, [
+    mocStateAddress,
+    config.dex,
+    baseTokenAddress,
+    secondaryTokenAddress
+  ]);
+};
+
+const deployMocBproBtcPriceProviderFallback = deployMocStatePriceProvider(
+  MocBproBtcPriceProviderFallback
+);
+
+const deployMocBproUsdPriceProviderFallback = deployMocStatePriceProvider(
+  MocBproUsdPriceProviderFallback
+);
+
+const deployUnityPriceProvider = network => deployContract(UnityPriceProvider, network);
+
+const deployChangePriceProvider = (
   network,
   baseTokenAddress,
   secondaryTokenAddress,
@@ -183,5 +212,8 @@ module.exports = {
   deployChangePriceProvider,
   deployPriceProviderLastClosingPrice,
   deployPriceProviderFallback,
+  deployMocBproBtcPriceProviderFallback,
+  deployMocBproUsdPriceProviderFallback,
+  deployUnityPriceProvider,
   deployPriceProviderFake
 };
