@@ -3,8 +3,8 @@ pragma solidity 0.5.8;
 import "../interface/IPriceProvider.sol";
 
 /**
-  @notice Price provider that always will return Unite price un 18th precision
-          Intended to pairs that has a theorical equivalent value
+  @notice Price provider that always will return Unity price (one) with 18th precision
+          Intended to pairs that has a theoretical equivalent value
  */
 contract UnityPriceProvider is IPriceProvider {
 

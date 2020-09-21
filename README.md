@@ -20,98 +20,105 @@
    1. [Governance and Upgradability](#governance-and-upgradability)
    1. [Block gas limit prevention](#block-gas-limit-prevention)
 
-# Introduction
+## Introduction
 
 This set of smart contracts implements a system where the users are able to exchange their ERC20 tokens present in the deployed network. In this exchange the orders can be inserted anytime but the actual exchanges happen at almost regular intervals, until that moment the funds are in custody of the system.
 
-# Main Concepts
+## Main Concepts
 
-## Tokens Pair
+### Tokens Pair
 
-The way to exchange a token is through a pair that contains it. A pair, or a tokens pair, is a pair of token where one is considered the base token and the other one is the secondary token. This pairs are said to be listed in the exchange if you can exchange one token for the other inside it i.e. if an user wants to trade X token for an Y token there must be an X/Y token pair or a Y/X token pair. To add a new pair there must be a pair where the new base token is listed against the common base token(which tipically will be DoC) or the new base token must be the common base token.
+The way to exchange a token is through a pair that contains it. A pair, or a tokens pair, is a pair of token where one is considered the base token and the other one is the secondary token. This pairs are said to be listed in the exchange if you can exchange one token for the other inside it i.e. if an user wants to trade X token for an Y token there must be an X/Y token pair or a Y/X token pair. To add a new pair there must be a pair where the new base token is listed against the common base token(which usually will be DoC) or the new base token must be the common base token.
 
-## Secondary token - Base token
+### Secondary token - Base token
 
 In a pair, the secondary token is seen as the good and the base token is seen as the medium of payment i.e. if a buy order is placed the sender is buying secondary tokens in exchange for base tokens meanwhile if a sell order is placed the sender is selling secondary tokens in exchange for base tokens.
 
-## Price Providers
+### Price Providers
 
-They are contracts that allow you to check the price of the secondary token expressed in units of the primary token. It is an interface of an oracle for example [Maker Dao Price Feed](https://developer.makerdao.com/feeds/) .
+They are contracts that allow you to check the price of the secondary token expressed in units of the primary token. It is an interface of an oracle for example [Maker Dao Price Feed](https://developer.makerdao.com/feeds/).
+The system currently implements the following price providers:
 
-## Limit Orders
+- *ExternalOraclePriceProviderFallback*: relies on an an external price source and if not available, falls back to dex getLastClosingPrice method for the given pair.
+- *MocBproBtcPriceProviderFallback*: gets the BproBtc Price from MocState contract, falls back to dex getLastClosingPrice method for the given pair.
+- *MocBproUsdPriceProviderFallback*: gets the BproUsd Price from MocState contract, falls back to dex getLastClosingPrice method for the given pair.
+- *TokenPriceProviderLastClosingPrice*: uses dex last closing price for the the given pair.
+- *UnityPriceProvider*: always return one, intended to pairs that has a theoretical equivalent value
+
+### Limit Orders
 
 Limit Orders (LO from now on) are a type of orders defined by an amount and the price to be paid/charged.
-The price is always expresed in how much minimum units of base currency is being paid/charged for a minimum unit of the secondary token(take into account that the price is in fixed-point notation so the user has decimals to use for a finer grained management of what it wants to pay). That being said the price may not be the actual price in which the order matches but it is rather a limit (if the user is buying the price is an upper limit of how much he will be paying and if the user is selling the price is an lower limit of how much will be charging).
+The price is always expressed in how much minimum units of base currency is being paid/charged for a minimum unit of the secondary token(take into account that the price is in fixed-point notation so the user has decimals to use for a finer grained management of what it wants to pay). That being said the price may not be the actual price in which the order matches but it is rather a limit (if the user is buying the price is an upper limit of how much he will be paying and if the user is selling the price is an lower limit of how much will be charging).
 In the other hand, the amount is always the amount to be locked by the user , i.e. if the user is buying the locking amount of the base token and if the user is selling the locking amount of the secondary token. This amount already includes the commission charged so the amount to be exchanged will actually be less than the locked one.
 The order can be executed partially too, i.e. an order can be matched with N orders in M different ticks. The orders can be matched with limit and market orders.
 
-## Market Orders
+### Market Orders
 
 Market Orders (MO from now on) are a type of orders defined by an **exchangeable amount** of tokens and the **multiply factor** to be used to compute the final price of the order.
 The multiply factor allows determining the competitiveness of market orders and is used to calculate the price of the token:
 
-```
+```sol
 Order Token Price = Market Price * Multiply Factor
 ```
 
-The market price is always expresed in how much units of base currency is being paid/charged for a minimum unit of the secondary token. The market price is obtained with [price providers](#price-providers)
+The market price is always expressed in how much units of base currency is being paid/charged for a minimum unit of the secondary token. The market price is obtained with [price providers](#price-providers)
 In the other hand, the exchangeable amount is the amount to be locked by the user minus fee , i.e. if the user is buying the exchangeable amount of the base token and if the user is selling the locking amount of the secondary token.
 The order can be executed partially too, i.e. an order can be matched with N orders in M different ticks. The orders can be matched with limit and market orders.
 
-## Orderbook
+### Orderbook
 
 An orderbook is a data structure where the orders are saved. There exists two orderbook for each pair, one for sell limit orders and the other for buy limit orders. Both have to be ordered by price at all times to minimize the gas paid in a tick. In particular, the buy orderbook has to be ordered with a descending price and the sell orderbook has to be ordered with an increasing price so the most competitive orders are at the start of it.
 
 The two orderbooks also save market orders. One of them for sell orders and the other for buy market orders. Both have to be ordered by **multiplyFactor** at all times to minimize the gas paid in a tick. The buy orderbook has to be ordered with a descending multiplyFactor and the sell orderbook has to be ordered with an increasing multiplyFactor so the most competitive orders are at the start of it.
 
-## Emergent price
+### Emergent price
 
 The emergent price is a price calculated given the orders that are present in a pair. In this particular case it is calculated as the average price of the last two matching orders. The last matching orders are the ones that have matching prices (i.e. the buy price is greater or equal than the sell price) and are the last to be processed in a matching process or tick. In order to get it we have to simulate the actual matching process.
 
-## Tick
+### Tick
 
 A tick is the process in which the orders are matched. In it we calculate the emergent price and later match the orders. The process starts taking the most competitive orders of each type(buy and sell). Given that orders we proceed to match them if they are able to match (i.e. the buy price is greater or equal than the sell price), if only one order is filled we take the next one of that orderbook while if both gets filled we advance in both orderbook and continue with the process until we reach a pair of orders where they have no matching prices. All the remaining orders are left for the next tick.
 The surplus generated (i.e. the difference between the limit price and the emergent price in the tick) are given back to the user in the same process. If the user sent a buy order the surplus is given as change of the transaction because some of the base token it locked is returned. In the case of a sell order the surplus is given as extra base token paid for the sold tokens.
 
-## Lifespan
+### Lifespan
 
 The lifespan of an order is the amount of ticks the order will live, after that amount of ticks the order will be expired and no longer be matched.
 
-## Pending Queue
+### Pending Queue
 
 When the tick is running the orders can not be inserted in the orderbook so we actually put them in a pending queue to actually move them at the end of the tick.
 
-# Pair states
+## Pair states
 
 Any pair can have many states and the states of each pair is NOT related to the state of the others.
 
-## Enabled
+### Enabled
 
 Each pair can be enabled, disabled or not-added. If a pair has not been added yet no operation can be made on it until we add it, and once added no one can un-add it. Despite the latter the pair can be disabled in which case the insertions for that pair are no longer available. However, the other operations ARE still available in order to be able to remove/close the orders already open on it(A feature has been added to change the last closing price to be able to update disabled pair's prices through governance if wanted). The disabled state is reversible through governance.
 
-## Tick states
+### Tick states
 
 There are four states of the tick and they are independent for each pair.
 
-### Receiving orders
+#### Receiving orders
 
 This state is the one where the tick is actually not running and the contract can insert orders directly in the orderbooks of that pair.
 
-### Running simulation
+#### Running simulation
 
 This states is the first one where the tick is running. While the pair is in that state the emergent price is being calculated and the orders to be inserted in that pair go to the pending queue.
 The execution of the tick in this step will be more efficient(and prevent/fix some gas limit softlock) if the expired orders are processed beforehand.
 
-### Matching orders
+#### Matching orders
 
 In this state the contract is actually matching the orders and returning the funds to the users. The orders inserted while in this state go to the pending queue.
 The execution of the tick in this step will be more efficient(and prevent/fix some gas limit softlock) if the expired orders are processed beforehand.
 
-### Moving pending orders
+#### Moving pending orders
 
 In this state the contract is moving the orders from the pending queue to the main orderbooks. The orders inserted in this state go to the pending queue too.
 
-# Architecture
+## Architecture
 
 The decentralized Exchange is a system built with smart contracts that allow the commercial exchange of ERC-20 tokens, including the Money on Chain tokens. In this sense, the smart contracts can be categorized into 4 categories:
 
@@ -120,9 +127,9 @@ The decentralized Exchange is a system built with smart contracts that allow the
 - _Tokens_: ERC-20 Tokens backed by the MoC system and others ( BProToken, DocToken, WRBTC, RIF )
 - _External Dependencies_: External contracts with which the system interacts, in this case, the previous ERC20 tokens and the governance system
 
-# Contracts
+## Contracts
 
-## DEX MoCDecentralizedExchange
+### DEX MoCDecentralizedExchange
 
 - References/uses: SafeMath, MoCExchangeLib
 - Inherits from: EventfulExchange, RestrictiveOrderListing, PartialExecution
@@ -155,16 +162,16 @@ Methods can be invoked only if the tick is not running
   }
 ```
 
-## CommissionManager
+### CommissionManager
 
 - Referenced by: MoCExchangeLib, OrderListing
 - References/uses: SafeMath, Governed, Ownable
 - Inherits from: Governed, Ownable
   This contract is in charge of keeping track of the charged commissions and calculating the commissions to reserve / charge depending on the operation and the amount of the order. Should only be called by `MoCDecentralizedExchange`.
 
-# Relevant patterns and choices
+## Relevant patterns and choices
 
-## Safe Math and precision
+### Safe Math and precision
 
 DEX system requires many mathematical operations, in this model just the 2 basic operations are used (addition/subtraction, multiplication/division). To protect against overflows, OpenZeppelin SafeMath library is used on any of this operations. For example:
 
@@ -202,7 +209,7 @@ contract CommissionManager is Governed, Ownable {
 
 Using unsigned int256 as the norm for all values, sets an upper limit to ~76 decimal places, so even if it's ok to multiply 18 precision values a couple of times, we need to be careful not to overflow nor lose precision.
 
-## Governance and Upgradability
+### Governance and Upgradability
 
 DEX and CommissionManager contracts subscribes to a governance implementation that allows an external contract to authorize changers to:
 
@@ -214,9 +221,9 @@ DEX and CommissionManager contracts subscribes to a governance implementation th
 
 For further detail on Governance mechanism refer to [Areopagus-Governance](https://github.com/money-on-chain/Areopagus-Governance)
 
-## Block gas limit prevention
+### Block gas limit prevention
 
-Although not recomended, dynamic array looping is needed to be performed on certain functions:
+Although not recommended, dynamic array looping is needed to be performed on certain functions:
 
 - On creating a new order without HINT
   This function is called when a new order is inserted in the OrderBook and the user does NOT specify the HINT.
@@ -226,13 +233,13 @@ Although not recomended, dynamic array looping is needed to be performed on cert
   Use the reserved word "delete" with an array that is created in each transaction. It is not possible to grow so much that it blocks another user.
 
 - On matching orders/simulating the matching given there are expired orders
-  It exists the possibility that the matching orders/simulation of the matching processes are not abled to be run because of a great amount of consecutive expired orders. This is solved with the possibility to process the expired orders, in a paginated way, before a tick is run and between the pages of a running tick.
+  It exists the possibility that the matching orders/simulation of the matching processes are not able to be run because of a great amount of consecutive expired orders. This is solved with the possibility to process the expired orders, in a paginated way, before a tick is run and between the pages of a running tick.
 
 There are other places where a dynamic array is looped but this other places are paginated in order to overcome a block gas limit softlocking.
 
 _Note_: There is volume unit tests to prove cases of gas limit.
 
-# Settings
+## Settings
 
 **deployGovernance**: Boolean corresponding to whether governance contracts must be deployed.
 
@@ -240,13 +247,13 @@ _Note_: There is volume unit tests to prove cases of gas limit.
 
 **governor**: The address of the contract that is going to be the governor. Not used if deployGovernance is set to _`true`_.
 
-**stoppper**: The address of the contract that is going to be the stoppper. Not used if deployGovernance is set to _`true`_.
+**stopper**: The address of the contract that is going to be the stopper. Not used if deployGovernance is set to _`true`_.
 
 **proxyAdmin**: The address of the contract that is going to be the proxy admin. Not used if deployGovernance is set to _`true`_.
 
 **upgradeDelegator**: The address of the contract that is going to be the upgrade delegator. Not used if deployGovernance is set to _`true`_.
 
-**addressesToHaveBalance**: The account addressess to set balance in all existing tokens. Only used if _`existingTokens`_ is _`false`_.
+**addressesToHaveBalance**: The account addresses to set balance in all existing tokens. Only used if _`existingTokens`_ is _`false`_.
 
 **beneficiaryAddress**: The address of the account that is going to receive the fees of the transactions.
 
