@@ -24,8 +24,11 @@ const WRBTC = artifacts.require('WRBTC');
 const ERC20WithBlacklist = artifacts.require('ERC20WithBlacklist');
 const TickStateFake = artifacts.require('TickStateFake');
 const TokenPriceProviderFake = artifacts.require('TokenPriceProviderFake');
+const MocStateFake = artifacts.require('MocStateFake');
 const TokenPriceProviderLastClosingPrice = artifacts.require('TokenPriceProviderLastClosingPrice');
-const TokenPriceProviderFallback = artifacts.require('TokenPriceProviderFallback');
+const ExternalOraclePriceProviderFallback = artifacts.require(
+  'ExternalOraclePriceProviderFallback'
+);
 const MoCDexFake = artifacts.require('MoCDexFake');
 const CommissionManager = artifacts.require(FEE_MANAGER_NAME);
 
@@ -50,10 +53,10 @@ const deployPriceProvider = (
     config.externalPriceProvider &&
     config.externalPriceProvider[baseTokenName] &&
     config.externalPriceProvider[baseTokenName][secondaryTokenName];
-  console.log(`Deploying price provider with externañ${externalPriceProvider}`);
+  console.log(`Deploying price provider with external ${externalPriceProvider}`);
 
   return externalPriceProvider
-    ? TokenPriceProviderFallback.new(
+    ? ExternalOraclePriceProviderFallback.new(
         externalPriceProvider,
         dexAddress,
         baseTokenAddress,
@@ -215,7 +218,7 @@ module.exports = async function(deployer, currentNetwork, [owner]) {
     await setAdmin({ newAdmin: proxyAdmin.address, contractAlias: 'MoCDexFake', ...options });
   }
 
-  console.log('Transferying ownership from dex to owner');
+  console.log('Transferring ownership from dex to owner');
   await commissionManager.transferOwnership(dexProxy.address, { from: owner });
 
   console.log('Getting contracts', dexProxy.address);
@@ -327,6 +330,8 @@ module.exports = async function(deployer, currentNetwork, [owner]) {
       MAX_BLOCKS_FOR_TICK,
       MIN_BLOCKS_FOR_TICK
     );
+    console.log('Deploying MocStateFake');
+    await deployer.deploy(MocStateFake, docBproPriceProvider.address, 0, 0, 0);
   }
 
   if (!existingTokens) {

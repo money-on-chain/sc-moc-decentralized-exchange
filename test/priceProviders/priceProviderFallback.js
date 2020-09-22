@@ -2,61 +2,25 @@ const testHelperBuilder = require('../testHelpers/testHelper');
 
 const DEFAULT_INITIAL_PRICE = 10;
 let testHelper;
-let wadify;
 let pricefy;
 let externalProvider;
+let assertMarketPrice;
 
-const decorateDex = function(dex, governor) {
-  return Object.assign({}, dex, {
+const decorateCreateNewPair = (dex, governor) =>
+  Object.assign({}, dex, {
     createNewPair: createNewPair(dex, governor)
   });
-};
 
 const createNewPair = (dex, governor) =>
-  async function(baseToken, secondaryToken, priceProvider, lastClosingPrice, price, user) {
+  async function(pair, priceProvider, lastClosingPrice) {
     await dex.addTokenPair(
-      baseToken.address,
-      secondaryToken.address,
+      ...pair,
       priceProvider.address,
       pricefy(1),
       pricefy(lastClosingPrice),
       governor
     );
-    if (price && user) {
-      await Promise.all([
-        dex.insertBuyLimitOrder(
-          baseToken.address,
-          secondaryToken.address,
-          wadify(1),
-          pricefy(price),
-          5,
-          {
-            from: user
-          }
-        ),
-        dex.insertSellLimitOrder(
-          baseToken.address,
-          secondaryToken.address,
-          wadify(1),
-          pricefy(price),
-          5,
-          {
-            from: user
-          }
-        )
-      ]);
-    }
   };
-
-const assertMarketPrice = async (priceProvider, expectedClosingPrice) => {
-  const lastClosingPrice = await priceProvider.peek();
-  assert(lastClosingPrice[1], 'Does not have price');
-  return testHelper.assertBigPrice(
-    parseInt(lastClosingPrice[0], 16).toString(),
-    expectedClosingPrice,
-    'Last closing price'
-  );
-};
 
 describe('Price provider with fallback tests - defaults to last closing price when external does not have a price', function() {
   let doc;
@@ -64,10 +28,13 @@ describe('Price provider with fallback tests - defaults to last closing price wh
   let secondary;
   let otherSecondary;
   let governor;
+  // [base.address, secondary.address] handy setup to improve readability
+  let pair;
+  let otherPair;
 
-  const setContracts = async function(accounts) {
+  const setContracts = async accounts => {
     testHelper = testHelperBuilder();
-    ({ wadify, pricefy } = testHelper);
+    ({ pricefy, assertMarketPrice } = testHelper);
     const OwnerBurnableToken = testHelper.getOwnerBurnableToken();
     await testHelper.createContracts({
       owner: accounts[0],
@@ -83,9 +50,12 @@ describe('Price provider with fallback tests - defaults to last closing price wh
       testHelper.getGovernor(),
       testHelper.getTokenPriceProviderFake().new()
     ]);
+    pair = [doc.address, secondary.address];
+    otherPair = [doc.address, otherSecondary.address];
 
     dex = testHelper.decorateGovernedSetters(dex);
-    dex = decorateDex(dex, governor);
+    dex = testHelper.decorateOrderInsertions(dex, accounts, { base: doc, secondary });
+    dex = decorateCreateNewPair(dex, governor);
 
     await externalProvider.pokeValidity(false);
   };
@@ -98,16 +68,12 @@ describe('Price provider with fallback tests - defaults to last closing price wh
       });
       it('GIVEN there is a token pair without orders', async function() {
         priceProvider = await testHelper
-          .getPriceProviderFallback()
-          .new(externalProvider.address, dex.address, doc.address, secondary.address);
-        await dex.createNewPair(doc, secondary, priceProvider, DEFAULT_INITIAL_PRICE);
+          .getExternalOraclePriceProviderFallback()
+          .new(externalProvider.address, dex.address, ...pair);
+        await dex.createNewPair(pair, priceProvider, DEFAULT_INITIAL_PRICE);
       });
       it('WHEN running the matching process', async function() {
-        await dex.matchOrders(
-          doc.address,
-          secondary.address,
-          testHelper.DEFAULT_STEPS_FOR_MATCHING
-        );
+        await dex.matchOrders(...pair, testHelper.DEFAULT_STEPS_FOR_MATCHING);
       });
       it('THEN the market price for the pair should be the same', async function() {
         await assertMarketPrice(priceProvider, DEFAULT_INITIAL_PRICE);
@@ -115,46 +81,30 @@ describe('Price provider with fallback tests - defaults to last closing price wh
     });
 
     contract('CASE: Running the matching process with emergentPrice 0', function(accounts) {
-      let user;
       let emergentPrice;
       describe('GIVEN the user has balance and allowance on all the tokens', function() {
         before(async function() {
           await setContracts(accounts);
-          user = accounts[testHelper.DEFAULT_ACCOUNT_INDEX];
-          await Promise.all([
-            testHelper.setBalancesAndAllowances({
-              dex,
-              base: doc,
-              secondary,
-              userData: null,
-              accounts
-            }),
-            testHelper.setBalancesAndAllowances({
-              dex,
-              base: doc,
-              secondary: otherSecondary,
-              userData: null,
-              accounts
-            })
-          ]);
+          await Promise.all(
+            [secondary, otherSecondary].map(sec =>
+              testHelper.setBalancesAndAllowances({
+                dex,
+                base: doc,
+                secondary: sec,
+                accounts
+              })
+            )
+          );
 
           priceProvider = await testHelper
-            .getPriceProviderFallback()
-            .new(externalProvider.address, dex.address, doc.address, secondary.address);
-          await dex.createNewPair(doc, secondary, priceProvider, DEFAULT_INITIAL_PRICE);
+            .getExternalOraclePriceProviderFallback()
+            .new(externalProvider.address, dex.address, ...pair);
+          await dex.createNewPair(pair, priceProvider, DEFAULT_INITIAL_PRICE);
 
-          await dex.insertBuyLimitOrder(doc.address, secondary.address, wadify(1), pricefy(1), 5, {
-            from: user
-          });
-          await dex.insertSellLimitOrder(doc.address, secondary.address, wadify(1), pricefy(3), 5, {
-            from: user
-          });
-          ({ emergentPrice } = await dex.getTokenPairStatus.call(doc.address, secondary.address));
-          await dex.matchOrders(
-            doc.address,
-            secondary.address,
-            testHelper.DEFAULT_STEPS_FOR_MATCHING
-          );
+          await dex.insertBuyLimitOrder({ price: 1 });
+          await dex.insertSellLimitOrder({ price: 3 });
+          ({ emergentPrice } = await dex.getTokenPairStatus.call(...pair));
+          await dex.matchOrders(...pair, testHelper.DEFAULT_STEPS_FOR_MATCHING);
         });
         describe('AND there is a token pair with orders that do not match', function() {
           describe('WHEN running the matching process', function() {
@@ -180,15 +130,15 @@ describe('Price provider with fallback tests - defaults to last closing price wh
 
       it('GIVEN there is a token pair ', async function() {
         priceProvider = await testHelper
-          .getPriceProviderFallback()
-          .new(externalProvider.address, dex.address, doc.address, secondary.address);
-        await dex.createNewPair(doc, secondary, priceProvider, DEFAULT_INITIAL_PRICE);
+          .getExternalOraclePriceProviderFallback()
+          .new(externalProvider.address, dex.address, ...pair);
+        await dex.createNewPair(pair, priceProvider, DEFAULT_INITIAL_PRICE);
       });
       it('WHEN inserting a new pair with different initial price', async function() {
         otherPriceProvider = await testHelper
-          .getPriceProviderFallback()
-          .new(externalProvider.address, dex.address, doc.address, otherSecondary.address);
-        await dex.createNewPair(doc, otherSecondary, priceProvider, DEFAULT_INITIAL_PRICE * 2);
+          .getExternalOraclePriceProviderFallback()
+          .new(externalProvider.address, dex.address, ...otherPair);
+        await dex.createNewPair(otherPair, priceProvider, DEFAULT_INITIAL_PRICE * 2);
       });
       it('THEN each pair has its respective last closing price', async function() {
         await Promise.all([
@@ -201,58 +151,46 @@ describe('Price provider with fallback tests - defaults to last closing price wh
     contract('CASE: Running the matching process should update only the given token pair', function(
       accounts
     ) {
-      let user;
       describe('GIVEN the user has balance and allowance on all the tokens', function() {
         before(async function() {
           await setContracts(accounts);
-          user = accounts[testHelper.DEFAULT_ACCOUNT_INDEX];
-          await Promise.all([
-            testHelper.setBalancesAndAllowances({
-              dex,
-              base: doc,
-              secondary,
-              userData: null,
-              accounts
-            }),
-            testHelper.setBalancesAndAllowances({
-              dex,
-              base: doc,
-              secondary: otherSecondary,
-              userData: null,
-              accounts
-            })
-          ]);
-
-          priceProvider = await testHelper
-            .getPriceProviderFallback()
-            .new(externalProvider.address, dex.address, doc.address, secondary.address);
-          otherPriceProvider = await testHelper
-            .getPriceProviderFallback()
-            .new(externalProvider.address, dex.address, doc.address, otherSecondary.address);
-          await Promise.all([
-            dex.createNewPair(doc, secondary, priceProvider, DEFAULT_INITIAL_PRICE),
-
-            dex.createNewPair(
-              doc,
-              otherSecondary,
-              otherPriceProvider,
-              DEFAULT_INITIAL_PRICE,
-              5,
-              user
+          await Promise.all(
+            [secondary, otherSecondary].map(sec =>
+              testHelper.setBalancesAndAllowances({
+                dex,
+                base: doc,
+                secondary: sec,
+                accounts
+              })
             )
-          ]);
-          await dex.matchOrders(
-            doc.address,
-            otherSecondary.address,
-            testHelper.DEFAULT_STEPS_FOR_MATCHING
           );
+
+          [priceProvider, otherPriceProvider] = await Promise.all(
+            [pair, otherPair].map(p =>
+              testHelper
+                .getExternalOraclePriceProviderFallback()
+                .new(externalProvider.address, dex.address, ...p)
+            )
+          );
+
+          await Promise.all([
+            dex.createNewPair(pair, priceProvider, DEFAULT_INITIAL_PRICE),
+            dex.createNewPair(otherPair, otherPriceProvider, DEFAULT_INITIAL_PRICE)
+          ]);
+          // Insert two matching orders so we can have a new last matching Price
+          await Promise.all([
+            dex.insertBuyLimitOrder({ base: doc, secondary: otherSecondary, price: 5 }),
+            dex.insertSellLimitOrder({ base: doc, secondary: otherSecondary, price: 5 })
+          ]);
+          await dex.matchOrders(...otherPair, testHelper.DEFAULT_STEPS_FOR_MATCHING);
         });
         describe('AND there are orders in two different token pairs', function() {
           describe('WHEN running the matching process', function() {
-            it('THEN the market price for the pair should be the expected ', function() {
+            it('THEN the market price for the matched pair should be last price', function() {
+              // One single buy/sell order with the same price (5), give same last match price
               return assertMarketPrice(otherPriceProvider, 5);
             });
-            it('AND the market price for the other pair should be the same', function() {
+            it('AND the market price for the non matching pair should be the same', function() {
               return assertMarketPrice(priceProvider, DEFAULT_INITIAL_PRICE);
             });
           });
@@ -269,8 +207,9 @@ describe('Price provider with fallback tests - defaults to last closing price wh
               before(async function() {
                 await externalProvider.pokeValidity(false);
               });
-              it('THEN the market price for the pair should be the same as before', function() {
-                return assertMarketPrice(priceProvider, DEFAULT_INITIAL_PRICE);
+              it('THEN the market price for the pair should be the same as before', async function() {
+                await assertMarketPrice(priceProvider, DEFAULT_INITIAL_PRICE);
+                await assertMarketPrice(otherPriceProvider, 5);
               });
             });
           });
