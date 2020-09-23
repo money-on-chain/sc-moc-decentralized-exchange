@@ -119,7 +119,7 @@ describe('volume tests and gas cost report generation, using a 1% commission rat
         );
         describe('WHEN matching orders', function() {
           before(async function() {
-            // Use a ridicoulously big amount of steps to ensure to be completing the steps
+            // Use a ridiculously big amount of steps to ensure to be completing the steps
             const {
               receipt: { gasUsed }
             } = await dex.matchOrders(...pair, 3000, {
@@ -142,7 +142,7 @@ describe('volume tests and gas cost report generation, using a 1% commission rat
     before(async function() {
       await setContractsAndBalances(accounts);
       // match to advance tick
-      // Use a ridicoulously big amount of steps to ensure to be completing the steps
+      // Use a ridiculously big amount of steps to ensure to be completing the steps
       await dex.matchOrders(...pair, 3000, {
         gas: 6.8e6
       });
@@ -179,7 +179,7 @@ describe('volume tests and gas cost report generation, using a 1% commission rat
     );
     describe('WHEN matching orders', function() {
       before(async function() {
-        // Use a ridicoulously big amount of steps to ensure to be completing the steps
+        // Use a ridiculously big amount of steps to ensure to be completing the steps
         const tx = await dex.matchOrders(...pair, 3000, {
           from: accounts[0],
           gas: 6.8e6
@@ -248,7 +248,7 @@ describe('volume tests and gas cost report generation, using a 1% commission rat
         );
         describe('WHEN matching orders', function() {
           before(async function() {
-            // Use a ridicoulously big amount of steps to ensure to be completing the steps
+            // Use a ridiculously big amount of steps to ensure to be completing the steps
             logObject.match = (await dex.matchOrders(...pair, 3000, {
               gas: 6.8e6
             })).receipt.gasUsed;
@@ -332,7 +332,7 @@ describe('volume tests and gas cost report generation, using a 1% commission rat
         );
         describe('WHEN matching orders', function() {
           before(async function() {
-            // Use a ridicoulously big amount of steps to ensure to be completing the steps
+            // Use a ridiculously big amount of steps to ensure to be completing the steps
             logObject.match = (await dex.matchOrders(...pair, 3000, {
               gas: 6.8e6
             })).receipt.gasUsed;
@@ -360,7 +360,7 @@ describe('volume tests and gas cost report generation, using a 1% commission rat
         if (!key.toLowerCase().includes('insertion')) {
           // Fake because gasUsed cannot be used to estimate gasLimit as it is the result
           // the end result accounting the returned gas in concept of for example storage freed.
-          // But the actual limit that triggers the rever could had been reached before.
+          // But the actual limit that triggers the revert could had been reached before.
           // eslint-disable-next-line
           object[key].fakeGasLimit = ((100 * gasAmount) / metadata.gasLimit).toFixed(2) + ' %';
         }

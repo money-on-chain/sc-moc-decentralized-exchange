@@ -1687,7 +1687,7 @@ If zero, will start from ordebook top.
     MoCExchangeLib.Order storage toEvaluate = _orderId == 0 ?
       getFirstOrderToExpire(token.orderbook, _orderType) :
       get(token.orderbook, _orderId);
-    if (toEvaluate.id != 0){ 
+    if (toEvaluate.id != 0) {
       require(toEvaluate.orderType == _orderType, "The order to expire does not correspond to the specified OrderType");
     }
     uint256 nextOrderId = toEvaluate.next;

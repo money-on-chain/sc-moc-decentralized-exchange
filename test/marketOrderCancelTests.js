@@ -116,7 +116,7 @@ const assertUserReceives = ({ accounts, accountIndex, orderId, ...props }) => {
 };
 
 const initContractsAndAllowance = accounts => async () => {
-  // with this, the contract charge no commission for the cancelation
+  // with this, the contract charge no commission for the cancellation
   await testHelper.createContracts({
     owner: accounts[0],
     tokenPair: {} // Will add the default base and secondary pair

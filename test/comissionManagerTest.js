@@ -20,8 +20,8 @@ const setContracts = async function() {
     testHelper.getGovernor()
   ]);
 };
-describe('comission manager test', function() {
-  contract('contract can not be initialized with null governos and owner addresses', function([
+describe('commission manager test', function() {
+  contract('contract can not be initialized with null governor and owner addresses', function([
     owner
   ]) {
     before(setContracts);
@@ -51,7 +51,7 @@ describe('comission manager test', function() {
         ERROR_MSG_OWNER_NOT_NULL
       );
     });
-    it('WHEN trying to initialize with commisionRate=10.5, THEN it should revert', async function() {
+    it('WHEN trying to initialize with commissionRate=10.5, THEN it should revert', async function() {
       await expectRevert(
         commissionManager.initialize(
           owner,
@@ -64,7 +64,7 @@ describe('comission manager test', function() {
         ERROR_MSG_BAD_RATE
       );
     });
-    it('WHEN trying to initialize with cancelationPenaltyRate=10.5, THEN it should revert', async function() {
+    it('WHEN trying to initialize with cancellationPenaltyRate=10.5, THEN it should revert', async function() {
       await expectRevert(
         commissionManager.initialize(
           owner,

@@ -122,7 +122,7 @@ describe('Dex: Single matching tests', function() {
     },
     {
       description:
-        'single match, sell order filled, sell.price < matchPrice < buy.price. The correct lockingAmount is substracted from the buy order',
+        'single match, sell order filled, sell.price < matchPrice < buy.price. The correct lockingAmount is subtracted from the buy order',
       buyOrders: {
         description: 'GIVEN there is a buy order',
         orders: [{ lockingAmount: 200, price: 20 }]
@@ -170,7 +170,7 @@ describe('Dex: Single matching tests', function() {
     },
     {
       description:
-        'single match, buy order filled, sell.price < matchPrice < buy.price. The correct lockingAmount is substracted from the sell order',
+        'single match, buy order filled, sell.price < matchPrice < buy.price. The correct lockingAmount is subtracted from the sell order',
       buyOrders: {
         description: 'GIVEN there is a buy order',
         orders: [{ lockingAmount: 100, price: 20 }]

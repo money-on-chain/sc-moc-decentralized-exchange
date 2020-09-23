@@ -61,12 +61,10 @@ describe('Paused functions tests', function() {
       fulfillPreconditions: async () => {
         await dex.insertSellLimitOrder(...pair, wadify(10), pricefy(1), 5);
         await dex.insertSellLimitOrder(...pair, wadify(10), pricefy(1), 5);
-        // TODO Uncomment when insertion works correctly
-        // await dex.insertMarketOrder(...pair, wadify(10), pricefy(1), 5, false);
+        await dex.insertMarketOrder(...pair, wadify(10), pricefy(1), 5, false);
         await dex.insertBuyLimitOrder(...pair, wadify(10), pricefy(1), 5);
         await dex.insertBuyLimitOrder(...pair, wadify(10), pricefy(1), 5);
-        // TODO Uncomment when insertion works correctly
-        //  await dex.insertMarketOrder(...pair, wadify(10), pricefy(1), 5, true);
+        await dex.insertMarketOrder(...pair, wadify(10), pricefy(1), 5, true);
         await dex.matchOrders(...pair, 1);
       },
       getParams() {
@@ -80,11 +78,9 @@ describe('Paused functions tests', function() {
       functionName: 'matchOrders',
       fulfillPreconditions: async () => {
         await dex.insertSellLimitOrder(...pair, wadify(10), pricefy(1), 5);
-        // TODO Uncomment when insertion works correctly
-        // await dex.insertMarketOrder(...pair, wadify(10), pricefy(1), 5, false);
+        await dex.insertMarketOrder(...pair, wadify(10), pricefy(1), 5, false);
         await dex.insertBuyLimitOrder(...pair, wadify(10), pricefy(1), 5);
-        // TODO Uncomment when insertion works correctly
-        // await dex.insertMarketOrder(...pair, wadify(10), pricefy(1), 5, true);
+        await dex.insertMarketOrder(...pair, wadify(10), pricefy(1), 5, true);
       },
       getParams() {
         return [base.address, secondary.address, testHelper.DEFAULT_STEPS_FOR_MATCHING];
