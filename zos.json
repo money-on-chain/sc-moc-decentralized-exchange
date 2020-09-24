@@ -3,10 +3,6 @@
   "name": "decentralized-exchange",
   "version": "1.0.0",
   "contracts": {
-    "Governor": "Governor",
-    "Stopper": "Stopper",
-    "CommissionManager": "CommissionManager",
-    "MoCDecentralizedExchange": "MoCDecentralizedExchange",
-    "MoCDexFake": "MoCDexFake"
+    "CommissionManager": "CommissionManager"
   }
 }
