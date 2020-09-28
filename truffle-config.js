@@ -1,8 +1,7 @@
 const HDWalletProvider = require('truffle-hdwallet-provider');
 
 // const mnemonic = 'weird tiny help punch grow typical endorse update ivory minute topic tennis';
-const mnemonic =
-  process.env.MNEMONIC || 'lab direct float merit wall huge wheat loyal maple cup battle butter';
+const mnemonic = process.env.MNEMONIC
 
 module.exports = {
   // Uncommenting the defaults below
@@ -24,7 +23,7 @@ module.exports = {
   },
   networks: {
     development: {
-      host: '127.0.0.1',
+      host: '192.168.56.2',
       port: 8545,
       network_id: '*',
       gas: 0xfffffffffff
@@ -44,10 +43,7 @@ module.exports = {
       host: 'https://public-node.testnet.rsk.co/',
       provider: new HDWalletProvider(mnemonic, 'https://public-node.testnet.rsk.co/'),
       network_id: '*',
-      gas: 6500000,
-      gasPrice: 69000000,
-      skipDryRun: true,
-      confirmations: 1
+      gasPrice: 80000000
     }
   },
   mocha: {

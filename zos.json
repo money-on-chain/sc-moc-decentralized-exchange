@@ -3,6 +3,7 @@
   "name": "decentralized-exchange",
   "version": "1.0.0",
   "contracts": {
-    "CommissionManager": "CommissionManager"
+    "CommissionManager": "CommissionManager",
+    "MoCDecentralizedExchange": "MoCDecentralizedExchange"
   }
 }
