@@ -2,10 +2,10 @@
   "rskTestnet": {
     "deployGovernance": false,
     "haveToAddTokenPairs": false,
-    "governor": "0x4eAC4518e81B3A5198aADAb998D2610B46aAA609",
-    "stopper": "0x5bCdf8A2E61BD238AEe43b99962Ee8BfBda1Beca",
-    "proxyAdmin": "0xffb65F6E24806B7e1A988EeD1Ad07BB2654fF695",
-    "upgradeDelegator": "0xCDAbFbF334A5F6BCe900D2f73470D1e6722365d8",
+    "governor": "0xd232f0a2113308E99238EFa59D9DDab90C6F7C93",
+    "stopper": "0x521fFdDa8fe169f57fF68a2D88b480BC31d75649",
+    "proxyAdmin": "0x7562512Bf557f3eCc11e2edc21e8E7cbc7754413",
+    "upgradeDelegator": "0x53fa7be6C35141d7328bBeF3B8b2c685C0c55f04",
     "addressesToHaveBalance": [
       "0xC2C22CeE68625D65105fE98a92B283b79845F609",
       "0x6E65A43762901Fe390f4e7fC1af550eD24535265",
