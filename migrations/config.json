@@ -2,10 +2,10 @@
   "rskTestnet": {
     "deployGovernance": false,
     "haveToAddTokenPairs": false,
-    "governor": "0xd232f0a2113308E99238EFa59D9DDab90C6F7C93",
-    "stopper": "0x521fFdDa8fe169f57fF68a2D88b480BC31d75649",
-    "proxyAdmin": "0x7562512Bf557f3eCc11e2edc21e8E7cbc7754413",
-    "upgradeDelegator": "0x53fa7be6C35141d7328bBeF3B8b2c685C0c55f04",
+    "governor": "0x4eAC4518e81B3A5198aADAb998D2610B46aAA609",
+    "stopper": "0x5bCdf8A2E61BD238AEe43b99962Ee8BfBda1Beca",
+    "proxyAdmin": "0xffb65F6E24806B7e1A988EeD1Ad07BB2654fF695",
+    "upgradeDelegator": "0xCDAbFbF334A5F6BCe900D2f73470D1e6722365d8",
     "addressesToHaveBalance": [
       "0xC2C22CeE68625D65105fE98a92B283b79845F609",
       "0x6E65A43762901Fe390f4e7fC1af550eD24535265",
@@ -16,13 +16,13 @@
     "beneficiaryAddress": "0xf69287F5Ca3cC3C6d3981f2412109110cB8af076",
     "existingTokens": {
       "BproToken": {
-        "address": "0xb6A9F8C6eEc48A7FBbCb5DE3b73C257EB554179e"
+        "address": "0x4dA7997A819bb46B6758B9102234c289dD2Ad3bf"
       },
       "WRBTC": {
         "address": "0xA274d994F698Dd09256674960d86aBa22C086669"
       },
       "DocToken": {
-        "address": "0xBca13b5E5A1637aCE451F2B7EF5E6d24E27D3bA3"
+        "address": "0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0"
       },
       "TestToken": {
         "address": "0x840871cbb73dC94dcb11b2CEA963553Db71a95b7"
