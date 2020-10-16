@@ -227,97 +227,101 @@ module.exports = async function(deployer, currentNetwork, [owner]) {
 
   const { haveToAddTokenPairs } = config;
 
-  const docBproPriceProvider = await deployPriceProvider(
-    config,
-    dexProxy.address,
-    'DocToken',
-    'BproToken',
-    doc.address,
-    bpro.address
-  );
-  const docTestTokenPriceProvider = await deployPriceProvider(
-    config,
-    dexProxy.address,
-    'DocToken',
-    'TestToken',
-    doc.address,
-    testToken.address
-  );
-  const docWrbtcPriceProvider = await deployPriceProvider(
-    config,
-    dexProxy.address,
-    'DocToken',
-    'WRBTC',
-    doc.address,
-    wrbtc.address
-  );
-  const wrbtcBproPriceProvider = await deployPriceProvider(
-    config,
-    dexProxy.address,
-    'WRBTC',
-    'BproToken',
-    wrbtc.address,
-    bpro.address
-  );
-  const wrbtcTestTokenPriceProvider = await deployPriceProvider(
-    config,
-    dexProxy.address,
-    'WRBTC',
-    'TestToken',
-    wrbtc.address,
-    testToken.address
-  );
-
-  const tokenPairsToAdd = [
-    [
-      doc.address,
-      bpro.address,
-      docBproPriceProvider.address,
-      DEFAULT_PRICE_PRECISION_STRING,
-      DEFAULT_PRICE_PRECISION_STRING
-    ],
-    [
-      doc.address,
-      testToken.address,
-      docTestTokenPriceProvider.address,
-      DEFAULT_PRICE_PRECISION_STRING,
-      DEFAULT_PRICE_PRECISION_STRING
-    ],
-    [
-      doc.address,
-      wrbtc.address,
-      docWrbtcPriceProvider.address,
-      DEFAULT_PRICE_PRECISION_STRING,
-      DEFAULT_PRICE_PRECISION_STRING
-    ],
-    [
-      wrbtc.address,
-      bpro.address,
-      wrbtcBproPriceProvider.address,
-      DEFAULT_PRICE_PRECISION_STRING,
-      DEFAULT_PRICE_PRECISION_STRING
-    ],
-    [
-      wrbtc.address,
-      testToken.address,
-      wrbtcTestTokenPriceProvider.address,
-      DEFAULT_PRICE_PRECISION_STRING,
-      DEFAULT_PRICE_PRECISION_STRING
-    ]
-  ];
-
   console.log('Getting dex contract at', dexProxy.address);
   const dex = await MoCDecentralizedExchange.at(dexProxy.address);
 
+  var tokenPairsToAdd = []
+
   if (haveToAddTokenPairs) {
     console.log('Adding token pairs to dex');
+
+    const docBproPriceProvider = await deployPriceProvider(
+      config,
+      dexProxy.address,
+      'DocToken',
+      'BproToken',
+      doc.address,
+      bpro.address
+    );
+    const docTestTokenPriceProvider = await deployPriceProvider(
+      config,
+      dexProxy.address,
+      'DocToken',
+      'TestToken',
+      doc.address,
+      testToken.address
+    );
+    const docWrbtcPriceProvider = await deployPriceProvider(
+      config,
+      dexProxy.address,
+      'DocToken',
+      'WRBTC',
+      doc.address,
+      wrbtc.address
+    );
+    const wrbtcBproPriceProvider = await deployPriceProvider(
+      config,
+      dexProxy.address,
+      'WRBTC',
+      'BproToken',
+      wrbtc.address,
+      bpro.address
+    );
+    const wrbtcTestTokenPriceProvider = await deployPriceProvider(
+      config,
+      dexProxy.address,
+      'WRBTC',
+      'TestToken',
+      wrbtc.address,
+      testToken.address
+    );
+
+    tokenPairsToAdd = [
+      [
+        doc.address,
+        bpro.address,
+        docBproPriceProvider.address,
+        DEFAULT_PRICE_PRECISION_STRING,
+        DEFAULT_PRICE_PRECISION_STRING
+      ],
+      [
+        doc.address,
+        testToken.address,
+        docTestTokenPriceProvider.address,
+        DEFAULT_PRICE_PRECISION_STRING,
+        DEFAULT_PRICE_PRECISION_STRING
+      ],
+      [
+        doc.address,
+        wrbtc.address,
+        docWrbtcPriceProvider.address,
+        DEFAULT_PRICE_PRECISION_STRING,
+        DEFAULT_PRICE_PRECISION_STRING
+      ],
+      [
+        wrbtc.address,
+        bpro.address,
+        wrbtcBproPriceProvider.address,
+        DEFAULT_PRICE_PRECISION_STRING,
+        DEFAULT_PRICE_PRECISION_STRING
+      ],
+      [
+        wrbtc.address,
+        testToken.address,
+        wrbtcTestTokenPriceProvider.address,
+        DEFAULT_PRICE_PRECISION_STRING,
+        DEFAULT_PRICE_PRECISION_STRING
+      ]
+    ];
+
     await addTokenPairs(tokenPairsToAdd, dex, governor);
+    
   } else {
     console.log('Tokens pairs that should be added');
     console.log(tokenPairsToAdd);
   }
 
-  if (deployFakes) {
+  if (deployFakes && tokenPairsToAdd) {
     console.log('Deploying ERC20WithBlacklist');
     await deployer.deploy(ERC20WithBlacklist);
     console.log('Deploying TickStateFake');
@@ -359,12 +363,7 @@ module.exports = async function(deployer, currentNetwork, [owner]) {
         upgradeDelegator: upgradeDelegator.address,
         governor: governor.address,
         stopper: stopper.address,
-        commissionManager: commissionManager.address,
-        docBproPriceProvider: docBproPriceProvider.address,
-        docTestTokenPriceProvider: docTestTokenPriceProvider.address,
-        docWrbtcPriceProvider: docWrbtcPriceProvider.address,
-        wrbtcBproPriceProvider: wrbtcBproPriceProvider.address,
-        wrbtcTestTokenPriceProvider: wrbtcTestTokenPriceProvider.address
+        commissionManager: commissionManager.address
       },
       null,
       2
