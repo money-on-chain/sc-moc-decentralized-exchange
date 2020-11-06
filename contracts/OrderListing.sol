@@ -290,7 +290,14 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     bool _isBuy
   ) public whenNotPaused {
     MoCExchangeLib.Pair storage pair = getTokenPair(_baseToken, _secondaryToken);
-    uint256 initialFee = commissionManager.calculateInitialFee(_amount);
+    // Price equivalent to 1 DOC
+    uint256 _priceOneDoc = TokenPairConverter.convertTokenToCommonBase(
+      address(_secondaryToken),
+      uint256(10**18),
+      address(_baseToken)
+    );
+    uint256 initialFee = commissionManager.calculateInitialFee(_amount, _priceOneDoc);
+    require(initialFee <= _amount, "Amount is greater than Fee");
     pair.doInsertMarketOrder(
       nextId(),
       _amount.sub(initialFee),
@@ -404,7 +411,14 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     uint64 _lifespan,
     uint256 _previousOrderIdHint
   ) private {
-    uint256 initialFee = commissionManager.calculateInitialFee(_amount);
+    // Price equivalent to 1 DOC
+    uint256 _priceOneDoc = TokenPairConverter.convertTokenToCommonBase(
+      address(_pair.secondaryToken.token),
+      uint256(10**18),
+      address(_pair.baseToken.token)
+    );
+    uint256 initialFee = commissionManager.calculateInitialFee(_amount, _priceOneDoc);
+    require(initialFee <= _amount, "Amount is greater than Fee");
     _pair.doInsertLimitOrder(
       nextId(),
       _amount.sub(initialFee),
@@ -437,7 +451,14 @@ contract OrderListing is EventfulOrderListing, TokenPairConverter, OrderIdGenera
     uint64 _lifespan,
     uint256 _previousOrderIdHint
   ) private {
-    uint256 initialFee = commissionManager.calculateInitialFee(_amount);
+    // Price equivalent to 1 DOC
+    uint256 _priceOneDoc = TokenPairConverter.convertTokenToCommonBase(
+      address(_pair.secondaryToken.token),
+      uint256(10**18),
+      address(_pair.baseToken.token)
+    );
+    uint256 initialFee = commissionManager.calculateInitialFee(_amount, _priceOneDoc);
+    require(initialFee <= _amount, "Amount is greater than Fee");
     _pair.doInsertLimitOrder(
       nextId(),
       _amount.sub(initialFee),
