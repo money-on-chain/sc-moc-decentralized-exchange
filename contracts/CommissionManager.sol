@@ -26,6 +26,7 @@ contract CommissionManager is Governed, Ownable {
   uint256 public cancelationPenaltyRate;
   uint256 public expirationPenaltyRate;
   uint256 public constant RATE_PRECISION = uint256(10**18);
+  uint256 public minimumCommission;
 
   /**
     @notice Checks that _rate is a valid rate, i.e. it is between 1(RATE_PRECISION)
@@ -84,9 +85,12 @@ contract CommissionManager is Governed, Ownable {
     @notice Calculates the commission to be reserved in the insertion of an order
     IT DOESN'T KEEP THE FUNDS NOR MOVES ANY NOR TRACKS THE RETURNED AS CHARGED COMMISSION(IT IS JUST RESERVED)
     @param _amount Order locked amount
+    @param _price Price equivalent to 1 DOC
    */
-  function calculateInitialFee(uint256 _amount) external view returns (uint256) {
-    return _amount.mul(commissionRate).div(RATE_PRECISION);
+  function calculateInitialFee(uint256 _amount, uint256 _price) external view returns (uint256) {
+    uint256 _minimumFixed = minimumCommission.mul(RATE_PRECISION).div(_price);
+    uint256 _initialFee = _amount.mul(commissionRate).div(RATE_PRECISION);
+    return _minimumFixed.add(_initialFee);
   }
 
   /**
@@ -119,6 +123,13 @@ contract CommissionManager is Governed, Ownable {
   }
 
   /**
+    @param _minimumCommission is the minimum commission in DOC reserved in commission
+  */
+  function setMinimumCommission(uint256 _minimumCommission) external onlyAuthorizedChanger  {
+    minimumCommission = _minimumCommission;
+  }
+
+  /**
     @notice Sets the charged commissions back to 0 for a given token
     It should be called after a withdrawal of the charged commissions
     IT DOESN'T MOVE ANY FUNDS
@@ -147,19 +158,22 @@ contract CommissionManager is Governed, Ownable {
     uint256 _cancelationPenaltyRate,
     uint256 _expirationPenaltyRate,
     address _governor,
-    address _owner
+    address _owner,
+    uint256 _minimumCommission
   )
     external
     initializer
-    isValidRate(_commissionRate)
-    isValidRate(_cancelationPenaltyRate)
-    isValidRate(_expirationPenaltyRate)
     isValidAddress(_beneficiaryAddress, "beneficiaryAddress cannot be null")
     isValidAddress(_governor, "governor cannot be null")
     isValidAddress(_owner, "owner cannot be null")
   {
+    require(_commissionRate <= RATE_PRECISION, "commissionRate should to be in relation to 1");
+    require(_cancelationPenaltyRate <= RATE_PRECISION, "cancelationPenaltyRate should to be in relation to 1");
+    require(_expirationPenaltyRate <= RATE_PRECISION, "expirationPenaltyRate should to be in relation to 1");
+
     beneficiaryAddress = _beneficiaryAddress;
     commissionRate = _commissionRate;
+    minimumCommission = _minimumCommission;
     cancelationPenaltyRate = _cancelationPenaltyRate;
     expirationPenaltyRate = _expirationPenaltyRate;
     Governed.initialize(_governor);
