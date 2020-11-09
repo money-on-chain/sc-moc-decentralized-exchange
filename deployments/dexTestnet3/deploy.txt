@@ -1,0 +1,139 @@
+Starting migrations...
+======================
+> Network name:    'rskTestnet'
+> Network id:      31
+> Block gas limit: 0x67c280
+
+
+1_initial_migration.js
+======================
+
+   Deploying 'Migrations'
+   ----------------------
+   > transaction hash:    0xa4cab95db0bdf19abcec0414e959b10c0a6253dea561d0aef7f87c478f115b69
+   > Blocks: 2            Seconds: 37
+   > contract address:    0x18E3080D3d30cf84f18c0929Fc25d02D0f66d71a
+   > block number:        1322484
+   > block timestamp:     1604683348
+   > account:             0xe82d51431CCBece79aA2DBc3dF33D5B3eeF39657
+   > balance:             0.133248830649
+   > gas used:            190299
+   > gas price:           0.069 gwei
+   > value sent:          0 ETH
+   > total cost:          0.000013130631 ETH
+
+   Pausing for 1 confirmations...
+   ------------------------------
+   > confirmation number: 1 (block: 1322485)
+
+   > Saving migration to chain.
+   > Saving artifacts
+   -------------------------------------
+   > Total cost:      0.000013130631 ETH
+
+
+2_deploy_contracts.js
+=====================
+Deploying fakes? false
+Deploying Tokens and libraries
+
+   Deploying 'TickState'
+   ---------------------
+
+   Deploying 'SafeTransfer'
+   ------------------------
+
+   Deploying 'MoCExchangeLib'
+   --------------------------
+   > transaction hash:    0xf257da77935bfff84d5dbbdd9b2ed5d3afa0d3f94ac2617661902076610457e4
+   ⠋ Blocks: 0            Seconds: 0   > transaction hash:    0xe8c345ed735651072edae65a8b42f660665bfabc7f19f82abf2f8a63e814004a
+   ⠦ Blocks: 0            Seconds: 0   > transaction hash:    0x7c817ad07a1cad9e9ff167a7f7a3767e9bcdd2e6eaa7ebc50fdd1577b97239f6
+   > Blocks: 2            Seconds: 77
+   > contract address:    0xF060167a853a0AA8C1cF65E29593f090711f3Cfa
+   > block number:        1322488
+   > block timestamp:     1604683461
+   > account:             0xe82d51431CCBece79aA2DBc3dF33D5B3eeF39657
+   > balance:             0.133240801326
+   > gas used:            74306
+   > gas price:           0.069 gwei
+   > value sent:          0 ETH
+   > total cost:          0.000005127114 ETH
+
+   Pausing for 1 confirmations...
+   ------------------------------
+   ⠋ Blocks: 0            Seconds: 0   > confirmation number: 1 (block: 1322489)
+   ⠇ Blocks: 0            Seconds: 0   > Blocks: 2            Seconds: 81
+   > contract address:    0x437eEa288683D1dc80D5A5d3Daa6c742298b98F0
+   > block number:        1322489
+   > block timestamp:     1604683504
+   > account:             0xe82d51431CCBece79aA2DBc3dF33D5B3eeF39657
+   > balance:             0.133235674212
+   > gas used:            74306
+   > gas price:           0.069 gwei
+   > value sent:          0 ETH
+   > total cost:          0.000005127114 ETH
+
+   Pausing for 1 confirmations...
+   ------------------------------
+   ⠸ Blocks: 0            Seconds: 0   > confirmation number: 1 (block: 1322490)
+   ⠏ Blocks: 0            Seconds: 0   > Blocks: 4            Seconds: 117
+   > contract address:    0x962B3e57F7958f3358B161Df1C6D996C36A282A0
+   > block number:        1322490
+   > block timestamp:     1604683536
+   > account:             0xe82d51431CCBece79aA2DBc3dF33D5B3eeF39657
+   > balance:             0.132835961145
+   > gas used:            5792943
+   > gas price:           0.069 gwei
+   > value sent:          0 ETH
+   > total cost:          0.000399713067 ETH
+
+   Pausing for 1 confirmations...
+   ------------------------------
+   ⠹ Blocks: 0            Seconds: 0   > confirmation number: 1 (block: 1322491)
+Linking libraries into dex
+
+   Linking
+   -------
+   * Contract: MoCDecentralizedExchange <--> Library: MoCExchangeLib (at address: 0x962B3e57F7958f3358B161Df1C6D996C36A282A0)
+Getting governance contracts
+   ⠹ Blocks: 0            Seconds: 0Adding Fee manager
+Pushing implementations (fee manager)
+   ⠋ Blocks: 0            Seconds: 0Creating proxy for fee manager
+   ⠏ Blocks: 0            Seconds: 00x2d04A2EDeE79dB592494211DB48Ed050B0B401de
+Setting admin for dex
+   ⠧ Blocks: 0            Seconds: 00x2d04A2EDeE79dB592494211DB48Ed050B0B401de
+Getting commission manager
+   ⠸ Blocks: 0            Seconds: 0Adding dex
+Pushing implementations (dex)
+   ⠏ Blocks: 0            Seconds: 0Creating proxy for dex
+   ⠧ Blocks: 0            Seconds: 00x981629a14D65824110b2a7582D6224567F1756A0
+Setting admin to dex
+   ⠹ Blocks: 0            Seconds: 00x981629a14D65824110b2a7582D6224567F1756A0
+Transferring ownership from dex to owner
+   ⠹ Blocks: 0            Seconds: 0Getting contracts 0x981629a14D65824110b2a7582D6224567F1756A0
+Getting dex contract at 0x981629a14D65824110b2a7582D6224567F1756A0
+   ⠙ Blocks: 0            Seconds: 0Tokens pairs that should be added
+[]
+{
+  "dex": "0x981629a14D65824110b2a7582D6224567F1756A0",
+  "doc": "0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0",
+  "wrbtc": "0x09b6ca5E4496238A1F176aEa6Bb607DB96c2286E",
+  "test": "0x840871cbb73dC94dcb11b2CEA963553Db71a95b7",
+  "bpro": "0x4dA7997A819bb46B6758B9102234c289dD2Ad3bf",
+  "proxyAdmin": "0xffb65F6E24806B7e1A988EeD1Ad07BB2654fF695",
+  "upgradeDelegator": "0xCDAbFbF334A5F6BCe900D2f73470D1e6722365d8",
+  "governor": "0x4eAC4518e81B3A5198aADAb998D2610B46aAA609",
+  "stopper": "0x5bCdf8A2E61BD238AEe43b99962Ee8BfBda1Beca",
+  "commissionManager": "0x2d04A2EDeE79dB592494211DB48Ed050B0B401de"
+}
+
+   > Saving migration to chain.
+   > Saving artifacts
+   -------------------------------------
+   > Total cost:      0.000409967295 ETH
+
+
+Summary
+=======
+> Total deployments:   4
+> Final cost:          0.000423097926 ETH
