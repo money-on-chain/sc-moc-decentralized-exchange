@@ -43,6 +43,44 @@
       }
     }
   },
+  "rskMainnet": {
+    "deployGovernance": false,
+    "haveToAddTokenPairs": false,
+    "governor": "0x036CaF1d8B11d46F5D819241cFFAC06cDF9Fd230",
+    "stopper": "0xEdA04b62fD4ce63836673F7DB9d0a9B59dd437eb",
+    "proxyAdmin": "0x6891b67fBF7DAFA462C3378B0b6f40F2B41880A4",
+    "upgradeDelegator": "0xA824640ce0608C56Defd70EE180fFAe5f394D488",
+    "addressesToHaveBalance": [],
+    "beneficiaryAddress": "0xC61820bFB8F87391d62Cd3976dDc1d35e0cf7128",
+    "existingTokens": {
+      "BproToken": {
+        "address": "0x440cd83C160de5C96DDb20246815EA44C7Abbca8"
+      },
+      "WRBTC": {
+        "address": "0x967f8799aF07DF1534d48A95a5C9FEBE92c53ae0"
+      },
+      "DocToken": {
+        "address": "0xE700691Da7B9851F2F35f8b8182C69C53ccad9DB"
+      },
+      "TestToken": {
+        "address": "0x840871cbb73dC94dcb11b2CEA963553Db71a95b7"
+      },
+      "RifToken": {
+        "address": "0x2aCc95758f8b5F583470bA265Eb685a8f45fC9D5"
+      }
+    },
+    "externalPriceProvider": {
+      "DocToken": {
+        "BproToken": "",
+        "WRBTC": "",
+        "TestToken": ""
+      },
+      "WRBTC": {
+        "BproToken": "",
+        "TestToken": ""
+      }
+    }
+  },
   "development": {
     "deployGovernance": true,
     "haveToAddTokenPairs": true,
@@ -85,12 +123,12 @@
     "MAX_BLOCKS_FOR_TICK": 20,
     "MIN_BLOCKS_FOR_TICK": 10,
     "MIN_ORDER_AMOUNT": 1e19,
-    "MAX_ORDER_LIFESPAN": 50,
+    "MAX_ORDER_LIFESPAN": 4800,
     "DEFAULT_PRICE_PRECISION": 1e18,
     "TOKEN_DECIMALS": 1e18,
     "COMMISSION_RATE": 0.001,
-    "CANCELATION_PENALTY_RATE": 0.25,
-    "EXPIRATION_PENALTY_RATE": 0.5,
+    "CANCELATION_PENALTY_RATE": 0.0,
+    "EXPIRATION_PENALTY_RATE": 0.2,
     "TOKENS_TO_MINT": 1e10,
     "MIN_MO_MULTIPLY_FACTOR": 0.01,
     "MAX_MO_MULTIPLY_FACTOR": 1.99,

@@ -24,7 +24,7 @@ module.exports = {
   },
   networks: {
     development: {
-      host: '192.168.56.2',
+      host: '127.0.0.1',
       port: 8545,
       network_id: '*',
       gas: 0xfffffffffff
@@ -46,6 +46,15 @@ module.exports = {
       network_id: '*',
       gas: 6800000,
       gasPrice: 69000000,
+      skipDryRun: true,
+      confirmations: 1
+    },
+    rskMainnet: {
+      host: 'https://public-node.rsk.co/',
+      provider: new HDWalletProvider(mnemonic, 'https://public-node.rsk.co/'),
+      network_id: '*',
+      gas: 6800000,
+      gasPrice: 60000000,
       skipDryRun: true,
       confirmations: 1
     }
