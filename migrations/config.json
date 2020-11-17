@@ -54,13 +54,13 @@
     "beneficiaryAddress": "0xC61820bFB8F87391d62Cd3976dDc1d35e0cf7128",
     "existingTokens": {
       "BproToken": {
-        "address": "0x440cd83C160de5C96DDb20246815EA44C7Abbca8"
+        "address": "0x440CD83C160De5C96Ddb20246815eA44C7aBBCa8"
       },
       "WRBTC": {
         "address": "0x967f8799aF07DF1534d48A95a5C9FEBE92c53ae0"
       },
       "DocToken": {
-        "address": "0xE700691Da7B9851F2F35f8b8182C69C53ccad9DB"
+        "address": "0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db"
       },
       "TestToken": {
         "address": "0x840871cbb73dC94dcb11b2CEA963553Db71a95b7"
