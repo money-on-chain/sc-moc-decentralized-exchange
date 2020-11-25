@@ -135,7 +135,7 @@ const createContracts = async ({
 
   const priceProviderFake = await getTokenPriceProviderFake().new();
 
-  const { commissionRate, cancelationPenaltyRate, expirationPenaltyRate } = commission || {};
+  const { commissionRate, cancelationPenaltyRate, expirationPenaltyRate, minimumCommission } = commission || {};
 
   const commissionManagerProxy = await project.createProxy(CommissionManagerProxy);
 
@@ -147,7 +147,7 @@ const createContracts = async ({
     expirationPenaltyRate || DEFAULT_EXPIRATION_PENALTY_RATE,
     governor.address,
     owner,
-    0.5
+    minimumCommission || DEFAULT_MINIMUM_COMMISSION
   );
   this.using.commissionManager = commissionManager;
 

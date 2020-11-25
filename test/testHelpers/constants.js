@@ -39,5 +39,5 @@ module.exports = {
     LIMIT_ORDER: new BN(0),
     MARKET_ORDER: new BN(1)
   },
-  DEFAULT_MINIMUM_COMMISSION: 0.5
+  DEFAULT_MINIMUM_COMMISSION: 0
 };
