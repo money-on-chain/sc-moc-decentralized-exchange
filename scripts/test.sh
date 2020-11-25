@@ -28,9 +28,9 @@ start_ganache() {
 
   if [ "$SOLIDITY_COVERAGE" = true ]; then
     touch allFiredEvents
-    node_modules/.bin/testrpc-sc --gasLimit 0x1fffffffffffff --port "$ganache_port" "${accounts[@]}" -i 1564754684494 --accounts 10 --defaultBalanceEther 100000000000000000 > /dev/null &
+    node_modules/.bin/testrpc-sc --gasLimit 0x1fffffffffffff --port "$ganache_port" "${accounts[@]}" -i 1564754684494 --allowUnlimitedContractSize --accounts 10 --defaultBalanceEther 100000000000000000 > /dev/null &
   else
-    node_modules/.bin/ganache-cli --gasLimit 0xfffffffffff --port "$ganache_port" "${accounts[@]}" -i 1564754684494 --accounts 10 --defaultBalanceEther 100000000000000000 > /dev/null &
+    node_modules/.bin/ganache-cli --gasLimit 0xfffffffffff --port "$ganache_port" "${accounts[@]}" -i 1564754684494 --allowUnlimitedContractSize --accounts 10 --defaultBalanceEther 100000000000000000 > /dev/null &
   fi
 
   ganache_pid=$!

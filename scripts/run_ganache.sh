@@ -41,9 +41,9 @@ start_ganache() {
   fi
 
   if [ "$TESTING" = true ]; then
-    node_modules/.bin/ganache-cli --gasLimit 0xfffffffffff --port "$GANACHE_PORT" -i 1564754684494 --accounts 10 --defaultBalanceEther 100000000000000000
+    node_modules/.bin/ganache-cli --gasLimit 0xfffffffffff --port "$GANACHE_PORT" -i 1564754684494 --allowUnlimitedContractSize --accounts 10 --defaultBalanceEther 100000000000000000
   else
-    node_modules/.bin/ganache-cli --db "$NODO_DIRECTORY" --gasLimit 0xfffffffffff "${accounts[@]}" -i 1564754684494 --port $GANACHE_PORT
+    node_modules/.bin/ganache-cli --db "$NODO_DIRECTORY" --gasLimit 0xfffffffffff "${accounts[@]}" -i 1564754684494 --allowUnlimitedContractSize --port $GANACHE_PORT
   fi
 
   ganache_pid=$!
