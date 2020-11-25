@@ -13,7 +13,6 @@ const COMMISSION_RATE = '0';
 const MINIMUM_COMMISSION = '0';
 const ERROR_MSG_GOVERNOR_NOT_NULL = 'revert governor cannot be null';
 const ERROR_MSG_OWNER_NOT_NULL = 'owner cannot be null';
-const ERROR_MSG_BAD_RATE = 'rate should to be in relation to 1';
 const ERROR_COMMISSION_RATE = 'commissionRate should to be in relation to 1';
 const ERROR_EXPIRATION_RATE = 'expirationPenaltyRate should to be in relation to 1';
 const ERROR_CANCELATION_RATE = 'cancelationPenaltyRate should to be in relation to 1';

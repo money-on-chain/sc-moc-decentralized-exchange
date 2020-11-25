@@ -2,7 +2,7 @@ const HDWalletProvider = require('truffle-hdwallet-provider');
 
 // const mnemonic = 'weird tiny help punch grow typical endorse update ivory minute topic tennis';
 const mnemonic =
- process.env.MNEMONIC || 'lab direct float merit wall huge wheat loyal maple cup battle butter';
+  process.env.MNEMONIC || 'lab direct float merit wall huge wheat loyal maple cup battle butter';
 
 module.exports = {
   // Uncommenting the defaults below

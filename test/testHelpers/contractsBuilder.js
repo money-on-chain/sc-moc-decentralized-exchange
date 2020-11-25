@@ -135,7 +135,12 @@ const createContracts = async ({
 
   const priceProviderFake = await getTokenPriceProviderFake().new();
 
-  const { commissionRate, cancelationPenaltyRate, expirationPenaltyRate, minimumCommission } = commission || {};
+  const {
+    commissionRate,
+    cancelationPenaltyRate,
+    expirationPenaltyRate,
+    minimumCommission
+  } = commission || {};
 
   const commissionManagerProxy = await project.createProxy(CommissionManagerProxy);
 
