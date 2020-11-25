@@ -10,6 +10,7 @@ const testHelper = testHelperBuilder();
 const { wadify } = testHelper;
 
 const COMMISSION_RATE = '0';
+const MINIMUM_COMMISSION = '0';
 const ERROR_MSG_GOVERNOR_NOT_NULL = 'revert governor cannot be null';
 const ERROR_MSG_OWNER_NOT_NULL = 'owner cannot be null';
 const ERROR_MSG_BAD_RATE = 'rate should to be in relation to 1';
@@ -33,7 +34,8 @@ describe('commission manager test', function() {
           COMMISSION_RATE,
           COMMISSION_RATE,
           constants.ZERO_ADDRESS,
-          owner
+          owner,
+          MINIMUM_COMMISSION
         ),
         ERROR_MSG_GOVERNOR_NOT_NULL
       );
@@ -46,7 +48,8 @@ describe('commission manager test', function() {
           COMMISSION_RATE,
           COMMISSION_RATE,
           governor.address,
-          constants.ZERO_ADDRESS
+          constants.ZERO_ADDRESS,
+          MINIMUM_COMMISSION
         ),
         ERROR_MSG_OWNER_NOT_NULL
       );
@@ -59,7 +62,8 @@ describe('commission manager test', function() {
           COMMISSION_RATE,
           COMMISSION_RATE,
           governor.address,
-          owner
+          owner,
+          MINIMUM_COMMISSION
         ),
         ERROR_MSG_BAD_RATE
       );
@@ -72,7 +76,8 @@ describe('commission manager test', function() {
           wadify(10.5),
           COMMISSION_RATE,
           governor.address,
-          owner
+          owner,
+          MINIMUM_COMMISSION
         ),
         ERROR_MSG_BAD_RATE
       );
@@ -85,7 +90,8 @@ describe('commission manager test', function() {
           COMMISSION_RATE,
           wadify(10.5),
           governor.address,
-          owner
+          owner,
+          MINIMUM_COMMISSION
         ),
         ERROR_MSG_BAD_RATE
       );
