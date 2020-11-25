@@ -25,7 +25,8 @@
     "truffle-migrate-mainnet": "cp zos.backup.json zos.json && truffle migrate --network rskMainnet --reset",
     "truffle-migrate-dev": "rm zos.dev-*.json; rm -r build/contracts; truffle migrate --network development --reset",
     "full-test": "npm run eslint && npm run solium && npm run test",
-    "pretty-sc": "prettier --write **/*.sol"
+    "pretty-sc": "prettier --write **/*.sol",
+    "truffle-flattener": "truffle-flattener $1 > flat.sol"
   },
   "repository": {
     "type": "git",
@@ -69,6 +70,7 @@
     "prettier-plugin-solidity": "1.0.0-alpha.47",
     "solidity-coverage": "0.6.4",
     "truffle": "5.0.28",
-    "truffle-hdwallet-provider": "1.0.14"
+    "truffle-hdwallet-provider": "1.0.14",
+    "@zemse/solidity-flattener": "1.5.1"
   }
 }
