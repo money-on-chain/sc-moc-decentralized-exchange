@@ -26,7 +26,7 @@
     "truffle-migrate-dev": "rm zos.dev-*.json; rm -r build/contracts; truffle migrate --network development --reset",
     "full-test": "npm run eslint && npm run solium && npm run test",
     "pretty-sc": "prettier --write **/*.sol",
-    "truffle-flattener": "truffle-flattener $1 > flat.sol"
+    "flatten-contracts": "scripts/contract_flattener.sh"
   },
   "repository": {
     "type": "git",
