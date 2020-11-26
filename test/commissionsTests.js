@@ -40,7 +40,8 @@ const initContractsAndAllowance = async accounts => {
     commission: {
       commissionRate: wadify(0.1), // 10%
       cancelationPenaltyRate: wadify(0.25), // 25%
-      expirationPenaltyRate: wadify(0.75) // 75%
+      expirationPenaltyRate: wadify(0.75), // 75%
+      minimumCommission: 0
     },
     tokenPair: {}, // Will add the default base and secondary pair
     ordersForTick: 2,

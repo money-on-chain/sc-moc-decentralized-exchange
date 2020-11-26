@@ -30,6 +30,7 @@ const MAX_BLOCKS_FOR_TICK = 12;
 const MIN_BLOCKS_FOR_TICK = 4;
 const DEFAULT_PRICE_PRECISION = (10 ** 4).toString();
 const COMMISSION_RATE = '0';
+const MINIMUM_COMMISSION = '0';
 const MIN_MULTIPLY_FACTOR = '15000000000000000';
 const MAX_MULTIPLY_FACTOR = '350000000000000000';
 const ERROR_MSG_ALREADY_INITIALIZED = 'Contract instance has already been initialized.';
@@ -70,7 +71,8 @@ const initializeDex = async function(temporaryOwner, beneficiaryAddress) {
     COMMISSION_RATE,
     COMMISSION_RATE,
     governor.address,
-    temporaryOwner
+    temporaryOwner,
+    MINIMUM_COMMISSION
   );
 
   await dex.initialize(

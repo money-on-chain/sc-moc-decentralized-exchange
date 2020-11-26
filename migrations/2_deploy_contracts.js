@@ -86,7 +86,8 @@ module.exports = async function(deployer, currentNetwork, [owner]) {
     EXPIRATION_PENALTY_RATE,
     TOKENS_TO_MINT,
     MIN_MO_MULTIPLY_FACTOR,
-    MAX_MO_MULTIPLY_FACTOR
+    MAX_MO_MULTIPLY_FACTOR,
+    MINIMUM_COMMISSION
   } = config;
   const DEFAULT_PRICE_PRECISION_STRING = DEFAULT_PRICE_PRECISION.toString();
   const executeBatched = actions =>
@@ -168,7 +169,8 @@ module.exports = async function(deployer, currentNetwork, [owner]) {
       (CANCELATION_PENALTY_RATE * TOKEN_DECIMALS).toString(),
       (EXPIRATION_PENALTY_RATE * TOKEN_DECIMALS).toString(),
       governor.address,
-      owner
+      owner,
+      (MINIMUM_COMMISSION * TOKEN_DECIMALS).toString()
     ],
     ...options
   });
