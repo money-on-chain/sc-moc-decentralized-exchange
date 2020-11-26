@@ -1,7 +1,9 @@
 const HDWalletProvider = require('truffle-hdwallet-provider');
 
 // const mnemonic = 'weird tiny help punch grow typical endorse update ivory minute topic tennis';
-const mnemonic = 'lab direct float merit wall huge wheat loyal maple cup battle butter';
+const mnemonic =
+  process.env.MNEMONIC || 'lab direct float merit wall huge wheat loyal maple cup battle butter';
+
 module.exports = {
   // Uncommenting the defaults below
   // provides for an easier quick-start with Ganache.
@@ -39,10 +41,22 @@ module.exports = {
       gas: 0xfffffffffff
     },
     rskTestnet: {
-      host: 'http://50.116.28.95:4444/',
-      provider: new HDWalletProvider(mnemonic, 'http://50.116.28.95:4444/'),
+      host: 'https://public-node.testnet.rsk.co/',
+      provider: new HDWalletProvider(mnemonic, 'https://public-node.testnet.rsk.co/'),
       network_id: '*',
-      gasPrice: 80000000
+      gas: 6800000,
+      gasPrice: 69000000,
+      skipDryRun: true,
+      confirmations: 1
+    },
+    rskMainnet: {
+      host: 'https://public-node.rsk.co/',
+      provider: new HDWalletProvider(mnemonic, 'https://public-node.rsk.co/'),
+      network_id: '*',
+      gas: 6800000,
+      gasPrice: 60000000,
+      skipDryRun: true,
+      confirmations: 1
     }
   },
   mocha: {

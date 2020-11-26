@@ -14,7 +14,8 @@ const {
   DEFAULT_EXPIRATION_PENALTY_RATE,
   DEFAULT_MIN_MO_MULTIPLY_FACTOR,
   DEFAULT_MAX_MO_MULTIPLY_FACTOR,
-  RATE_PRECISION
+  RATE_PRECISION,
+  DEFAULT_MINIMUM_COMMISSION
 } = require('./constants');
 
 ZWeb3.initialize(web3.currentProvider);
@@ -134,7 +135,8 @@ const createContracts = async ({
 
   const priceProviderFake = await getTokenPriceProviderFake().new();
 
-  const { commissionRate, cancelationPenaltyRate, expirationPenaltyRate } = commission || {};
+  const { commissionRate, cancelationPenaltyRate, expirationPenaltyRate, minimumCommission } =
+    commission || {};
 
   const commissionManagerProxy = await project.createProxy(CommissionManagerProxy);
 
@@ -145,7 +147,8 @@ const createContracts = async ({
     cancelationPenaltyRate || DEFAULT_CANCELATION_PENALTY_RATE,
     expirationPenaltyRate || DEFAULT_EXPIRATION_PENALTY_RATE,
     governor.address,
-    owner
+    owner,
+    minimumCommission || DEFAULT_MINIMUM_COMMISSION
   );
   this.using.commissionManager = commissionManager;
 
