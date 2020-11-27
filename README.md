@@ -230,7 +230,7 @@ docker run -d -p 8545:8545 trufflesuite/ganache-cli:latest
 
 | Contract                      | Proxy                           | Implementation                 |
 | :---------------------------- | -----------------------------   | ------------------------------ |
-| MoCDecentralizedExchange | [0x4ebd075534d9E24cE134f8BC962311c913730a84](https://explorer.rsk.co/address/0x4ebd075534d9E24cE134f8BC962311c913730a84) | [0xEC8A7473e7aC0DB598f028Af2b5ba6B65afc3ea8](https://explorer.rsk.co/address/0xEC8A7473e7aC0DB598f028Af2b5ba6B65afc3ea8) | 
+| MoCDecentralizedExchange | [0x4ebd075534d9E24cE134f8BC962311c913730a84](https://explorer.rsk.co/address/0x4ebd075534d9E24cE134f8BC962311c913730a84) | [0xEC8A7473e7aC0DB598f028Af2b5ba6B65afc3ea8](https://blockscout.com/rsk/mainnet/address/0xEc8A7473e7AC0db598F028Af2B5Ba6B65AFC3ea8/contracts) | 
 | CommissionManager | [0xfBBEA67566844601fFB8ABe8FC2E7E6547A408f0](https://explorer.rsk.co/address/0xfBBEA67566844601fFB8ABe8FC2E7E6547A408f0) | [0xE190B137663A2101c00d7F3d98FD0F8D46D58e0b](https://explorer.rsk.co/address/0xE190B137663A2101c00d7F3d98FD0F8D46D58e0b) | 
 | MoCExchangeLib | [0x12ede3eEBF9e3FD6317cFBCb3ebfc762Db954d68](https://explorer.rsk.co/address/0x12ede3eEBF9e3FD6317cFBCb3ebfc762Db954d68) | [0x12ede3eEBF9e3FD6317cFBCb3ebfc762Db954d68](https://explorer.rsk.co/address/0x12ede3eEBF9e3FD6317cFBCb3ebfc762Db954d68) | 
 
