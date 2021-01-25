@@ -166,10 +166,15 @@ The amount is always the amount to be locked by the user , i.e.
 This amount already includes the **commission charged** so the amount to be exchanged will actually be 
 less than the locked one.
 
+The minimum amount to send in the platform is the equivalent to 10 DOC.
+
+### Commission
+
+The commission charged by the platform is 0.1% of the amount + 0.5 DOC Fixed.
+
 ## API and contract
 
 API are set of tool to query the contracts from outside the blockchain, also you can use it from another contract.
-In this document we are going to make example for api and contract.
 
 ### Requirements
 
@@ -199,6 +204,51 @@ npm install --save -E git+https://github.com/money-on-chain/sc-moc-decentralized
 ```
 
 ​Having done that lets you use our contract as a dependency to your contract. 
+
+### Python Scripts Connection table
+
+to run python script go to folder scripts/api:
+
+```
+cd scripts/api
+export ACCOUNT_PK_SECRET=PK
+python ./1_approve.py
+```
+
+where PK is your Private key, first you need to make changes to the script file with your data, accounts, tokens, etc.:
+
+```
+from moneyonchain.networks import NetworkManager
+from moneyonchain.tokens import WRBTCToken
+
+
+connection_network = 'rskTesnetPublic'
+config_network = 'dexTestnet'
+
+# init network manager
+# connection network is the brownie connection network
+# config network is our enviroment we want to connect
+network_manager = NetworkManager(
+    connection_network=connection_network,
+    config_network=config_network)
+```
+
+**Connection Network**
+
+Connection Network     | Node                               | Chain Id   | Network
+---------------------- | ---------------------------------- | ---------- | --------------
+rskTesnetPublic        | https://public-node.testnet.rsk.co | 31         |  Testnet
+rskMainnetPublic       | https://public-node.rsk.co         | 30         |  Mainnet
+
+
+**Config Network enviroment to use**
+
+Enviroment        | Network    | Type   
+----------------- | ---------- | ---------
+dexTestnet        | Testnet    | Test      
+dexMainnet        | Mainnet    | Production
+
+
 
 ## The MoCDecentralizedExchange Contract
 
