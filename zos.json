@@ -4,6 +4,9 @@
   "version": "1.0.0",
   "contracts": {
     "CommissionManager": "CommissionManager",
-    "MoCDecentralizedExchange": "MoCDecentralizedExchange"
+    "MoCDecentralizedExchange": "MoCDecentralizedExchange",
+    "Governor": "Governor",
+    "Stopper": "Stopper",
+    "MoCDexFake": "MoCDexFake"
   }
 }
