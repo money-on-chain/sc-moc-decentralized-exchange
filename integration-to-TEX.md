@@ -924,6 +924,108 @@ Gas Used: 230192 / 253211 (90.9%)
 
 ```
 
+## Inserting a Buy Market Order
+
+
+#### Python script
+
+to run python script go to folder scripts/api:
+
+```
+cd scripts/api
+export ACCOUNT_PK_SECRET=PK
+python ./6_insert_buy_market_order.py
+```
+
+where PK is your Private key, first you need to make changes to the script file with your data, accounts, tokens, etc.:
+
+
+```
+from moneyonchain.networks import NetworkManager
+from moneyonchain.tex import MoCDecentralizedExchange
+
+connection_network = 'rskTesnetPublic'
+config_network = 'dexTestnet'
+
+# init network manager
+# connection network is the brownie connection network
+# config network is our enviroment we want to connect
+network_manager = NetworkManager(
+    connection_network=connection_network,
+    config_network=config_network)
+
+# run install() if is the first time and you want to install
+# networks connection from brownie
+# network_manager.install()
+
+# Connect to network
+network_manager.connect()
+
+
+# instantiate DEX Contract
+dex = MoCDecentralizedExchange(network_manager).from_abi()
+
+base_token = '0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0'  # DOC Token address
+secondary_token = '0x09b6ca5E4496238A1F176aEa6Bb607DB96c2286E'  # WRBTC Token address
+amount = 20  # you want to buy the equivalent to 20 DOC
+multiply_factor = 1.01
+lifespan = 7  # the number of ticks your transaction are going to be alive.
+
+print("Insert buy market order. Please wait to the transaction be mined!...")
+tx_receipt = dex.insert_buy_market_order(
+    base_token,
+    secondary_token,
+    amount,
+    multiply_factor,
+    lifespan)
+
+# finally disconnect from network
+network_manager.disconnect()
+
+```
+
+The result:
+
+```
+Insert buy market order. Please wait to the transaction be mined!...
+Transaction sent: 0x808efa488fb77039fa3ed31282c32aebbb84a6c15875beab43694a5905d9c6c8
+  Gas price: 0.06 gwei   Gas limit: 288203   Nonce: 1646
+  MoCDecentralizedExchange.insertMarketOrder confirmed - Block: 1554808   Gas used: 262003 (90.91%)
+
+Transaction was Mined 
+---------------------
+Tx Hash: 0x808efa488fb77039fa3ed31282c32aebbb84a6c15875beab43694a5905d9c6c8
+From: 0xCD8A1c9aCc980ae031456573e34dC05cD7daE6e3
+To: 0xA066d6e20e122deB1139FA3Ae3e96d04578c67B5
+Value: 0
+Function: MoCDecentralizedExchange.insertMarketOrder
+Block: 1554808
+Gas Used: 262003 / 288203 (90.9%)
+
+   Events In This Transaction
+   --------------------------
+   Transfer
+      from: 0xCD8A1c9aCc980ae031456573e34dC05cD7daE6e3
+      to: 0xA066d6e20e122deB1139FA3Ae3e96d04578c67B5
+      value: 20000000000000000000
+   Approval
+      owner: 0xCD8A1c9aCc980ae031456573e34dC05cD7daE6e3
+      spender: 0xA066d6e20e122deB1139FA3Ae3e96d04578c67B5
+      value: 4916199999999999999290
+   NewOrderInserted
+      id: 160
+      sender: 0xCD8A1c9aCc980ae031456573e34dC05cD7daE6e3
+      baseTokenAddress: 0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0
+      secondaryTokenAddress: 0x09B6Ca5E4496238a1F176aEA6bB607db96C2286E
+      exchangeableAmount: 19480000000000000000
+      reservedCommission: 520000000000000000
+      price: 0
+      multiplyFactor: 1010000000000000008
+      expiresInTick: 66
+      isBuy: True
+      orderType: 1
+
+```
 
 ## Inserting a Sell Limit Order
 
@@ -1270,6 +1372,103 @@ Gas Used: 236454 / 260099 (90.9%)
 
 ```
 
+## Inserting a Sell Market Order (MO)
+
+
+#### Python script
+
+to run python script go to folder scripts/api:
+
+```
+cd scripts/api
+export ACCOUNT_PK_SECRET=PK
+python ./7_insert_sell_market_order.py
+```
+
+where PK is your Private key, first you need to make changes to the script file with your data, accounts, tokens, etc.:
+
+
+```
+from moneyonchain.networks import NetworkManager
+from moneyonchain.tex import MoCDecentralizedExchange
+
+connection_network='rskTesnetPublic'
+config_network = 'dexTestnet'
+
+# init network manager
+# connection network is the brownie connection network
+# config network is our enviroment we want to connect
+network_manager = NetworkManager(
+    connection_network=connection_network,
+    config_network=config_network)
+
+# run install() if is the first time and you want to install
+# networks connection from brownie
+# network_manager.install()
+
+# Connect to network
+network_manager.connect()
+
+
+# instantiate TEX Contract
+dex = MoCDecentralizedExchange(network_manager).from_abi()
+
+base_token = '0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0'  # DOC Token address
+secondary_token = '0x09b6ca5E4496238A1F176aEa6Bb607DB96c2286E'  # WRBTC Token address
+amount = 0.0007  # you want to sell 0.0007 WRBTC
+multiply_factor = 1.01
+lifespan = 7  # the number of ticks your transaction are going to be alive.
+
+print("Insert sell market order. Please wait to the transaction be mined!...")
+tx_receipt = dex.insert_sell_market_order(
+    base_token,
+    secondary_token,
+    amount,
+    multiply_factor,
+    lifespan)
+
+# finally disconnect from network
+network_manager.disconnect()
+
+```
+
+The result:
+
+```
+Insert sell market order. Please wait to the transaction be mined!...
+Transaction sent: 0xf0ac5db7b4146346cd3d103fc3f1e13e4e472217e60b655132dda9192826bf9e
+  Gas price: 0.06 gwei   Gas limit: 287815   Nonce: 1648
+  MoCDecentralizedExchange.insertMarketOrder confirmed - Block: 1554832   Gas used: 261650 (90.91%)
+
+Transaction was Mined 
+---------------------
+Tx Hash: 0xf0ac5db7b4146346cd3d103fc3f1e13e4e472217e60b655132dda9192826bf9e
+From: 0xCD8A1c9aCc980ae031456573e34dC05cD7daE6e3
+To: 0xA066d6e20e122deB1139FA3Ae3e96d04578c67B5
+Value: 0
+Function: MoCDecentralizedExchange.insertMarketOrder
+Block: 1554832
+Gas Used: 261650 / 287815 (90.9%)
+
+   Events In This Transaction
+   --------------------------
+   Transfer
+      from: 0xCD8A1c9aCc980ae031456573e34dC05cD7daE6e3
+      to: 0xA066d6e20e122deB1139FA3Ae3e96d04578c67B5
+      value: 699999999999999
+   NewOrderInserted
+      id: 161
+      sender: 0xCD8A1c9aCc980ae031456573e34dC05cD7daE6e3
+      baseTokenAddress: 0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0
+      secondaryTokenAddress: 0x09B6Ca5E4496238a1F176aEA6bB607db96C2286E
+      exchangeableAmount: 670696824710207
+      reservedCommission: 29303175289792
+      price: 0
+      multiplyFactor: 1010000000000000008
+      expiresInTick: 67
+      isBuy: False
+      orderType: 1
+```
 
 # Canceling an Order
 
@@ -1493,6 +1692,138 @@ contract YourCancelOrder {
     }
 }
 ```
+
+#### Python script Cancel buy Order
+
+to run python script go to folder scripts/api:
+
+```
+cd scripts/api
+export ACCOUNT_PK_SECRET=PK
+python ./8_cancel_buy_order.py
+```
+
+where PK is your Private key, first you need to make changes to the script file with your data, accounts, tokens, etc.:
+
+
+```
+from moneyonchain.networks import NetworkManager
+from moneyonchain.tex import MoCDecentralizedExchange
+
+connection_network = 'rskTesnetPublic'
+config_network = 'dexTestnet'
+
+# init network manager
+# connection network is the brownie connection network
+# config network is our enviroment we want to connect
+network_manager = NetworkManager(
+    connection_network=connection_network,
+    config_network=config_network)
+
+# run install() if is the first time and you want to install
+# networks connection from brownie
+# network_manager.install()
+
+# Connect to network
+network_manager.connect()
+
+# instantiate DEX Contract
+dex = MoCDecentralizedExchange(network_manager).from_abi()
+
+base_token = '0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0'  # DOC Token address
+secondary_token = '0x09b6ca5E4496238A1F176aEa6Bb607DB96c2286E'  # WRBTC Token address
+order_id = 162
+previous_order_id = 0
+
+print("Order cancel. Please wait to the transaction be mined!...")
+tx_receipt = dex.cancel_buy_order(
+    base_token,
+    secondary_token,
+    order_id,
+    previous_order_id)
+
+# finally disconnect from network
+network_manager.disconnect()
+
+```
+
+The result:
+
+```
+Order cancel. Please wait to the transaction be mined!...
+Transaction sent: 0xf45da3ba345c4d5ff949ac0b1c3579356651ad2605b488c357346857b8529c73
+  Gas price: 0.06 gwei   Gas limit: 137666   Nonce: 1651
+  MoCDecentralizedExchange.cancelBuyOrder confirmed - Block: 1555248   Gas used: 62576 (45.45%)
+
+Transaction was Mined 
+---------------------
+Tx Hash: 0xf45da3ba345c4d5ff949ac0b1c3579356651ad2605b488c357346857b8529c73
+From: 0xCD8A1c9aCc980ae031456573e34dC05cD7daE6e3
+To: 0xA066d6e20e122deB1139FA3Ae3e96d04578c67B5
+Value: 0
+Function: MoCDecentralizedExchange.cancelBuyOrder
+Block: 1555248
+Gas Used: 62576 / 137666 (45.5%)
+
+   Events In This Transaction
+   --------------------------
+   Transfer
+      from: 0xA066d6e20e122deB1139FA3Ae3e96d04578c67B5
+      to: 0xCD8A1c9aCc980ae031456573e34dC05cD7daE6e3
+      value: 14000000000000000000
+   OrderCancelled
+      id: 162
+      sender: 0xCD8A1c9aCc980ae031456573e34dC05cD7daE6e3
+      returnedAmount: 13486000000000000000
+      commission: 0
+      returnedCommission: 514000000000000000
+      isBuy: True
+```
+
+#### Python script Cancel Sell Order
+
+to run python script go to folder scripts/api:
+
+```
+cd scripts/api
+export ACCOUNT_PK_SECRET=PK
+python ./9_cancel_sell_order.py
+```
+
+where PK is your Private key, first you need to make changes to the script file with your data, accounts, tokens, etc.:
+
+
+```
+Order cancel. Please wait to the transaction be mined!...
+Transaction sent: 0xbdc15398c63c05c14fce9a183d4787b0ac2c006a3ca08e6ba611eca609092bed
+  Gas price: 0.06 gwei   Gas limit: 140724   Nonce: 1649
+  MoCDecentralizedExchange.cancelSellOrder confirmed - Block: 1555193   Gas used: 63966 (45.45%)
+
+Transaction was Mined 
+---------------------
+Tx Hash: 0xbdc15398c63c05c14fce9a183d4787b0ac2c006a3ca08e6ba611eca609092bed
+From: 0xCD8A1c9aCc980ae031456573e34dC05cD7daE6e3
+To: 0xA066d6e20e122deB1139FA3Ae3e96d04578c67B5
+Value: 0
+Function: MoCDecentralizedExchange.cancelSellOrder
+Block: 1555193
+Gas Used: 63966 / 140724 (45.5%)
+
+   Events In This Transaction
+   --------------------------
+   Transfer
+      from: 0xA066d6e20e122deB1139FA3Ae3e96d04578c67B5
+      to: 0xCD8A1c9aCc980ae031456573e34dC05cD7daE6e3
+      value: 699999999999999
+   OrderCancelled
+      id: 161
+      sender: 0xCD8A1c9aCc980ae031456573e34dC05cD7daE6e3
+      returnedAmount: 670696824710207
+      commission: 0
+      returnedCommission: 29303175289792
+      isBuy: False
+```
+
 
 # From outside the blockchain
 
