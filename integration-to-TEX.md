@@ -79,28 +79,31 @@ A user can create two types of orders:
 
 **RSK Mainnet tokens pairs avalaibles**
 
-Token pair      | Base Token address                          | Secondary Token address
---------------- | ------------------------------------------- | -------------------------
-DOC/WRBTC        | 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db | 0x967f8799aF07DF1534d48A95a5C9FEBE92c53ae0
-DOC/RDOC         | 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db | 0x2d919F19D4892381D58edeBeca66D5642Cef1a1f
-DOC/BPRO         | 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db | 0x440CD83C160De5C96Ddb20246815eA44C7aBBCa8
-WRBTC/BPRO       | 0x967f8799aF07DF1534d48A95a5C9FEBE92c53ae0 | 0x440CD83C160De5C96Ddb20246815eA44C7aBBCa8
-DOC/RIF          | 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db | 0x2acc95758f8b5f583470ba265eb685a8f45fc9d5
-RDOC/RIFP        | 0x2d919F19D4892381D58edeBeca66D5642Cef1a1f | 0xf4d27c56595Ed59B66cC7F03CFF5193e4bd74a61
-RIF/RIFP         | 0x2acc95758f8b5f583470ba265eb685a8f45fc9d5 | 0xf4d27c56595Ed59B66cC7F03CFF5193e4bd74a61
+Token pair      | Base Token address                          | Secondary Token address                     | MO
+--------------- | ------------------------------------------- | ------------------------------------------- | -----
+DOC/WRBTC        | 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db | 0x967f8799aF07DF1534d48A95a5C9FEBE92c53ae0  | Yes
+DOC/RDOC         | 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db | 0x2d919F19D4892381D58edeBeca66D5642Cef1a1f  | Yes
+DOC/BPRO         | 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db | 0x440CD83C160De5C96Ddb20246815eA44C7aBBCa8  | Yes
+WRBTC/BPRO       | 0x967f8799aF07DF1534d48A95a5C9FEBE92c53ae0 | 0x440CD83C160De5C96Ddb20246815eA44C7aBBCa8  | Yes
+DOC/RIF          | 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db | 0x2acc95758f8b5f583470ba265eb685a8f45fc9d5  | Yes
+RDOC/RIFP        | 0x2d919F19D4892381D58edeBeca66D5642Cef1a1f | 0xf4d27c56595Ed59B66cC7F03CFF5193e4bd74a61  | Yes
+RIF/RIFP         | 0x2acc95758f8b5f583470ba265eb685a8f45fc9d5 | 0xf4d27c56595Ed59B66cC7F03CFF5193e4bd74a61  | Yes
 
 
 **RSK tesnet tokens pairs avalaibles**
 
-Token pair      | Base Token address                          | Secondary Token address
---------------- | ------------------------------------------- | -------------------------
-DOC/WRBTC        | 0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0 | 0x09b6ca5E4496238A1F176aEa6Bb607DB96c2286E
-DOC/RDOC         | 0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0 | 0xC3De9F38581f83e281f260d0DdbaAc0e102ff9F8
-DOC/BPRO         | 0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0 | 0x4dA7997A819bb46B6758B9102234c289dD2Ad3bf
-WRBTC/BPRO       | 0x09b6ca5E4496238A1F176aEa6Bb607DB96c2286E | 0x4dA7997A819bb46B6758B9102234c289dD2Ad3bf
-DOC/RIF          | 0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0 | 0x19F64674D8A5B4E652319F5e239eFd3bc969A1fE
-RDOC/RIFP        | 0xC3De9F38581f83e281f260d0DdbaAc0e102ff9F8 | 0x23A1aA7b11e68beBE560a36beC04D1f79357f28d
-RIF/RIFP         | 0x19F64674D8A5B4E652319F5e239eFd3bc969A1fE | 0x23A1aA7b11e68beBE560a36beC04D1f79357f28d
+Token pair      | Base Token address                          | Secondary Token address                     | MO
+--------------- | ------------------------------------------- | ------------------------------------------- | -----
+DOC/WRBTC        | 0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0 | 0x09b6ca5E4496238A1F176aEa6Bb607DB96c2286E  | Yes
+DOC/RDOC         | 0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0 | 0xC3De9F38581f83e281f260d0DdbaAc0e102ff9F8  | Yes
+DOC/BPRO         | 0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0 | 0x4dA7997A819bb46B6758B9102234c289dD2Ad3bf  | Yes
+WRBTC/BPRO       | 0x09b6ca5E4496238A1F176aEa6Bb607DB96c2286E | 0x4dA7997A819bb46B6758B9102234c289dD2Ad3bf  | Yes
+DOC/RIF          | 0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0 | 0x19F64674D8A5B4E652319F5e239eFd3bc969A1fE  | Yes
+RDOC/RIFP        | 0xC3De9F38581f83e281f260d0DdbaAc0e102ff9F8 | 0x23A1aA7b11e68beBE560a36beC04D1f79357f28d  | Yes
+RIF/RIFP         | 0x19F64674D8A5B4E652319F5e239eFd3bc969A1fE | 0x23A1aA7b11e68beBE560a36beC04D1f79357f28d  | Yes
+
+**Market Order Enabled** In some pairs could be disabled or not ready for market orders , is up to you the risk 
+of operate in MO disabled, you lose your funds. MO is only for pairs that have price providers. 
 
 
 ## Orderbook
@@ -108,7 +111,7 @@ RIF/RIFP         | 0x19F64674D8A5B4E652319F5e239eFd3bc969A1fE | 0x23A1aA7b11e68b
 An orderbook is a data structure where the orders are saved. There are two orderbook for each tokens pair, one for 
 **sell orders** and the other for **buy orders**.
 
-## Limit Orders
+### Limit Orders
 
 Limit Orders (LO from now on) are a type of orders defined by an amount and the price to be paid/charged.
 The price is always expressed in how much minimum units of base currency is being paid/charged for a minimum 
@@ -977,6 +980,170 @@ Gas Used: 230192 / 253211 (90.9%)
 ## Inserting a Buy Market Order
 
 
+Market Orders (MO from now on) are a type of orders defined by an **exchangeable amount** of tokens and 
+the **multiply factor** to be used to compute the final price of the order.
+
+**Multiply factor**
+
+```
+(100 + priceDifference) / 100 = Multiply Factor
+```
+
+Example:
+
+```
+     1% Multiply Factor:
+       (100 + 1) / 100 = 1.01
+    -1% Multiply Factor:
+       (100 - 1 ) / 100 = 0.99
+
+     10% Multiply Factor:
+       (100 + 10) / 100 = 1.1
+    -10% Multiply Factor:
+       (100 - 10 ) / 100 = 0.9
+```
+
+**Price providers**
+
+The prices are provided depend on the pairs. Example MOC OS for pair DOC/BPRO, ROC OS for pair RDOC/RIFPRO or MoC Medianizer
+for DOC/WRBTC or ROC Medianizer for RDOC/RIF.
+
+#### Contract
+
+```js
+/**
+    @notice Inserts a market order at start in the buy orderbook of a given pair with a hint;
+    the pair should not be disabled; the contract should not be paused. Takes the funds
+    with a transferFrom
+    @param _baseToken the base token of the pair
+    @param _secondaryToken the secondary token of the pair
+    @param _amount The quantity of tokens sent
+    @param _multiplyFactor Maximum price to be paid [base/secondary]
+    @param _lifespan After _lifespan ticks the order will be expired and no longer matched, must be lower or equal than the maximum
+    @param _isBuy true if it is a buy market order
+    0 is considered as no hint and the smart contract must iterate
+  */
+  function insertMarketOrder(
+    address _baseToken,
+    address _secondaryToken,
+    uint256 _amount,
+    uint256 _multiplyFactor,
+    uint64 _lifespan,
+    bool _isBuy
+  )
+    public
+    isValidLifespan(_lifespan)
+    isValidMultiplyFactor(_multiplyFactor)
+    isValidAmount(_isBuy ? _baseToken : _secondaryToken, _amount, _baseToken)
+  ...
+```
+
+### Parameters of the operation
+
+#### The baseToken parameter
+
+Is the address of the contract used to implement the ERC-20 base token. You can find more about
+the current supported tokens [here](#current-tokens).
+
+#### The secondaryToken parameter
+
+Is the address of the contract used to implement the ERC-20 secondary token. You can find more about the current 
+supported tokens [here](#current-tokens).
+
+The token pair must exist in the TEX platform because it defines the precisions to use in _price_ and _amount_ parameter.
+
+#### The amount parameter
+
+The amount of the secondary token to be locked by the user.
+
+This amount already includes the **commission charged** so the amount to be exchanged will actually be less than the locked one.
+
+#### The multiply factor
+
+This formula:
+
+```
+(100 + priceDifference) / 100 = Multiply Factor
+```
+
+Example:
+
+```
+     1% Multiply Factor:
+       (100 + 1) / 100 = 1.01
+    -1% Multiply Factor:
+       (100 - 1 ) / 100 = 0.99
+
+     10% Multiply Factor:
+       (100 + 10) / 100 = 1.1
+    -10% Multiply Factor:
+       (100 - 10 ) / 100 = 0.9
+```
+
+If we want +1% from the price pass 1.01 with precision. multiply_factor_to_pass = 1.01 * 10 ** 18 
+
+
+#### The lifespan parameter
+
+Is the number of ticks that the order will be expired and no longer matched, must be lower or equal than the 
+maximum (currently 10). It is a positive integer value.
+
+#### Is Buy
+
+Send 'true' if is buy order and 'false' is sell order, 
+
+#### Gas limit and gas price
+
+This two values are a parameter of the transaction, this is not used in the contract and it is usually managed by 
+your wallet(you should read about them if you are developing and you don't know exactly what are they) 
+but you should take them into account when trying to send all of your funds to mint some BitPros.
+
+### Possible failures
+
+This operation may fail if one of the following scenarios occurs:
+
+#### The TEX contract is paused:
+
+If the system suffers some type of attack, the contract can be paused so that operations cannot be done and the risk 
+of the users losing their funds with the operation can be minimized. You can get more information about 
+stoppables contracts [here](https://github.com/money-on-chain/Areopagus-Governance/blob/develop/contracts/Stopper/Stoppable.sol)
+In that state, the contract doesn't allow minting any type of token.
+
+To know if this is the case you can ask to **MoCDecentralizedExchange** if it's **paused()**.
+
+#### You sent too low amount:
+
+It reverts if the amount is not valid given a maximum in common base token currency and the error message will be 
+"amount is not enough".
+
+If the transaction reverts, all your funds will be returned (except the fee paid to the network).
+
+#### You sent too high lifespan:
+
+If the lifespan is not valid given a maximum value then it reverts and sends the error message will be "Lifespan too high".
+
+If the transaction reverts, all your funds will be returned (except the fee paid to the network).
+
+
+#### Pair token does not exist
+
+The token pair must exist in TEX platform. If a pair of base and secondary token does not exist, the transaction 
+reverts with the message: "Token pair does not exist".
+
+#### Pair token is disabled:
+
+The token pair can be enabled or disabled. If it is disabled, the transaction reverts with the message: 
+"Pair has been disabled".
+
+#### Not enough gas:
+
+If the gas limit sent is not enough to run all the code needed to execute the transaction, the transaction will 
+revert(again, returning all your funds except the fee paid to the network). This may return an "out of gas" error or 
+simply a "revert" error because of the usage of the proxy pattern.
+
+
+
+
 #### Python script
 
 to run python script go to folder scripts/api:
@@ -1423,6 +1590,168 @@ Gas Used: 236454 / 260099 (90.9%)
 ```
 
 ## Inserting a Sell Market Order (MO)
+
+Market Orders (MO from now on) are a type of orders defined by an **exchangeable amount** of tokens and 
+the **multiply factor** to be used to compute the final price of the order.
+
+**Multiply factor**
+
+```
+(100 + priceDifference) / 100 = Multiply Factor
+```
+
+Example:
+
+```
+     1% Multiply Factor:
+       (100 + 1) / 100 = 1.01
+    -1% Multiply Factor:
+       (100 - 1 ) / 100 = 0.99
+
+     10% Multiply Factor:
+       (100 + 10) / 100 = 1.1
+    -10% Multiply Factor:
+       (100 - 10 ) / 100 = 0.9
+```
+
+**Price providers**
+
+The prices are provided depend on the pairs. Example MOC OS for pair DOC/BPRO, ROC OS for pair RDOC/RIFPRO or MoC Medianizer
+for DOC/WRBTC or ROC Medianizer for RDOC/RIF.
+
+#### Contract
+
+```js
+/**
+    @notice Inserts a market order at start in the buy orderbook of a given pair with a hint;
+    the pair should not be disabled; the contract should not be paused. Takes the funds
+    with a transferFrom
+    @param _baseToken the base token of the pair
+    @param _secondaryToken the secondary token of the pair
+    @param _amount The quantity of tokens sent
+    @param _multiplyFactor Maximum price to be paid [base/secondary]
+    @param _lifespan After _lifespan ticks the order will be expired and no longer matched, must be lower or equal than the maximum
+    @param _isBuy true if it is a buy market order
+    0 is considered as no hint and the smart contract must iterate
+  */
+  function insertMarketOrder(
+    address _baseToken,
+    address _secondaryToken,
+    uint256 _amount,
+    uint256 _multiplyFactor,
+    uint64 _lifespan,
+    bool _isBuy
+  )
+    public
+    isValidLifespan(_lifespan)
+    isValidMultiplyFactor(_multiplyFactor)
+    isValidAmount(_isBuy ? _baseToken : _secondaryToken, _amount, _baseToken)
+  ...
+```
+
+### Parameters of the operation
+
+#### The baseToken parameter
+
+Is the address of the contract used to implement the ERC-20 base token. You can find more about
+the current supported tokens [here](#current-tokens).
+
+#### The secondaryToken parameter
+
+Is the address of the contract used to implement the ERC-20 secondary token. You can find more about the current 
+supported tokens [here](#current-tokens).
+
+The token pair must exist in the TEX platform because it defines the precisions to use in _price_ and _amount_ parameter.
+
+#### The amount parameter
+
+The amount of the secondary token to be locked by the user.
+
+This amount already includes the **commission charged** so the amount to be exchanged will actually be less than the locked one.
+
+#### The multiply factor
+
+This formula:
+
+```
+(100 + priceDifference) / 100 = Multiply Factor
+```
+
+Example:
+
+```
+     1% Multiply Factor:
+       (100 + 1) / 100 = 1.01
+    -1% Multiply Factor:
+       (100 - 1 ) / 100 = 0.99
+
+     10% Multiply Factor:
+       (100 + 10) / 100 = 1.1
+    -10% Multiply Factor:
+       (100 - 10 ) / 100 = 0.9
+```
+
+If we want +1% from the price pass 1.01 with precision. multiply_factor_to_pass = 1.01 * 10 ** 18 
+
+
+#### The lifespan parameter
+
+Is the number of ticks that the order will be expired and no longer matched, must be lower or equal than the 
+maximum (currently 10). It is a positive integer value.
+
+#### Is Buy
+
+Send 'true' if is buy order and 'false' is sell order, 
+
+#### Gas limit and gas price
+
+This two values are a parameter of the transaction, this is not used in the contract and it is usually managed by 
+your wallet(you should read about them if you are developing and you don't know exactly what are they) 
+but you should take them into account when trying to send all of your funds to mint some BitPros.
+
+### Possible failures
+
+This operation may fail if one of the following scenarios occurs:
+
+#### The TEX contract is paused:
+
+If the system suffers some type of attack, the contract can be paused so that operations cannot be done and the risk 
+of the users losing their funds with the operation can be minimized. You can get more information about 
+stoppables contracts [here](https://github.com/money-on-chain/Areopagus-Governance/blob/develop/contracts/Stopper/Stoppable.sol)
+In that state, the contract doesn't allow minting any type of token.
+
+To know if this is the case you can ask to **MoCDecentralizedExchange** if it's **paused()**.
+
+#### You sent too low amount:
+
+It reverts if the amount is not valid given a maximum in common base token currency and the error message will be 
+"amount is not enough".
+
+If the transaction reverts, all your funds will be returned (except the fee paid to the network).
+
+#### You sent too high lifespan:
+
+If the lifespan is not valid given a maximum value then it reverts and sends the error message will be "Lifespan too high".
+
+If the transaction reverts, all your funds will be returned (except the fee paid to the network).
+
+
+#### Pair token does not exist
+
+The token pair must exist in TEX platform. If a pair of base and secondary token does not exist, the transaction 
+reverts with the message: "Token pair does not exist".
+
+#### Pair token is disabled:
+
+The token pair can be enabled or disabled. If it is disabled, the transaction reverts with the message: 
+"Pair has been disabled".
+
+#### Not enough gas:
+
+If the gas limit sent is not enough to run all the code needed to execute the transaction, the transaction will 
+revert(again, returning all your funds except the fee paid to the network). This may return an "out of gas" error or 
+simply a "revert" error because of the usage of the proxy pattern.
+
 
 
 #### Python script
@@ -1875,7 +2204,7 @@ Gas Used: 63966 / 140724 (45.5%)
 ```
 
 
-# From outside the blockchain
+# Another way to access from outside the blockchain (Javascript method)
 
 The logic of the TEX platform is developed with smart contracts that run on the RSK blockchain. 
 To interact with this kind of technology, we developed a dApp (decentralized application), 
@@ -2035,247 +2364,3 @@ for more information about events.
 In the following example we will show you how to find events that are emitted by TEX smart contract in 
 **RSK Testnet** blockchain with **truffle**.
 
-### Code example: Events
-
-[TODO] Write test to use TEX.
-
-```js
-const Web3 = require('web3');
-//You must compile the smart contracts or use the official ABIs of the //repository
-const MocExchange = require('../../build/contracts/MoCExchange.json');
-const truffleConfig = require('../../truffle');
-
-/**
- * Get a provider from truffle.js file
- * @param {String} network
- */
-const getDefaultProvider = network =>
-  truffleConfig.networks[network].provider || truffleConfig.networks[network].endpoint;
-
-/**
- * Get a new web3 instance from truffle.js file
- */
-const getWeb3 = network => {
-  const provider = getDefaultProvider(network);
-  return new Web3(provider, null, {
-    transactionConfirmationBlocks: 1
-  });
-};
-
-const web3 = getWeb3('rskTestnet');
-
-const execute = async () => {
-  web3.eth.defaultGas = 2000000;
-
-  /**
-   * Loads an specified contract
-   * @param {ContractABI} abi
-   * @param {String} contractAddress
-   */
-  const getContract = async (abi, contractAddress) => new web3.eth.Contract(abi, contractAddress);
-
-  await getEvents();
-};
-
-execute()
-  .then(() => console.log('Completed'))
-  .catch(err => {
-    console.log('Error', err);
-  });
-```
-
-See [getPastEvents](https://web3js.readthedocs.io/en/v1.2.0/web3-eth-contract.html?highlight=getPastEvents#events-allevents) 
-for parameters and event structure details.
-
-## Example code inserting orders
-
-In the following example we will show how to insert an order in **testnet** with **truffle**.
-
-You can find code examples into _/examples_ dir.
-[TODO]: Write test to use TEX
-
-```js
-const BigNumber = require('bignumber.js');
-const Web3 = require('web3');
-const truffleConfig = require('../../truffle');
-
-/**
- * Get a provider from truffle.js file
- * @param {String} network
- */
-const getDefaultProvider = network =>
-  truffleConfig.networks[network].provider || truffleConfig.networks[network].endpoint;
-
-/**
- * Get a gasPrice from truffle.js file
- * @param {String} network
- */
-const getGasPrice = network => truffleConfig.networks[network].gasPrice || 60000000;
-
-/**
- * Get a new web3 instance from truffle.js file
- */
-const getWeb3 = network => {
-  const provider = getDefaultProvider(network);
-  return new Web3(provider, null, {
-    transactionConfirmationBlocks: 1
-  });
-};
-
-const web3 = getWeb3('rskTestnet');
-const gasPrice = getGasPrice('rskTestnet');
-
-const execute = async () => {
-  web3.eth.defaultGas = 2000000;
-
-  /**
-   * Loads an specified contract
-   * @param {ContractABI} abi
-   * @param {String} contractAddress
-   */
-  const getContract = async (abi, contractAddress) => new web3.eth.Contract(abi, contractAddress);
-
-  /**
-   * Transforms BigNumbers into
-   * @param {BigNumber} number
-   */
-  const toContract = number => new BigNumber(number).toFixed(0);
-};
-
-execute()
-  .then(() => console.log('Completed'))
-  .catch(err => {
-    console.log('Error', err);
-  });
-```
-
-## Example code inserting orders without truffle
-
-In the following example we will learn how to:
-
-- Use the ABIs of TEX.
-- Get the Pair Token Status.
-- Insert sell and buy orders.
-
-We will use the **testnet** network
-
-First we create a new node project.
-
-```
-mkdir example-orders
-cd example-orders
-npm init
-```
-
-Let's add the necessary dependencies to run the project.
-
-```
-npm install --save bignumber.js
-npm install --save web3
-npm install --save truffle-hdwallet-provider
-```
-
-Now we create a new script called **insertOrders.js** with the following code:
-
-[TODO] Write test to use TEX
-
-```js
-const HDWalletProvider = require('truffle-hdwallet-provider');
-const BigNumber = require('bignumber.js');
-const Web3 = require('web3');
-//You must compile the smart contracts or use the official ABIs of the //repository
-
-//Config params to TestNet
-const endpoint = 'https://public-node.testnet.rsk.co';
-//a mnemonic is 12 words instead of a single private key to sign the //transactions
-const mnemonic = 'chase chair crew elbow uncle awful cover asset cradle pet loud puzzle';
-const provider = new HDWalletProvider(mnemonic, endpoint);
-const web3 = new Web3(provider);
-
-//Contract addresses on testnet
-const gasPrice = 60000000;
-
-const execute = async () => {
-  /**
-   * Loads an specified contract
-   * @param {json ABI} abi
-   * @param {localhost/testnet/mainnet} contractAddress
-   */
-  const getContract = async (abi, contractAddress) => new web3.eth.Contract(abi, contractAddress);
-
-  /**
-   * Transforms BigNumbers into
-   * @param {*} number
-   */
-  const toContract = number => new BigNumber(number).toFixed(0);
-
-  function logEnd() {
-    console.log('End Example');
-  }
-};
-
-execute()
-  .then(() => console.log('Completed'))
-  .catch(err => {
-    console.log('Error', err);
-  });
-```
-
-## Example code canceling orders
-
-In the following example we will learn how to:
-
-- Cancelling Orders
-
-We will use **truffle** and **testnet** network.
-
-First we create a new node project.
-
-```
-mkdir example-cancelling-orders
-cd example-cancelling-orders
-npm init
-```
-
-Let's add the necessary dependencies to run the project.
-
-```
-npm install --save web3
-```
-
-[TODO] Write test to use TEX
-
-**Example**
-
-```js
-const Web3 = require('web3');
-//You must compile the smart contracts or use the official ABIs of the //repository
-const MocAbi = require('../../build/contracts/MoC.json');
-const truffleConfig = require('../../truffle');
-
-/**
- * Get a provider from truffle.js file
- * @param {String} network
- */
-const getDefaultProvider = network =>
-  truffleConfig.networks[network].provider || truffleConfig.networks[network].endpoint;
-
-/**
- * Get a gasPrice from truffle.js file
- * @param {String} network
- */
-const getGasPrice = network => truffleConfig.networks[network].gasPrice || 60000000;
-
-/**
- * Get a new web3 instance from truffle.js file
- */
-const getWeb3 = network => {
-  const provider = getDefaultProvider(network);
-  return new Web3(provider, null, {
-    transactionConfirmationBlocks: 1
-  });
-};
-
-const web3 = getWeb3('rskTestnet');
-const gasPrice = getGasPrice('rskTestnet');
-```
