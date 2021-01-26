@@ -1,25 +1,32 @@
 # Integration to TEX Platform
 
 1.  [Introduction to TEX](#introduction-to-tex)
-    1.  [Tokens](#tokens-pair)
+    1.  [Tokens](#tokens)
     1.  [Tokens Pair](#tokens-pair)
+    1.  [Wrapped RBTC](#wrapped-rbtc)
     1.  [Orderbook](#orderbook)
-    1.  [Limit Orders](#limit-orders)
+        1.  [Limit Orders](#limit-orders)
+        1.  [Market Orders](#market-orders)        
+        1.  [Price](#price)
+        1.  [Amount](#amount)
+        1.  [Commissions](#commission)
+        1.  [Emergent price](#emergent-price)
+        1.  [Tick](#tick)        
+        1.  [Lifespan](#lifespan)
+        1.  [Pending Queue](#pending-queue)
+    1.  [API and contract](#api-and-contract)   
     1.  [The MoCDecentralizedExchange Contract](#the-mocdecentralizedexchange-contract)
     1.  [Current tokens](#current-tokens)
-2.  [Setting allowance](setting-allowance)
+2.  [Setting allowance](#setting-allowance)
+3.  [Wrapped RBTC](#wrapped-rbtc)
 1.  [Inserting an Order](#inserting-an-order)
-    1.  [Inserting a Buy Order](#inserting-a-buy-order)
-    1.  [Inserting a Sell Order](#inserting-a-sell-order)
+    1.  [Inserting a Buy Limit Order](#inserting-a-buy-limit-order)
+    1.  [Inserting a Buy Market Order](#inserting-a-buy-market-order)        
+    1.  [Inserting a Sell Limit Order](#inserting-a-sell-limit-order)
+    1.  [Inserting a Sell Market Order](#inserting-a-sell-market-order)
 1.  [Canceling an order](#canceling-an-order)
-1.  [From outside the blockchain](#from-outside-of-the-blockchain)
-    1.  [Using RSK nodes](#using-rsk-nodes)
-    1.  [Using web3](#using-web3)
-    1.  [Official TEX ABIS](#official-tex-abis)
-    1.  [Events](#events)
-    1.  [Example code inserting orders](#example-code-inserting-orders)
-    1.  [Example code inserting orders without truffle](#example-code-inserting-orders-without-truffle)
-    1.  [Example code canceling orders](#example-code-canceling-orders)
+1.  [From outside the blockchain](#another-way-to-access-from-outside)
+
 
 # Introduction to TEX
 
@@ -58,13 +65,10 @@ BitPro                 | BPRO         | 0x4dA7997A819bb46B6758B9102234c289dD2Ad3
 RIF                    | RIF          | 0x19F64674D8A5B4E652319F5e239eFd3bc969A1fE
 RIFPro                 | RIFP         | 0x23A1aA7b11e68beBE560a36beC04D1f79357f28d
 RIFDOC                 | RDOC         | 0xC3De9F38581f83e281f260d0DdbaAc0e102ff9F8
+ADOC                   | DOC          | 0x489049c48151924c07F86aa1DC6Cc3Fea91ed963
+ABPRO                  | BPRO         | 0x5639809FAFfF9082fa5B9a8843D12695871f68bd
+AMOC                   | MOC          | 0x0399c7F7B37E21cB9dAE04Fb57E24c68ed0B4635
 
-
-## Wrapped RBTC
-
-This is a token exchange you can't exchange token with base money, you can only exchange with tokens. You need first
-transform your base RBTC in WRBTC if you want to use you RBTC. This operation RBTC->WRBTC is called Wrap, and the operation
-WRBTC->RBTC is unwrap.
 
 ## Tokens Pair
 
@@ -88,6 +92,7 @@ WRBTC/BPRO       | 0x967f8799aF07DF1534d48A95a5C9FEBE92c53ae0 | 0x440CD83C160De5
 DOC/RIF          | 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db | 0x2acc95758f8b5f583470ba265eb685a8f45fc9d5  | Yes
 RDOC/RIFP        | 0x2d919F19D4892381D58edeBeca66D5642Cef1a1f | 0xf4d27c56595Ed59B66cC7F03CFF5193e4bd74a61  | Yes
 RIF/RIFP         | 0x2acc95758f8b5f583470ba265eb685a8f45fc9d5 | 0xf4d27c56595Ed59B66cC7F03CFF5193e4bd74a61  | Yes
+WRBTC/RIF        | 0x967f8799aF07DF1534d48A95a5C9FEBE92c53ae0 | 0x2acc95758f8b5f583470ba265eb685a8f45fc9d5  | No
 
 
 **RSK tesnet tokens pairs avalaibles**
@@ -101,9 +106,23 @@ WRBTC/BPRO       | 0x09b6ca5E4496238A1F176aEa6Bb607DB96c2286E | 0x4dA7997A819bb4
 DOC/RIF          | 0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0 | 0x19F64674D8A5B4E652319F5e239eFd3bc969A1fE  | Yes
 RDOC/RIFP        | 0xC3De9F38581f83e281f260d0DdbaAc0e102ff9F8 | 0x23A1aA7b11e68beBE560a36beC04D1f79357f28d  | Yes
 RIF/RIFP         | 0x19F64674D8A5B4E652319F5e239eFd3bc969A1fE | 0x23A1aA7b11e68beBE560a36beC04D1f79357f28d  | Yes
+DOC/ADOC         | 0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0 | 0x489049c48151924c07F86aa1DC6Cc3Fea91ed963  | Yes
+ADOC/ABPRO       | 0x489049c48151924c07F86aa1DC6Cc3Fea91ed963 | 0x5639809FAFfF9082fa5B9a8843D12695871f68bd  | Yes
+ADOC/AMOC        | 0x489049c48151924c07F86aa1DC6Cc3Fea91ed963 | 0x0399c7F7B37E21cB9dAE04Fb57E24c68ed0B4635  | No
+WRBTC/AMOC       | 0x09b6ca5E4496238A1F176aEa6Bb607DB96c2286E | 0x0399c7F7B37E21cB9dAE04Fb57E24c68ed0B4635  | No
+WRBTC/RIF        | 0x09b6ca5E4496238A1F176aEa6Bb607DB96c2286E | 0x19F64674D8A5B4E652319F5e239eFd3bc969A1fE  | No
 
-**Market Order Enabled** In some pairs could be disabled or not ready for market orders , is up to you the risk 
-of operate in MO disabled, you lose your funds. MO is only for pairs that have price providers. 
+**Market Order Enabled:** In some pairs could be disabled or not ready for market orders , is up to you the risk 
+of operate in MO disabled, you lose your funds. MO is only for pairs that have price providers.
+
+**Precision:** Precision of all ticks is in 10**18. 
+
+
+## Wrapped RBTC
+
+This is a token exchange you can't exchange token with base money, you can only exchange with tokens. You need first
+transform your base RBTC in WRBTC if you want to use you RBTC. This operation RBTC->WRBTC is called Wrap, and the operation
+WRBTC->RBTC is unwrap.
 
 
 ## Orderbook
@@ -174,6 +193,37 @@ The minimum amount to send in the platform is the equivalent to 10 DOC.
 ### Commission
 
 The commission charged by the platform is 0.1% of the amount + 0.5 DOC Fixed.
+
+### Emergent price
+
+The emergent price is a price calculated given the orders that are present in a pair. In this particular case it 
+is calculated as the average price of the last two matching orders. The last matching orders are the ones that 
+have matching prices (i.e. the buy price is greater or equal than the sell price) and are the last to be processed 
+in a matching process or tick. In order to get it we have to simulate the actual matching process.
+
+### Tick
+
+A tick is the process in which the orders are matched. In it we calculate the emergent price and later match the 
+orders. The process starts taking the most competitive orders of each type(buy and sell). Given that orders we 
+proceed to match them if they are able to match (i.e. the buy price is greater or equal than the sell price), 
+if only one order is filled we take the next one of that orderbook while if both gets filled we advance in both 
+orderbook and continue with the process until we reach a pair of orders where they have no matching prices. All 
+the remaining orders are left for the next tick.
+The surplus generated (i.e. the difference between the limit price and the emergent price in the tick) are 
+given back to the user in the same process. If the user sent a buy order the surplus is given as change 
+of the transaction because some of the base token it locked is returned. In the case of a sell order the 
+surplus is given as extra base token paid for the sold tokens.
+
+### Lifespan
+
+The lifespan of an order is the amount of ticks the order will live, after that amount of ticks the order will 
+be expired and no longer be matched.
+
+### Pending Queue
+
+When the tick is running the orders can not be inserted in the orderbook so we actually put them in a pending 
+queue to actually move them at the end of the tick.
+
 
 ## API and contract
 
@@ -328,7 +378,8 @@ console or with an app.
 #### Smart Contract​
 
 ​
-You just have to import the contract **MoCDecentralizedExchange** contract and a ERC-20 interface. We recommend using [OpenZeppelin](https://openzeppelin.com/);
+You just have to import the contract **MoCDecentralizedExchange** contract and a ERC-20 interface. 
+We recommend using [OpenZeppelin](https://openzeppelin.com/);
 ​
 
 ```js
@@ -447,7 +498,7 @@ Token allowed amount: 0.001
 ```
 
 
-## Wrapped RBTC
+# Wrapped RBTC
 
 This is a token exchange you can't exchange token with base money, you can only exchange with tokens. You need first
 transform your base RBTC in WRBTC if you want to use you RBTC. This operation RBTC->WRBTC is called Wrap, and the operation
@@ -470,7 +521,7 @@ function withdraw(uint256 wad) public {
 ```
 
 
-#### WRAP Python script
+#### Wrap Python script
 
 to run python script go to folder scripts/api:
 
@@ -616,7 +667,7 @@ Gas Used: 38991 / 42890 (90.9%)
 ```
 
 
-# Inserting a Limit Order
+# Inserting an Order
 
 In this tutorial we will show you how to insert a Buy and Sell Orders.
 
@@ -1851,6 +1902,7 @@ Gas Used: 261650 / 287815 (90.9%)
 
 # Canceling an Order
 
+This is a way to cancel manually an order. 
 In this tutorial the functions that is of interest to us are two:
 
 ```js
@@ -2049,7 +2101,7 @@ contract YourCancelOrder {
         require(success, "Commission transfer failed");
 
         //Insert the new buy order at start
-        tex.insertSellOrder(
+        tex.insertSellLimitOrder(
             baseTokenAddress,
             secondaryTokenAddress,
             _amount.sub(commissions),
@@ -2204,7 +2256,7 @@ Gas Used: 63966 / 140724 (45.5%)
 ```
 
 
-# Another way to access from outside the blockchain (Javascript method)
+# Another way to access from outside
 
 The logic of the TEX platform is developed with smart contracts that run on the RSK blockchain. 
 To interact with this kind of technology, we developed a dApp (decentralized application), 
