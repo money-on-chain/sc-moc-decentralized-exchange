@@ -1,1 +1,1 @@
-moneyonchain==2.0.4
+moneyonchain==2.0.5

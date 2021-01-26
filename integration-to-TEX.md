@@ -16,7 +16,8 @@
         1.  [Pending Queue](#pending-queue)
     1.  [API and contract](#api-and-contract)   
     1.  [The MoCDecentralizedExchange Contract](#the-mocdecentralizedexchange-contract)
-    1.  [Current tokens](#current-tokens)
+    1.  [Current tokens](#current-tokens)    
+2.  [Getting information from exchange](#getting-information-from-exchange)        
 2.  [Setting allowance](#setting-allowance)
 3.  [Wrapped RBTC](#wrapped-rbtc)
 1.  [Inserting an Order](#inserting-an-order)
@@ -231,14 +232,14 @@ API are set of tool to query the contracts from outside the blockchain, also you
 
 ### Requirements
 
-To use api we need python installed in your machine and moneyonchain version 2.0.4 package installed. 
+To use api we need python installed in your machine and moneyonchain version 2.0.5 package installed. 
 For contracts developing we need nodejs and truffle suit. 
 
 * python >= 3.6
 
 ### Installation
 
-* pip install moneyonchain==2.0.4
+* pip install moneyonchain==2.0.5
 
 ### Smart Contracts
 
@@ -324,6 +325,353 @@ a decimal, it's represented as an integer adjusted by a given value, the _precis
 
 Using unsigned int256 as the norm for all values, sets an upper limit to ~76 decimal places, so even if it's ok 
 to multiply 18 precision values a couple of times, we need to be careful not to overflow nor lose precision.
+
+# Getting information from exchange
+
+## Pair info
+
+Getting info given a pair token
+
+to run python script go to folder scripts/api:
+
+```
+cd scripts/api
+python ./pair_info.py
+```
+
+The code
+
+```
+import pprint
+
+from moneyonchain.networks import NetworkManager
+from moneyonchain.tex import MoCDecentralizedExchange
+
+pp = pprint.PrettyPrinter(indent=4)
+
+connection_network='rskTesnetPublic'
+config_network = 'dexTestnet'
+
+# init network manager
+# connection network is the brownie connection network
+# config network is our enviroment we want to connect
+network_manager = NetworkManager(
+    connection_network=connection_network,
+    config_network=config_network)
+
+# run install() if is the first time and you want to install
+# networks connection from brownie
+# network_manager.install()
+
+# Connect to network
+network_manager.connect()
+
+# instantiate DEX Contract
+dex = MoCDecentralizedExchange(network_manager).from_abi()
+
+base_token = '0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0'  # DOC Token address
+secondary_token = '0x09b6ca5E4496238A1F176aEa6Bb607DB96c2286E'  # WRBTC Token address
+
+token_status = dex.token_pairs_status(base_token, secondary_token)
+print("Token Status")
+pp.pprint(token_status)
+
+print("Last Closing Price: {0}".format(token_status['lastClosingPrice'] / 10 ** 18))
+print("Market Price: {0}".format(token_status['marketPrice'] / 10 ** 18))
+
+# finally disconnect from network
+network_manager.disconnect()
+
+```
+
+The result:
+
+```
+Token Status
+
+{   'EMAPrice': 17480576716894192682909,
+    'disabled': False,
+    'emergentPrice': 0,
+    'lastBuyMatchAmount': 0,
+    'lastBuyMatchId': 0,
+    'lastClosingPrice': 26173189500000000139391,
+    'lastSellMatchId': 0,
+    'lastTickBlock': 1554810,
+    'marketPrice': 32080730000000000000000,
+    'nextTickBlock': 1554830,
+    'smoothingFactor': 16530000000000000,
+    'tickNumber': 60}
+
+Last Closing Price: 26173.1895
+Market Price: 32080.73
+
+
+```
+
+## Tick is running
+
+Get if given a pair is running a tick
+
+```
+# instantiate DEX Contract
+dex = MoCDecentralizedExchange(network_manager).from_abi()
+
+base_token = '0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0'  # DOC Token address
+secondary_token = '0x09b6ca5E4496238A1F176aEa6Bb607DB96c2286E'  # WRBTC Token address
+
+is_running = dex.tick_is_running((base_token, secondary_token))
+print("Is Running: {0}".format(is_running))
+```
+
+result:
+
+```
+Is Running: False
+```
+
+## Dex is paused
+
+
+```
+# instantiate DEX Contract
+dex = MoCDecentralizedExchange(network_manager).from_abi()
+
+is_paused = dex.paused()
+print("Is paused: {0}".format(is_paused))
+```
+
+result:
+
+```
+Is paused: False
+```
+
+## Tick Stage
+
+Returns the tick stage for a given pair
+
+
+```
+# instantiate DEX Contract
+dex = MoCDecentralizedExchange(network_manager).from_abi()
+
+base_token = '0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0'  # DOC Token address
+secondary_token = '0x09b6ca5E4496238A1F176aEa6Bb607DB96c2286E'  # WRBTC Token address
+
+tick_stage = dex.tick_stage((base_token, secondary_token))
+print("Tick Stage: {0}".format(tick_stage))
+
+```
+
+result:
+
+```
+Tick Stage: 0.
+
+0 RECEIVING_ORDERS
+1 RUNNING_SIMULATION
+2 RUNNING_MATCHING
+3 MOVING_PENDING_ORDERS
+```
+
+## Getting info from events
+
+We can get all type of information from events, for query events you need to access throught private node .
+
+Please refer to [py_Moneyonchain](https://github.com/money-on-chain/py_Moneyonchain/tree/version-2/examples/tex/events) site for events examples
+
+List of events
+
+```
+event NewOrderAddedToPendingQueue(
+    uint256 indexed id,
+    // On the RSK network, having an event with only one parameter
+    // which is indexed breaks the web3 importer, so a dummy
+    // argument is added.
+    uint256 notIndexedArgumentSoTheThingDoesntBreak
+  );
+
+  /**
+@notice notifies the buyer that their order matched
+@dev Cloned from MoCExchangeLib.sol or the event it is not recognized and emitted from that lib
+@param orderId the buyer's order
+@param amountSent the amount of baseToken [using baseTokenDecimals] sent to the seller
+@param commission the amount of baseToken [using baseTokenDecimals] that was charged as commission
+@param change the amount of baseToken [using baseTokenDecimals] sent back to the buyer
+@param received the amount of secondaryToken [using secondaryTokenDecimals] received in exchange
+@param remainingAmount = totalOrderAmount - (amountSent + change), if remainingAmount is 0, the order is filled and removed from the orderbook.
+@param matchPrice the price [using priceComparisonPrecision] at which the order matched
+@param tickNumber the tick's number in witch the order matched
+*/
+  event BuyerMatch(
+    uint256 indexed orderId,
+    uint256 amountSent,
+    uint256 commission,
+    uint256 change,
+    uint256 received,
+    uint256 remainingAmount,
+    uint256 matchPrice,
+    uint64 tickNumber
+  );
+
+  /**
+@notice notifies the seller that their order matched
+@dev Cloned from MoCExchangeLib.sol or the event it is not recognized and emitted from that lib
+@param orderId the seller's order
+@param amountSent the amount of secondaryToken [using secondaryTokenDecimals] sent to the buyer
+@param commission the amount of secondaryToken [using baseTokenDecimals] that was charged as commission
+@param received the total amount the seller recieved == expected + surplus.
+@param surplus the amount of baseToken [using baseTokenDecimals] the seller recieved additional to the expected.
+@param remainingAmount = totalOrderAmount - amountSent, if remainingAmount is 0, the order is filled and removed from the orderbook.
+@param matchPrice the price [using priceComparisonPrecision] at which the order matched
+@param tickNumber the tick's number in witch the order matched
+*/
+  event SellerMatch(
+    uint256 indexed orderId,
+    uint256 amountSent,
+    uint256 commission,
+    uint256 received,
+    uint256 surplus,
+    uint256 remainingAmount,
+    uint256 matchPrice,
+    uint64 tickNumber
+  );
+
+  /**
+@dev Cloned from MoCExchangeLib.sol or the event it is not recognized and emitted from that lib
+@notice emitted when and expired Order has been process and it funds returned
+@param orderId id of the expired order processed
+@param owner the secondary token of the pair
+@param returnedAmount actual token amount returned to the owner
+@param commission applied as penalizacion for the expiration
+@param returnedCommission the commission returned as the expiration does not consume the whole commission
+*/
+  event ExpiredOrderProcessed(
+    uint256 indexed orderId,
+    address indexed owner,
+    uint256 returnedAmount,
+    uint256 commission,
+    uint256 returnedCommission
+  );
+
+  /**
+@dev Cloned from MoCExchangeLib.sol or the event it is not recognized and emitted from that lib
+@notice notifies the start of the tick
+@param baseTokenAddress the base token of the pair
+@param secondaryTokenAddress the secondary token of the pair
+@param number the tick number that just started
+*/
+  event TickStart(address indexed baseTokenAddress, address indexed secondaryTokenAddress, uint64 number);
+
+  /**
+@dev Cloned from TickState.sol or the event it is not recogniced and emited from that lib
+@notice notifies the end of the tick and its result
+@param baseTokenAddress the base token of the pair
+@param secondaryTokenAddress the secondary token of the pair
+@param number the tick number that just finished
+@param nextTickBlock the block number after wich one it can be excecuted the next tick
+@param closingPrice the price [using priceComparisonPrecision] used to match the orders this tick
+*/
+  event TickEnd(
+    address indexed baseTokenAddress,
+    address indexed secondaryTokenAddress,
+    uint64 indexed number,
+    uint256 nextTickBlock,
+    uint256 closingPrice
+  );
+```
+
+Example of getting inserted orders and write to cvs. You need a node access throught http://localhost:4444
+
+```
+import time
+import csv
+import os
+
+from moneyonchain.networks import NetworkManager
+from moneyonchain.tex import MoCDecentralizedExchange, DEXNewOrderInserted
+
+connection_network='rskTesnetLocal'
+config_network = 'dexTestnet'
+
+# init network manager
+# connection network is the brownie connection network
+# config network is our enviroment we want to connect
+network_manager = NetworkManager(
+    connection_network=connection_network,
+    config_network=config_network)
+
+# run install() if is the first time and you want to install
+# networks connection from brownie
+# network_manager.install()
+
+# Connect to network
+network_manager.connect()
+
+log.info("Starting to import events from contract...")
+start_time = time.time()
+
+# MoCDecentralizedExchange.sol
+dex = MoCDecentralizedExchange(network_manager).from_abi()
+
+events_functions = 'NewOrderInserted'
+hours_delta = 0
+from_block = 1332673  # from block start
+to_block = 1332700  # block end or 0 to last block
+block_steps = 1000
+
+last_block_number = int(network_manager.block_number)
+
+if to_block <= 0:
+    to_block = last_block_number  # last block number in the node
+
+current_block = from_block
+
+l_events = list()
+count = 0
+while current_block <= to_block:
+
+    step_end = current_block + block_steps
+    if step_end > to_block:
+        step_end = to_block
+
+    log.info("Scanning blocks steps from {0} to {1}".format(current_block, step_end))
+
+    events = dex.filter_events(from_block=current_block, to_block=step_end)
+    if events:
+        for event in events:
+            if events_functions in event['event']:
+                eve = DEXNewOrderInserted(event)
+                print(eve.print_table())
+                print()
+                l_events.append(eve)
+
+                count += 1
+
+    # Adjust current blocks to the next step
+    current_block = current_block + block_steps
+
+# Write list to CSV File
+
+if l_events:
+    columns = DEXNewOrderInserted.columns()
+    path_file = '{0}_new_order_inserted_{1}_{2}.csv'.format(config_network, from_block, to_block)
+    with open(os.path.join('csv', path_file), 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        writer.writerow(columns)
+
+        count = 0
+        for event in l_events:
+            count += 1
+            writer.writerow(event.row())
+
+# finally disconnect from network
+network_manager.disconnect()
+
+duration = time.time() - start_time
+print("Getting events from DEX done! Succesfull!! Done in {0} seconds".format(duration))
+
+```
 
 
 # Setting allowance
@@ -1919,6 +2267,20 @@ function cancelSellOrder(
   address _secondaryToken,
   uint256 _orderId,
   uint256 _previousOrderIdHint) public
+```
+
+### Event Order Cancelled
+
+Query for event 'OrderCancelled' to know if an order is already cancelled.
+
+```
+OrderCancelled
+      id: 162
+      sender: 0xCD8A1c9aCc980ae031456573e34dC05cD7daE6e3
+      returnedAmount: 13486000000000000000
+      commission: 0
+      returnedCommission: 514000000000000000
+      isBuy: True
 ```
 
 ### Parameters of the operation
