@@ -197,15 +197,19 @@ docker run -d -p 8545:8545 trufflesuite/ganache-cli:latest
 **Type**: Production
 **Chain id**: 30
 
-#### Pairs Operated
+#### Pairs Operated in mainnet
 
 
-| Pair                      | Base Token                           | Secondary Token                 |
-| :---------------------------- | -----------------------------   | ------------------------------ |
-| DOC/WRBTC | [0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db](https://explorer.rsk.co/address/0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db) | [0x967f8799aF07DF1534d48A95a5C9FEBE92c53ae0](https://explorer.rsk.co/address/0x967f8799aF07DF1534d48A95a5C9FEBE92c53ae0) | 
-| DOC/RDOC | [0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db](https://explorer.rsk.co/address/0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db) | [0x2d919F19D4892381D58edeBeca66D5642Cef1a1f](https://explorer.rsk.co/address/0x2d919F19D4892381D58edeBeca66D5642Cef1a1f) | 
-| WRBTC/BPRO | [0x967f8799aF07DF1534d48A95a5C9FEBE92c53ae0](https://explorer.rsk.co/address/0x967f8799aF07DF1534d48A95a5C9FEBE92c53ae0) | [0x440CD83C160De5C96Ddb20246815eA44C7aBBCa8](https://explorer.rsk.co/address/0x440CD83C160De5C96Ddb20246815eA44C7aBBCa8) | 
-| RIF/RIFP | [0x2acc95758f8b5f583470ba265eb685a8f45fc9d5](https://explorer.rsk.co/address/0x2acc95758f8b5f583470ba265eb685a8f45fc9d5) | [0xf4d27c56595Ed59B66cC7F03CFF5193e4bd74a61](https://explorer.rsk.co/address/0xf4d27c56595Ed59B66cC7F03CFF5193e4bd74a61) |
+Token pair      | Base Token address                          | Secondary Token address                     | MO
+--------------- | ------------------------------------------- | ------------------------------------------- | -----
+DOC/WRBTC        | 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db | 0x967f8799aF07DF1534d48A95a5C9FEBE92c53ae0  | Yes
+DOC/RDOC         | 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db | 0x2d919F19D4892381D58edeBeca66D5642Cef1a1f  | Yes
+DOC/BPRO         | 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db | 0x440CD83C160De5C96Ddb20246815eA44C7aBBCa8  | Yes
+WRBTC/BPRO       | 0x967f8799aF07DF1534d48A95a5C9FEBE92c53ae0 | 0x440CD83C160De5C96Ddb20246815eA44C7aBBCa8  | Yes
+DOC/RIF          | 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db | 0x2acc95758f8b5f583470ba265eb685a8f45fc9d5  | Yes
+RDOC/RIFP        | 0x2d919F19D4892381D58edeBeca66D5642Cef1a1f | 0xf4d27c56595Ed59B66cC7F03CFF5193e4bd74a61  | Yes
+RIF/RIFP         | 0x2acc95758f8b5f583470ba265eb685a8f45fc9d5 | 0xf4d27c56595Ed59B66cC7F03CFF5193e4bd74a61  | Yes
+WRBTC/RIF        | 0x967f8799aF07DF1534d48A95a5C9FEBE92c53ae0 | 0x2acc95758f8b5f583470ba265eb685a8f45fc9d5  | No
 
 
 #### Commission Status
@@ -239,3 +243,8 @@ The code is verified in explorer and in blockscout site.
 The current code of the contract is release v1.3.2, you can flatten the contracts code to compare running the script:  `npm run flatten-contracts`.
 
 Also you can obtain the implementation address from proxy address with this [script](https://github.com/money-on-chain/py_Moneyonchain/blob/master/examples/dex/deploy/info.py)
+
+
+# Tex Integration
+
+Please read [tex integration ...](integration-to-TEX.md)

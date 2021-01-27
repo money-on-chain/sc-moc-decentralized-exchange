@@ -121,7 +121,7 @@ of operate in MO disabled, you lose your funds. MO is only for pairs that have p
 
 ## Wrapped RBTC
 
-This is a token exchange you can't exchange token with base money, you can only exchange with tokens. You need first
+This is a token exchange, you can't exchange token with base money, you can only exchange with tokens. You need first
 transform your base RBTC in WRBTC if you want to use you RBTC. This operation RBTC->WRBTC is called Wrap, and the operation
 WRBTC->RBTC is unwrap.
 
@@ -229,6 +229,7 @@ queue to actually move them at the end of the tick.
 ## API and contract
 
 API are set of tool to query the contracts from outside the blockchain, also you can use it from another contract.
+You can access to source examples in folder 'scripts/api'.
 
 ### Requirements
 
