@@ -242,6 +242,20 @@ For contracts developing we need nodejs and truffle suit.
 
 * pip install moneyonchain==2.0.5
 
+**Also we use Brownie so we need to install it**
+
+`pip install eth-brownie==1.12.2`
+
+and to install connection nodes required to connect:
+
+```
+console> brownie networks add RskNetwork rskTesnetPublic host=https://public-node.testnet.rsk.co chainid=31 explorer=https://blockscout.com/rsk/mainnet/api
+console> brownie networks add RskNetwork rskTesnetLocal host=http://localhost:4444 chainid=31 explorer=https://blockscout.com/rsk/mainnet/api
+console> brownie networks add RskNetwork rskMainnetPublic host=https://public-node.rsk.co chainid=30 explorer=https://blockscout.com/rsk/mainnet/api
+console> brownie networks add RskNetwork rskMainnetLocal host=http://localhost:4444 chainid=30 explorer=https://blockscout.com/rsk/mainnet/api
+```
+
+
 ### Smart Contracts
 
 To create a new Smart Contract that uses the TEX platform, you can use any language and IDE you want. In this tutorial, 
@@ -302,6 +316,7 @@ Enviroment        | Network    | Type
 ----------------- | ---------- | ---------
 dexTestnet        | Testnet    | Test      
 dexMainnet        | Mainnet    | Production
+
 
 
 
@@ -484,13 +499,49 @@ Please refer to [py_Moneyonchain](https://github.com/money-on-chain/py_Moneyonch
 List of events
 
 ```
-event NewOrderAddedToPendingQueue(
+/**
+    @notice A new order has been inserted in the orderbook, and it is ready to be matched
+    @param id Id of the order
+    @param sender Address owner of the order
+    @param baseTokenAddress Address of the token used as base in the pair(it is the token being used as currency,
+    to pay the good, the secondary token)
+    @param secondaryTokenAddress Address of the token used as secondary in the pair(it is the good
+    being exchanged in this pair)
+    @param exchangeableAmount Amount that was left to be exchanged
+    @param reservedCommission Commission reserved to be charged later
+    @param price Target price of the order[base/secondary] or priceMultiplier [dimentionless] [pricePrecision]
+    @param expiresInTick Number of tick in which the order can no longer be matched
+    @param isBuy The order is a buy order
+    @param orderType The order's type; LIMIT_ORDER or MARKET_ORDER
+   */
+  event NewOrderInserted(
     uint256 indexed id,
-    // On the RSK network, having an event with only one parameter
-    // which is indexed breaks the web3 importer, so a dummy
-    // argument is added.
-    uint256 notIndexedArgumentSoTheThingDoesntBreak
+    address indexed sender,
+    address baseTokenAddress,
+    address secondaryTokenAddress,
+    uint256 exchangeableAmount,
+    uint256 reservedCommission,
+    uint256 price,
+    uint256 multiplyFactor,
+    uint64 expiresInTick,
+    bool isBuy,
+    MoCExchangeLib.OrderType orderType
   );
+  
+/**
+    @notice All the charged commission for a given token was withdrawn
+    @param token The address of the withdrawn tokens
+    @param commissionBeneficiary Receiver of the tokens
+    @param withdrawnAmount Amount that was withdrawn
+   */
+  event CommissionWithdrawn(address token, address commissionBeneficiary, uint256 withdrawnAmount);
+
+  /**
+    @notice A new order has been inserted in the pending queue. It is waiting to be moved to the orderbook
+    @dev On the RSK network, having an event with only one parameter which is indexed breaks the web3
+    importer, so a dummy argument is added.
+   */
+  event NewOrderAddedToPendingQueue(uint256 indexed id, uint256 notIndexedArgumentSoTheThingDoesntBreak);
 
   /**
 @notice notifies the buyer that their order matched
