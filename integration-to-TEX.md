@@ -69,6 +69,7 @@ RIFDOC                 | RDOC         | 0xC3De9F38581f83e281f260d0DdbaAc0e102ff9
 ADOC                   | DOC          | 0x489049c48151924c07F86aa1DC6Cc3Fea91ed963
 ABPRO                  | BPRO         | 0x5639809FAFfF9082fa5B9a8843D12695871f68bd
 AMOC                   | MOC          | 0x0399c7F7B37E21cB9dAE04Fb57E24c68ed0B4635
+MOC                    | MOC          | 0x45a97b54021a3F99827641AFe1BFAE574431e6ab
 
 
 ## Tokens Pair
@@ -112,6 +113,7 @@ ADOC/ABPRO       | 0x489049c48151924c07F86aa1DC6Cc3Fea91ed963 | 0x5639809FAFfF90
 ADOC/AMOC        | 0x489049c48151924c07F86aa1DC6Cc3Fea91ed963 | 0x0399c7F7B37E21cB9dAE04Fb57E24c68ed0B4635  | No
 WRBTC/AMOC       | 0x09b6ca5E4496238A1F176aEa6Bb607DB96c2286E | 0x0399c7F7B37E21cB9dAE04Fb57E24c68ed0B4635  | No
 WRBTC/RIF        | 0x09b6ca5E4496238A1F176aEa6Bb607DB96c2286E | 0x19F64674D8A5B4E652319F5e239eFd3bc969A1fE  | No
+WRBTC/MOC        | 0x09b6ca5E4496238A1F176aEa6Bb607DB96c2286E | 0x45a97b54021a3F99827641AFe1BFAE574431e6ab  | No
 
 **Market Order Enabled:** In some pairs could be disabled or not ready for market orders , is up to you the risk 
 of operate in MO disabled, you lose your funds. MO is only for pairs that have price providers.
