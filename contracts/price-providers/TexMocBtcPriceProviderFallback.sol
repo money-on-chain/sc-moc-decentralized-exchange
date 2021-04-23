@@ -17,7 +17,7 @@ contract TexMocBtcPriceProviderFallback is PriceProviderFallback {
 
   constructor(
     IMocState _mocState,
-    MoCDecentralizedExchange _dex,
+    IMoCDecentralizedExchange _dex,
     address _baseToken,
     address _secondaryToken,
     address _baseTokenDocMoc,

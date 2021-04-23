@@ -1,7 +1,7 @@
 pragma solidity 0.5.8;
 
 import "./PriceProviderFallback.sol";
-import "../MoCDecentralizedExchange.sol";
+import "../interface/IMoCDecentralizedExchange.sol";
 
 /**
   @notice if the externalPriceProvider price source is not available, falls back
@@ -12,7 +12,7 @@ contract ExternalOraclePriceProviderFallback is PriceProviderFallback {
 
   constructor(
     IPriceProvider _externalPriceProvider,
-    MoCDecentralizedExchange _dex,
+    IMoCDecentralizedExchange _dex,
     address _baseToken,
     address _secondaryToken
   ) public PriceProviderFallback(_dex, _baseToken, _secondaryToken) {
