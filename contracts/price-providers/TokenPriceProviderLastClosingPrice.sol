@@ -1,15 +1,15 @@
 pragma solidity 0.5.8;
 
 import "../interface/IPriceProvider.sol";
-import "../MoCDecentralizedExchange.sol";
+import "../interface/IMoCDecentralizedExchange.sol";
 
 contract TokenPriceProviderLastClosingPrice is IPriceProvider {
-  MoCDecentralizedExchange public dex;
+  IMoCDecentralizedExchange public dex;
   address public baseToken;
   address public secondaryToken;
 
   constructor(
-    MoCDecentralizedExchange _dex,
+    IMoCDecentralizedExchange _dex,
     address _baseToken,
     address _secondaryToken
   ) public {

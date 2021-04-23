@@ -1,7 +1,7 @@
 pragma solidity 0.5.8;
 
 import "../interface/IPriceProvider.sol";
-import "../MoCDecentralizedExchange.sol";
+import "../interface/IMoCDecentralizedExchange.sol";
 
 /**
   @notice if the main price source is not available, falls back to dex
@@ -10,7 +10,7 @@ import "../MoCDecentralizedExchange.sol";
   FIXME: if bumping to solidity 0.6, add "abstract" and "virtual" reserved words for readability
 */
 contract PriceProviderFallback is IPriceProvider {
-  MoCDecentralizedExchange public dex;
+  IMoCDecentralizedExchange public dex;
   address public baseToken;
   address public secondaryToken;
 
@@ -20,7 +20,7 @@ contract PriceProviderFallback is IPriceProvider {
     @param _secondaryToken secondary token of the pair to get the price from
   */
   constructor(
-    MoCDecentralizedExchange _dex,
+    IMoCDecentralizedExchange _dex,
     address _baseToken,
     address _secondaryToken
   ) public {
@@ -37,7 +37,7 @@ contract PriceProviderFallback is IPriceProvider {
   function peek() external view returns (bytes32, bool) {
     (bytes32 price, bool isValid) = failablePeek();
     bytes32 finalPrice = isValid ? price : fallbackPrice();
-    return (finalPrice, true);
+    return (finalPrice, finalPrice != 0);
   }
 
   /**
