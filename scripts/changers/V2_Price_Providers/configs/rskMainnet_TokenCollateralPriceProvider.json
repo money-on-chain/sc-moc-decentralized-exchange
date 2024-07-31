@@ -1,0 +1,19 @@
+{
+  "mocV2": "0xA27024Ed70035E46dba712609fc2Afa1c97aA36A",
+  "tpAddress": "0x3A15461d8aE0F0Fb5Fa2629e9DA7D66A794a6e37",
+  "dex": "0x4ebd075534d9E24cE134f8BC962311c913730a84",
+  "governor": "0x036CaF1d8B11d46F5D819241cFFAC06cDF9Fd230",
+  "admin": "0x6891b67fBF7DAFA462C3378B0b6f40F2B41880A4",
+  "TokenCollateralTec": {
+    "baseToken": "0x2acc95758f8b5f583470ba265eb685a8f45fc9d5",
+    "secondaryToken": "0xf4d27c56595Ed59B66cC7F03CFF5193e4bd74a61",
+    "PriceProvider": "",
+    "Changer": ""
+  },
+  "TokenCollateralPegged": {
+    "baseToken": "0x2d919F19D4892381D58edeBeca66D5642Cef1a1f",
+    "secondaryToken": "0xf4d27c56595Ed59B66cC7F03CFF5193e4bd74a61",
+    "PriceProvider": "",
+    "Changer": ""
+  }
+}
