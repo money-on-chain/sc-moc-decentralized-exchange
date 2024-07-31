@@ -2,7 +2,6 @@ const PriceProviderChanger = artifacts.require('./PriceProviderChanger.sol');
 
 const { getConfig, getNetwork, saveConfig } = require('./helper');
 
-
 module.exports = async callback => {
   try {
     const network = getNetwork(process.argv);
@@ -21,11 +20,9 @@ module.exports = async callback => {
     console.log(`Changer address: ${priceProviderChanger.address}`);
     config.TokenCollateralTec.Changer = priceProviderChanger.address;
     saveConfig(config, configPath);
-
   } catch (error) {
     callback(error);
   }
 
   callback();
 };
-

@@ -1,7 +1,8 @@
-const TokenCollateralPeggedPriceProviderFallback = artifacts.require('./V2TokenCollateralPeggedPriceProviderFallback.sol');
+const TokenCollateralPeggedPriceProviderFallback = artifacts.require(
+  './V2TokenCollateralPeggedPriceProviderFallback.sol'
+);
 
 const { getConfig, getNetwork, saveConfig } = require('./helper');
-
 
 module.exports = async callback => {
   try {
@@ -22,11 +23,9 @@ module.exports = async callback => {
     console.log(`Price Provider address: ${TokenCollateralPeggedPriceProvider.address}`);
     config.TokenCollateralPegged.PriceProvider = TokenCollateralPeggedPriceProvider.address;
     saveConfig(config, configPath);
-
   } catch (error) {
     callback(error);
   }
 
   callback();
 };
-

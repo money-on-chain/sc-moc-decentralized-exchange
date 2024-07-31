@@ -33,8 +33,7 @@ const saveConfig = (config, path) => {
 };
 
 const shouldExecuteChanges = currentNetwork =>
-  currentNetwork === 'development' ||
-  currentNetwork === 'coverage' ;
+  currentNetwork === 'development' || currentNetwork === 'coverage';
 
 module.exports = {
   getConfig,

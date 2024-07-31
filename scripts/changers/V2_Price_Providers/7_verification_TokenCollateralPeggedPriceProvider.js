@@ -1,5 +1,7 @@
 /* eslint-disable no-console */
-const TokenCollateralPeggedPriceProviderFallback = artifacts.require('./V2TokenCollateralPeggedPriceProviderFallback.sol');
+const TokenCollateralPeggedPriceProviderFallback = artifacts.require(
+  './V2TokenCollateralPeggedPriceProviderFallback.sol'
+);
 
 const BigNumber = require('bignumber.js');
 const { getConfig, getNetwork } = require('./helper');
@@ -13,7 +15,9 @@ module.exports = async callback => {
     console.log(`Price Provider Address: ${config.TokenCollateralPegged.PriceProvider}`);
 
     // Get value from contract
-    const priceProvider = await TokenCollateralPeggedPriceProviderFallback.at(config.TokenCollateralPegged.PriceProvider);
+    const priceProvider = await TokenCollateralPeggedPriceProviderFallback.at(
+      config.TokenCollateralPegged.PriceProvider
+    );
 
     const price = await priceProvider.peek();
 
@@ -21,9 +25,8 @@ module.exports = async callback => {
     const pricePrecision = BigNumber(price[0].toString()).div(mocPrecision);
     console.log(`Price from contract: ${pricePrecision.toString()}`);
 
-    //console.log(`Price from contract: ${PriceFromMedianizer[0].toString()}`);
+    // console.log(`Price from contract: ${PriceFromMedianizer[0].toString()}`);
     console.log(`Valid?: ${price[1].toString()}`);
-
   } catch (error) {
     callback(error);
   }
