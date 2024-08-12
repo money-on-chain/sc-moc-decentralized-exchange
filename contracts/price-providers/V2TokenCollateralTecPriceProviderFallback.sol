@@ -41,12 +41,13 @@ contract V2TokenCollateralTecPriceProviderFallback is PriceProviderFallback {
 
     // Only if has a valid price
     if (isValid && price != bytes32(0)) {
-      uint256 tecPrice = mocV2.getPTCac();
-      if (bytes32(tecPrice) != bytes32(0)) {
-        return (bytes32(tecPrice), tecPrice != 0);
-      }
+        uint256 tecPrice = mocV2.getPTCac();
+        bytes32 tecPriceBytes = bytes32(tecPrice);
+        if (tecPriceBytes != bytes32(0)) {
+            return (tecPriceBytes, true);
+        }
     }
 
-    return (price, false);
+    return (0, false);
   }
 }

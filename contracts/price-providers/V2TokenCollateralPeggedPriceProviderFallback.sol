@@ -42,19 +42,19 @@ contract V2TokenCollateralPeggedPriceProviderFallback is PriceProviderFallback {
     }
 
     IMoCV2.PegContainerItem memory tpItem = mocV2.pegContainer(tpIndex.index);
-
     IPriceProvider priceProvider = IPriceProvider(tpItem.priceProvider);
     (bytes32 price, bool isValid) = priceProvider.peek();
 
     // Only if has a valid price
     if (isValid && price != bytes32(0)) {
-
       uint256 tecPrice = mocV2.getPTCac();
-      if (bytes32(tecPrice) != bytes32(0)) {
-        uint256 calculatedPrice = uint256(tecPrice).mul(uint256(price)).div(RATE_PRECISION);
-        return (bytes32(calculatedPrice), calculatedPrice != 0);
+      bytes32 tecPriceBytes = bytes32(tecPrice);
+      if (tecPriceBytes != bytes32(0)) {
+        uint256 calculatedPrice = tecPrice.mul(uint256(price)).div(RATE_PRECISION);
+        return (bytes32(calculatedPrice), true);
       }
     }
+
     return (0, false);
   }
 }
