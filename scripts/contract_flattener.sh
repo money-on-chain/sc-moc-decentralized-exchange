@@ -7,4 +7,5 @@ node_modules/.bin/truffle-flattener contracts/price-providers/TexMocBtcPriceProv
 node_modules/.bin/truffle-flattener contracts/price-providers/TokenPriceProviderLastClosingPrice.sol > scripts/contract_flatten/TokenPriceProviderLastClosingPrice.sol
 node_modules/.bin/truffle-flattener contracts/price-providers/V2TokenCollateralTecPriceProviderFallback.sol > scripts/contract_flatten/V2TokenCollateralTecPriceProviderFallback.sol
 node_modules/.bin/truffle-flattener contracts/price-providers/V2TokenCollateralPeggedPriceProviderFallback.sol > scripts/contract_flatten/V2TokenCollateralPeggedPriceProviderFallback.sol
+node_modules/.bin/truffle-flattener contracts/changers/PriceProviderChanger.sol > scripts/contract_flatten/PriceProviderChanger.sol
 echo "Finish successfully! Take a look in folder scripts/contract_flatten/..."
