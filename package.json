@@ -52,7 +52,7 @@
     "bn-chai": "1.0.1",
     "chai": "4.2.0",
     "chai-as-promised": "7.1.1",
-    "eslint": "6.1.0",
+    "eslint": "9.39.1",
     "eslint-config-airbnb-base": "13.2.0",
     "eslint-config-prettier": "6.0.0",
     "eslint-plugin-import": "2.18.2",
@@ -68,7 +68,7 @@
     "openzeppelin-test-helpers": "0.4.0",
     "prettier": "1.18.2",
     "prettier-plugin-solidity": "1.0.0-alpha.47",
-    "solidity-coverage": "0.6.4",
+    "solidity-coverage": "0.8.16",
     "truffle": "5.0.28",
     "truffle-hdwallet-provider": "1.0.14",
     "@zemse/solidity-flattener": "1.5.1"
